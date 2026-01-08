@@ -21,7 +21,10 @@ This document serves as an informative overview, providing a comprehensive summa
 
 ## Technology
 1. Python Scripts
-2. GitHub Actions
-3. CloudRun
-4. Lambda Functions
-5. N8N Workflows
+2. Typescript/JavaScript
+3. GCP Compute Engine
+4. AWS EC2
+5. GitHub Actions
+6. CloudRun
+7. Lambda Functions
+8. N8N Workflows
