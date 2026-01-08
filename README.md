@@ -1,8 +1,8 @@
 # AI Integrations
 
-This document serves as an informative overview, providing a comprehensive summary of the various AI agents and bots currently operational within this repository. It is designed to offer a clear and concise understanding of their functionalities and integrations.
+This document serves as an informative overview, providing a comprehensive summary of the various AI powered Assistants or Agents currently operational within this repository. It is designed to offer a clear and concise understanding of their functionalities and integrations.
 
-## AI Agents
+## Agents 
 
 1.  **Vehicle Diagnostics Agent:** This agent is designed to provide in-depth analysis and insights into vehicle performance, aiding in the identification of potential issues using OBD
 
