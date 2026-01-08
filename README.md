@@ -15,3 +15,12 @@ This document serves as an informative overview, providing a comprehensive summa
 5.  **Account Agent and ETL Agent:** These two agents work in synergy to manage financial operations.
     *   **Account Agent:** This agent is specifically designed to automate the generation of critical accounting statements. It leverages data sourced from various locations, including bank accounts and shared drive folders, to produce accurate and timely reports. The statements generated include cash flow reports, income statements, and balance sheets.
     *   **ETL Agent:** Functioning on a recurring monthly basis, this agent is responsible for the automated generation and distribution of comprehensive financial reports. It produces both monthly and yearly financial statements, ensuring a consistent and organized reporting structure.
+  
+
+
+## Technology
+1. Python Scripts
+2. GitHub Actions
+3. CloudRun
+4. Lambda Functions
+5. N8N Workflows
