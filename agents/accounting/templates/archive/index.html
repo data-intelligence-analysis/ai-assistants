@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Accounting Agent</title>
+</head>
+<body>
+    <h1>📊 Accounting Report Generator</h1>
+    {% if error %}
+        <p style="color:red;">Error: {{ error }}</p>
+    {% endif %}
+    {% if report_generated %}
+        <p style="color:green;">✅ Reports generated successfully!</p>
+        <a href="/download/income">Download Income Statement</a><br>
+        <a href="/download/balance">Download Balance Sheet</a>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        <label>Select Data Source:</label><br>
+        <input type="radio" name="source" value="csv" checked> CSV Upload<br>
+        <input type="radio" name="source" value="sheets"> Google Sheets<br>
+        <input type="radio" name="source" value="excel"> Excel from URL<br><br>
+
+        <div id="csv-fields">
+            <label>Upload CSV:</label>
+            <input type="file" name="file"><br>
+        </div>
+
+        <div id="sheets-fields" style="display:none;">
+            <label>Sheet Name:</label>
+            <input type="text" name="sheet_name"><br>
+            <label>Worksheet:</label>
+            <input type="text" name="worksheet"><br>
+        </div>
+
+        <div id="excel-fields" style="display:none;">
+            <label>Excel File URL:</label>
+            <input type="text" name="excel_url"><br>
+            <label>Sheet Name (optional):</label>
+            <input type="text" name="excel_sheet"><br>
+        </div>
+
+        <br><button type="submit">Generate Reports</button>
+    </form>
+
+    <script>
+        const radios = document.querySelectorAll('input[name="source"]');
+        const csvFields = document.getElementById("csv-fields");
+        const sheetsFields = document.getElementById("sheets-fields");
+        const excelFields = document.getElementById("excel-fields");
+
+        radios.forEach(radio => {
+            radio.addEventListener("change", () => {
+                csvFields.style.display = radio.value === "csv" ? "block" : "none";
+                sheetsFields.style.display = radio.value === "sheets" ? "block" : "none";
+                excelFields.style.display = radio.value === "excel" ? "block" : "none";
+            });
+        });
+    </script>
+</body>
+</html>

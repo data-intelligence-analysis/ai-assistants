@@ -1,0 +1,78 @@
+company:
+  name: "Sample LLC"
+  currency: "USD"
+  ein: "12-3456789"
+  fiscal_year_start: "2025-01-01"
+datasource_csv:
+  type: csv
+  csv_glob: "data/transactions/*.csv"
+datasource_sheets:
+  type: sheets
+  spreadsheet_key: "YOUR_GOOGLE_SHEET_KEY"
+  worksheet_name: "Transactions"
+datasource_excel:
+  type: excel
+  file_url: "https://example.com/path/to/Vendor_Payments.xlsx"
+  sheet_name: "2025-Q1"
+opening_balances:
+  as_of: "2025-01-01"
+  assets:
+    Checking: 15000.00
+    Savings: 5000.00
+  liabilities:
+    CreditCard: -2000.00
+  equity:
+    OwnerEquity: 17000.00
+account_mapping:
+  revenue: [Sales, Service Income]
+  cogs: [Cost of Goods Sold]
+  expense: [Advertising, Bank Fees,Office Supplies, Software, Meals, Travel, Utilities, Rent, Payroll, Taxes]
+assets: [Checking, Savings, AccountsReceivable, Inventory, Equipment]
+liabilities: [CreditCard, Loan, AccountsPayable]
+equity: [OwnerEquity]
+periods:
+  monthly: true
+  quarterly: true
+  annual: true
+rules:
+  - category: Revenue
+    keywords: [sale, invoice, payout, stripe, shopify]
+  - category: Advertising
+    keywords: [facebook, google ads, adwords, "meta ads", "facebook ads", "instagram ads", "tiktok ads"]
+  - category: Office Supplies
+    keywords: [office depot, staples, "office depot", "paper", "pen", "ink"]
+  - category: Travel
+    keywords: [uber, lyft, flights, hotel, "american airlines", "delta", "united", "hotel", "airbnb", "booking.com", "expedia", "tripadvisor"]
+  - category: Utilities
+    keywords: [electricity, water, gas, internet, "wifi", "att", "xfinity"]
+  - category: Payroll
+    keywords: [payroll, salary, "payroll", "gusto", "adp"]
+  - category: Rent
+    keywords: [rent, "lease"]
+  - category: Software
+    keywords: ["aws", "vercel", "github", "openai", "notion", "slack", "saas", "subscription", "subscription management", "subscription billing", "subscription invoicing"]
+  - category: Sales
+    keywords: [sales, "sales tax", "sales tax", "sales tax","stripe", "shopify", "checkout", "sale"]
+  - category: Interest Income
+    keywords: ["interest"]
+  - category: Transfer
+    keywords: ["transfer", "xfer"]
+category: "Interest Income"
+plaid:
+  client_id: "your_client_id"
+  secret: "your_secret"
+  access_token: "your_access_token"
+
+google_sheets:
+  - name: "Business Expenses"
+    sheet_url: "https://docs.google.com/spreadsheets/d/.../edit#gid=0"
+  - name: "Rental Income"
+    sheet_url: "https://docs.google.com/spreadsheets/d/.../edit#gid=123456"
+
+excel_files:
+  - name: "Vendor Payments"
+    file_url: "https://example.com/path/to/Vendor_Payments.xlsx"
+    sheet_name: "2025-Q1"
+  - name: "Payroll"
+    file_url: "https://example.com/path/to/Payroll.xlsx"
+    sheet_name: "Employees"

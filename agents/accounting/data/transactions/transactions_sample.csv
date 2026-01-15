@@ -1,0 +1,17 @@
+date,description,amount,account,category
+2025-01-03,Stripe payout,1250.00,Checking,Revenue
+2025-01-04,AWS bill,-120.55,Checking,Software
+2025-01-10,Office Depot,-45.20,Checking,Office Supplies
+2025-02-02,Shopify sale,890.00,Checking,Revenue
+2025-03-01,Client invoice,1500.00,Checking,Service Income
+2025-01-03, Stripe payout order #1001, 1250.00, Checking, 
+2025-01-04, AWS monthly bill, -120.55, Checking, 
+2025-01-10, Office Depot supplies, -45.20, Checking, 
+2025-01-12, Gusto payroll, -950.00, Checking, 
+2025-01-18, Google Ads January, -300.00, Checking, 
+2025-02-02, Shopify sale #992, 890.00, Checking, 
+2025-02-09, United flight to client, -420.00, CreditCard, 
+2025-02-15, Internet bill (Xfinity), -85.00, Checking, 
+2025-03-01, Client service invoice 2025-03, 1500.00, Checking, Service Income
+2025-03-11, Notion subscription, -12.00, Checking, Expense
+

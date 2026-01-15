@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "accounting-agent": {
+      "command": "python",
+      "args": ["mcp_server.py"],
+      "cwd": "/Users/dennisosafo/Documents/Startups-code/Curiou/ai_assistants/accounting_agent",
+      "env": {
+        "PYTHONPATH": "/Users/dennisosafo/Documents/Startups-code/Curiou/ai_assistants/accounting_agent"
+      }
+    }
+  }
+}

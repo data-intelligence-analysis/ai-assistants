@@ -1,0 +1,20 @@
+accounting_agent/
+├── README.md
+├── agent.py
+├── app.py
+├── etl_agent.py
+├── telegram_sender.py
+├── categorizer.py
+├── config.yaml
+├── transactions/
+│       └── transactions_sample.csv
+├── output/
+├── pdf_render.py
+├── plaid_loader.py
+├── sheets_loader.py
+├── statements.py
+├── rules.yaml
+├── requirements.txt
+├── templates/
+│   └── index.html
+└── __pycache__/

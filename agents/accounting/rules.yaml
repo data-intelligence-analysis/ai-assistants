@@ -1,0 +1,15 @@
+rules:
+  - category: Revenue
+    keywords: [sale, invoice, payout, stripe, shopify]
+  - category: Advertising
+    keywords: [facebook, google ads, adwords]
+  - category: Office Supplies
+    keywords: [office depot, staples]
+  - category: Travel
+    keywords: [uber, lyft, flights, hotel]
+  - category: Utilities
+    keywords: [electricity, water, gas, internet]
+  - category: Payroll
+    keywords: [payroll, salary]
+  - category: Rent
+    keywords: [rent]

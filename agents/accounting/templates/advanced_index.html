@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounting Agent - Advanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #faf9f7;
+            color: #1a1a1a;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 80px;
+            background-color: #f5f4f2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            border-right: 1px solid #e5e5e5;
+        }
+
+        .sidebar-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #f5f4f2;
+            border: 1px solid #e5e5e5;
+        }
+
+        .sidebar-icon:hover {
+            background-color: #e5e5e5;
+        }
+
+        .sidebar-icon.active {
+            background-color: #1a1a1a;
+            color: white;
+        }
+
+        .sidebar-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .app-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background-color: #f0f0f0;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ff4444;
+        }
+
+        .status-indicator.running {
+            background-color: #44ff44;
+        }
+
+        .user-profile {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #4a4a4a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .pro-button {
+            background-color: #1a1a1a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pro-button:hover {
+            background-color: #333;
+        }
+
+        /* Main Question */
+        .main-question {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        /* Input Area */
+        .input-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 20px 24px;
+            font-size: 18px;
+            border: 2px solid #e5e5e5;
+            border-radius: 16px;
+            background-color: white;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-field:focus {
+            border-color: #1a1a1a;
+            box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: #999;
+        }
+
+        .send-button {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            background-color: #1a1a1a;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .send-button:hover {
+            background-color: #333;
+        }
+
+        .send-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .send-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background-color: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .action-button:hover {
+            background-color: #f5f5f5;
+            border-color: #d5d5d5;
+        }
+
+        .action-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Helper Prompts */
+        .helper-prompts {
+            margin-top: 40px;
+        }
+
+        .helper-prompts h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #4a4a4a;
+        }
+
+        .prompt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .prompt-card {
+            background-color: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .prompt-card:hover {
+            border-color: #1a1a1a;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .prompt-card h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+        }
+
+        .prompt-card p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .prompt-icon {
+            width: 32px;
+            height: 32px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .prompt-icon svg {
+            width: 18px;
+            height: 18px;
+            color: #666;
+        }
+
+        .prompt-status {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ccc;
+        }
+
+        .prompt-status.success {
+            background-color: #44ff44;
+        }
+
+        .prompt-status.error {
+            background-color: #ff4444;
+        }
+
+        .prompt-status.loading {
+            background-color: #ffaa00;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Chat Messages */
+        .chat-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f8f8f8;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .chat-message {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 80%;
+        }
+
+        .chat-message.user {
+            background-color: #1a1a1a;
+            color: white;
+            margin-left: auto;
+        }
+
+        .chat-message.assistant {
+            background-color: white;
+            border: 1px solid #e5e5e5;
+        }
+
+        .chat-message.loading {
+            background-color: #f0f0f0;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            padding: 20px;
+            background-color: #f8f8f8;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .footer p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .footer .disclaimer {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .main-question {
+                font-size: 36px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .prompt-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-icon active">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            </svg>
+        </div>
+        <div class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+        </div>
+        <div class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+        </div>
+        <div class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="app-status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">App Status: Checking...</span>
+            </div>
+            <!-- <div style="display: flex; align-items: center; gap: 16px;">
+                <button class="pro-button">Get Pro</button>
+                <div class="user-profile">U</div>
+            </div> -->
+        </div>
+
+        <!-- Main Question -->
+        <div class="main-question">What can I help with?</div>
+
+        <!-- Status Messages -->
+        {% if error %}
+        <div class="status-message status-error">
+            ❌ Error: {{ error }}
+        </div>
+        {% endif %}
+        
+        {% if report_generated %}
+        <div class="status-message status-success">
+            ✅ Reports generated successfully!
+            <div style="margin-top: 12px;">
+                <a href="/download/income" style="color: #155724; text-decoration: underline; margin-right: 20px;">Download Income Statement</a>
+                <a href="/download/balance" style="color: #155724; text-decoration: underline;">Download Balance Sheet</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Chat Container -->
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-message assistant">
+                👋 Hi! I'm your accounting assistant. I can help you process financial data, generate reports, and manage your accounting workflow. What would you like to do?
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-container">
+            <input type="text" class="input-field" placeholder="Ask anything" id="mainInput">
+            <button class="send-button" id="sendButton" onclick="sendMessage()">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-button" onclick="attachFile()">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
+                </svg>
+                Attach File
+            </button>
+            <button class="action-button" onclick="deepSearch()">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Deep Search
+            </button>
+            <button class="action-button" onclick="reason()">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                Reason
+            </button>
+            <button class="action-button" onclick="toggleChat()">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                </svg>
+                Toggle Chat
+            </button>
+        </div>
+
+        <!-- Helper Prompts -->
+        <div class="helper-prompts">
+            <h3>Quick Actions</h3>
+            <div class="prompt-grid">
+                <div class="prompt-card" onclick="executePrompt('Generate reports from Google Sheets')" id="prompt1">
+                    <div class="prompt-status" id="status1"></div>
+                    <div class="prompt-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                        </svg>
+                    </div>
+                    <h4>Generate reports from Google Sheets</h4>
+                    <p>Connect to your Google Sheets and automatically generate income statements and balance sheets</p>
+                </div>
+
+                <div class="prompt-card" onclick="executePrompt('Start accounting app')" id="prompt2">
+                    <div class="prompt-status" id="status2"></div>
+                    <div class="prompt-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </div>
+                    <h4>Start accounting app</h4>
+                    <p>Launch the Flask accounting application server to begin processing your financial data</p>
+                </div>
+
+                <div class="prompt-card" onclick="executePrompt('Process CSV file')" id="prompt3">
+                    <div class="prompt-status" id="status3"></div>
+                    <div class="prompt-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                        </svg>
+                    </div>
+                    <h4>Process CSV file</h4>
+                    <p>Upload and process your transaction CSV files to categorize and analyze your financial data</p>
+                </div>
+
+                <div class="prompt-card" onclick="executePrompt('Generate reports from CSV')" id="prompt4">
+                    <div class="prompt-status" id="status4"></div>
+                    <div class="prompt-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                        </svg>
+                    </div>
+                    <h4>Generate reports from CSV</h4>
+                    <p>Create comprehensive financial reports directly from your CSV transaction data</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p class="disclaimer">AI can make mistakes. Please double-check responses.</p>
+        </div>
+    </div>
+
+    <script>
+        let chatVisible = false;
+        let isProcessing = false;
+
+        // Initialize app status
+        checkAppStatus();
+
+        // Handle Enter key in input field
+        document.getElementById('mainInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !isProcessing) {
+                sendMessage();
+            }
+        });
+
+        // Check app status
+        async function checkAppStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                updateAppStatus(data.running);
+            } catch (error) {
+                updateAppStatus(false);
+            }
+        }
+
+        // Update app status display
+        function updateAppStatus(running) {
+            const indicator = document.getElementById('statusIndicator');
+            const text = document.getElementById('statusText');
+            
+            if (running) {
+                indicator.classList.add('running');
+                text.textContent = 'App Status: Running';
+            } else {
+                indicator.classList.remove('running');
+                text.textContent = 'App Status: Stopped';
+            }
+        }
+
+        // Send message function
+        async function sendMessage() {
+            const input = document.getElementById('mainInput');
+            const message = input.value.trim();
+            
+            if (message && !isProcessing) {
+                isProcessing = true;
+                const sendButton = document.getElementById('sendButton');
+                sendButton.disabled = true;
+                
+                // Add user message to chat
+                addChatMessage(message, 'user');
+                
+                // Clear input
+                input.value = '';
+                
+                // Show loading message
+                const loadingId = addChatMessage('Processing your request...', 'assistant', true);
+                
+                try {
+                    // Send to backend
+                    const response = await fetch('/api/process', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Remove loading message
+                    removeChatMessage(loadingId);
+                    
+                    // Add response
+                    addChatMessage(data.response, 'assistant');
+                    
+                    // Update app status if needed
+                    if (data.status) {
+                        updateAppStatus(data.status.running);
+                    }
+                    
+                } catch (error) {
+                    removeChatMessage(loadingId);
+                    addChatMessage('Sorry, there was an error processing your request.', 'assistant');
+                }
+                
+                isProcessing = false;
+                sendButton.disabled = false;
+            }
+        }
+
+        // Add chat message
+        function addChatMessage(message, type, isLoading = false) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            const messageId = 'msg_' + Date.now();
+            
+            messageDiv.id = messageId;
+            messageDiv.className = `chat-message ${type}`;
+            if (isLoading) messageDiv.classList.add('loading');
+            messageDiv.textContent = message;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            return messageId;
+        }
+
+        // Remove chat message
+        function removeChatMessage(messageId) {
+            const message = document.getElementById(messageId);
+            if (message) {
+                message.remove();
+            }
+        }
+
+        // Execute prompt function
+        async function executePrompt(prompt) {
+            const input = document.getElementById('mainInput');
+            input.value = prompt;
+            await sendMessage();
+        }
+
+        // Action button functions
+        function attachFile() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.csv,.xlsx,.xls';
+            fileInput.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    executePrompt(`Process this CSV file: ${file.name}`);
+                }
+            };
+            fileInput.click();
+        }
+
+        function deepSearch() {
+            executePrompt('Perform a deep search on my financial data');
+        }
+
+        function reason() {
+            executePrompt('Explain the reasoning behind my financial analysis');
+        }
+
+        function toggleChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatVisible = !chatVisible;
+            chatContainer.style.display = chatVisible ? 'block' : 'none';
+        }
+
+        // Update prompt status
+        function updatePromptStatus(promptId, status) {
+            const statusElement = document.getElementById(`status${promptId}`);
+            statusElement.className = `prompt-status ${status}`;
+        }
+
+        // Add some interactive feedback
+        document.querySelectorAll('.prompt-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                if (!isProcessing) {
+                    this.style.transform = 'translateY(-2px)';
+                }
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Check app status every 30 seconds
+        setInterval(checkAppStatus, 30000);
+    </script>
+</body>
+</html>
