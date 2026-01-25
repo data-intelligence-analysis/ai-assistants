@@ -22,7 +22,9 @@ This document serves as an informative overview, providing a comprehensive summa
 
 8. **Network Testing**: Designing and implementing network protocol and application testing involves using Al augmentation, which involves defining tools for the agent to use in interacting with network devices and running tests.
 
-9. **Penetration Testing**: 
+9. **Penetration Testing**: Al-Powered Penetration Testing Assistant
+
+10. **Content Strategy Agent**: Build a system that watches industry news every hour, filters junk articles, and auto-generates Twitter threads plus LinkedIn posts. Al scores each piece for quality before writing anything. High scores get published automatically. Medium scores hit my review queue. Garbage gets archived.
 
 ## Technology
 1. Python Scripts
