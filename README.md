@@ -12,7 +12,7 @@ This document serves as an informative overview, providing a comprehensive summa
 
 4.  **Real-Time Sports Alert:** Monitors live sports events and sends instant notifications for scores, stats, or game-changing moments.
 
-5.  **Viral Post Automation:** Analyzes trends and automatically creates, schedules, and posts content optimized for maximum engagement and virality.
+5.  **Viral Post Automation:** Render and generate viral content from your social media (X, Instagram, LinkedIn) analyze trends and automatically create, schedules, and posts content optimized for maximum engagement and virality.
 
 6.  **Appointment Booking:** This intelligent agent streamlines the appointment scheduling process. It offers flexible integration options, facilitating bookings in popular platforms like Google Calendar, as well as custom calendars. Users can interact with this agent through a variety of channels, including Telegram, WhatsApp, or a user-friendly web application.
 
