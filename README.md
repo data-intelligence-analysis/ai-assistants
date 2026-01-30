@@ -16,9 +16,9 @@ This document serves as an informative overview, providing a comprehensive summa
 
 6.  **Appointment Booking:** This intelligent agent streamlines the appointment scheduling process. It offers flexible integration options, facilitating bookings in popular platforms like Google Calendar, as well as custom calendars. Users can interact with this agent through a variety of channels, including Telegram, WhatsApp, or a user-friendly web application.
 
-7.  **Account Agent and ETL Agent:** These two agents work in synergy to manage financial operations.
-    *   **Account Agent:** This agent is specifically designed to automate the generation of critical accounting statements. It leverages data sourced from various locations, including bank accounts and shared drive folders, to produce accurate and timely reports. The statements generated include cash flow reports, income statements, and balance sheets.
-    *   **ETL Agent:** Functioning on a recurring monthly basis, this agent is responsible for the automated generation and distribution of comprehensive financial reports. It produces both monthly and yearly financial statements, ensuring a consistent and organized reporting structure.
+7.  **Accounting Agent and ETL Workflow:** These two agents work in synergy to manage financial operations.
+    *   **Accounting Agent:** This agent is specifically designed to automate the generation of critical accounting statements. It leverages data sourced from various locations, including bank accounts and shared drive folders, to produce accurate and timely reports. The statements generated include cash flow reports, income statements, and balance sheets.
+    *   **ETL Workflow:** Functioning on a recurring monthly basis, this agent is responsible for the automated generation and distribution of comprehensive financial reports. It produces both monthly and yearly financial statements, ensuring a consistent and organized reporting structure.
 
 8. **Network Testing**: Designing and implementing network protocol and application testing involves using Al augmentation, which involves defining tools for the agent to use in interacting with network devices and running tests.
 
