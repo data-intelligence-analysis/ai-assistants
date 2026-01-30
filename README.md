@@ -6,7 +6,7 @@ This document serves as an informative overview, providing a comprehensive summa
 
 1.  **Vehicle Diagnostics Agent:** This agent is designed to provide in-depth analysis and insights into vehicle performance, aiding in the identification of potential issues using OBD
 
-2.  **Sales/Lead Generation:** Automatically identifies potential clients, gathers contact information, and sends personalized outreach messages to generate qualified leads.
+2.  **Sales/Lead Generation:** Automatically identifies potential clients, gathers contact information, and sends personalized outreach messages to generate qualified leads and document it in a database
 
 3.  **Video Clipping:** Extracts, trims, and compiles key moments from long videos into shareable clips based on user-defined criteria.
 
