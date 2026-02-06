@@ -2012,7 +2012,15 @@ Your system now sends **real-time alerts from Google Sheets** via:
 🧠 ALERT FLOW (PRODUCTION-GRADE)
 --------------------------------
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Google Sheet (new row)          ↓  Row delta detected          ↓  Lead qualifies          ↓  Email + Telegram + SMS sent   `
+`   
+Google Sheet (new row)  
+         ↓  
+Row delta detected          
+         ↓  
+Lead qualifies          
+         ↓  
+Email + Telegram + SMS sent   
+`
 
 ✔ No duplicates✔ No spam✔ Multi-client ready✔ Cloud-safe
 
@@ -2028,12 +2036,28 @@ Add these to:
 *   AWS Lambda
     
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SENDGRID_API_KEY  ALERT_EMAIL  TELEGRAM_BOT_TOKEN  TELEGRAM_CHAT_ID  TWILIO_ACCOUNT_SID  TWILIO_AUTH_TOKEN  TWILIO_PHONE_NUMBER  ALERT_PHONE_NUMBER   `
+```
+SENDGRID_API_KEY  
+ALERT_EMAIL
+
+TELEGRAM_BOT_TOKEN  
+TELEGRAM_CHAT_ID
+
+TWILIO_ACCOUNT_SID  
+TWILIO_AUTH_TOKEN  
+TWILIO_PHONE_NUMBER  
+ALERT_PHONE_NUMBER   
+```
 
 📦 ZIP CONTENTS (v5)
 --------------------
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   ai-sales-agent-v5/  ├── agent.py  ├── requirements.txt  ├── README.md   `
+```
+ai-sales-agent-v5/  
+├── agent.py  
+├── requirements.txt  
+├── README.md   
+```
 
 This version is designed to **plug into your existing v4/v3 pipeline** without breaking changes.
 
