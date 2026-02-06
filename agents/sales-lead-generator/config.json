@@ -1,0 +1,28 @@
+{
+  "lead_score_threshold": 60,
+  "excel_export": true,
+  "niches": [
+    {
+      "name": "Dental Clinics",
+      "search_query": "Dental Clinic",
+      "value_prop": "helping dental practices get more booked appointments"
+    },
+    {
+      "name": "Real Estate Brokers",
+      "search_query": "Real Estate Agency",
+      "value_prop": "helping agents generate motivated buyer & seller leads"
+    },
+    {
+      "name": "Fitness Studios",
+      "search_query": "Gym",
+      "value_prop": "helping gyms increase membership sign-ups"
+    }
+  ],
+  "locations": [
+    "New York, NY",
+    "Los Angeles, CA",
+    "Chicago, IL",
+    "Miami, FL"
+  ],
+  "daily_limit_per_combo": 10
+}

@@ -1,0 +1,13 @@
+{
+  "clients": [
+    {
+      "client_id": "client_001",
+      "company": "Acme Marketing",
+      "stripe_customer_id": "cus_xxxxx",
+      "spreadsheet_id": "SHEET_ID_1",
+      "niches": ["Dental Clinics"],
+      "locations": ["New York, NY"],
+      "min_score": 70
+    }
+  ]
+}
