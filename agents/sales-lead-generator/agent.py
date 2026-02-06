@@ -12,7 +12,6 @@
 
 import os
 import stripe
-import os
 import datetime
 import openai
 import requests
@@ -20,10 +19,40 @@ import gspread
 import json
 import hashlib
 from google.oauth2.service_account import Credentials
+from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from openpyxl import load_workbook
+from googleapiclient.discovery import build
+from google.oauth2.service_account import Credentials
+import datetime
+
+# ---------------- CONFIG ---------------- #
+openai.api_key = os.getenv("OPENAI_API_KEY")
+SERPAPI_KEY = os.getenv("SERPAPI_API_KEY")
+SENDGRID_KEY = os.getenv("SENDGRID_API_KEY")
+SPREADSHEET_NAME = "AI Sales Agent Leads"
+CALENDAR_ID = "primary"
+STATE_FILE = "sheet_state.json" # TRACK ROW COUNT IN GOOGLE SHEET STATE FILE
+STATE_FILE = "state.json" # TRACK ROW COUNT IN EXCEL STATE FILE
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+with open("config.json") as f:
+    CONFIG = json.load(f)
+
+# ---------------- GOOGLE AUTH ---------------- #
+creds = Credentials.from_service_account_file(
+    "service_account.json",
+    scopes=[
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/calendar"
+    ]
+)
+
+gc = gspread.authorize(creds)
+sheet = gc.open(SPREADSHEET_NAME).sheet1
+calendar = build("calendar", "v3", credentials=creds)
 
 
 
@@ -154,9 +183,7 @@ def generate_linkedin_dm(lead, niche, location):
 
     return response.choices[0].message.content.strip()
 
-from googleapiclient.discovery import build
-from google.oauth2.service_account import Credentials
-import datetime
+
 
 def export_sheet_to_excel(spreadsheet_id, sheet_name="Sheet1"):
     creds = Credentials.from_service_account_file(
@@ -195,16 +222,43 @@ def notify_email(new_count, total_count):
         to_emails=os.getenv("NOTIFY_EMAIL_TO"),
         subject=subject,
         plain_text_content=body
+        # html_content=f"""
+        # <strong>Business:</strong> {lead['Business Name']}<br>
+        # <strong>Location:</strong> {lead['Location']}<br>
+        # <strong>Lead Type:</strong> {lead['Lead Type']}<br>
+        # <a href="{lead['Google Maps Link']}">View on Google Maps</a>
+        # """
     )
-
     sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
     sg.send(message)
 
-def notify_telegram(new_count, total_count):
+
+def notify_email_lead(lead):
+    message = Mail(
+        from_email="alerts@yourdomain.com",
+        to_emails="you@yourdomain.com",
+        subject=f"🚀 New Lead: {lead['Business Name']}",
+        # html_content=f"""
+        # <strong>Business:</strong> {lead['Business Name']}<br>
+        # <strong>Location:</strong> {lead['Location']}<br>
+        # <strong>Lead Type:</strong> {lead['Lead Type']}<br>
+        # <a href="{lead['Google Maps Link']}">View on Google Maps</a>
+        # """
+    )
+    sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+    sg.send(message)
+    
+
+def notify_telegram(lead, new_count, total_count):
     message = (
         f"🚀 *New Lead Added!*\n\n"
         f"➕ New entries: {new_count}\n"
         f"📊 Total leads: {total_count}"
+        f"*Business:* {lead['Business Name']}\n"
+        f"*Location:* {lead['Location']}\n"
+        f"*Type:* {lead['Lead Type']}\n"
+        f"*Score:* {lead['Lead Score']}\n"
+        f"[Open in Google Maps]({lead['Google Maps Link']})"
     )
 
     url = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_BOT_TOKEN')}/sendMessage"
@@ -216,9 +270,29 @@ def notify_telegram(new_count, total_count):
 
     requests.post(url, json=payload)
 
-# TRACK ROW COUNT IN STATE FILE
-STATE_FILE = "state.json"
 
+def notify_telegram_lead(lead):
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+
+    text = (
+        f"🚀 *New Lead*\n\n"
+        f"*Business:* {lead['Business Name']}\n"
+        f"*Location:* {lead['Location']}\n"
+        f"*Type:* {lead['Lead Type']}\n"
+        f"[Open in Google Maps]({lead['Google Maps Link']})"
+    )
+
+    requests.post(
+        f"https://api.telegram.org/bot{token}/sendMessage",
+        json={
+            "chat_id": chat_id,
+            "text": text,
+            "parse_mode": "Markdown"
+        }
+    )
+
+# EXCEL NEW-LEAD DETECTOR
 def load_last_row_count():
     if not os.path.exists(STATE_FILE):
         return 0
@@ -233,30 +307,37 @@ def get_excel_row_count(file_name):
     wb = load_workbook(file_name)
     ws = wb.active
     return ws.max_row - 1  # exclude header
+    
+# GOOGLE SHEETS NEW-LEAD DETECTOR
+def load_state():
+    if os.path.exists(STATE_FILE):
+        return json.load(open(STATE_FILE))
+    return {"last_row": 1}
 
-# ---------------- CONFIG ---------------- #
-openai.api_key = os.getenv("OPENAI_API_KEY")
-SERPAPI_KEY = os.getenv("SERPAPI_API_KEY")
-SENDGRID_KEY = os.getenv("SENDGRID_API_KEY")
+def save_state(row):
+    json.dump({"last_row": row}, open(STATE_FILE, "w"))
 
-SPREADSHEET_NAME = "AI Sales Agent Leads"
-CALENDAR_ID = "primary"
+def get_new_leads(sheet):
+    state = load_state()
+    last_row = state["last_row"]
 
-with open("config.json") as f:
-    CONFIG = json.load(f)
+    all_rows = sheet.get_all_records()
+    current_row_count = len(all_rows) + 1  # header row
 
-# ---------------- GOOGLE AUTH ---------------- #
-creds = Credentials.from_service_account_file(
-    "service_account.json",
-    scopes=[
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/calendar"
-    ]
-)
+    if current_row_count <= last_row:
+        return []
 
-gc = gspread.authorize(creds)
-sheet = gc.open(SPREADSHEET_NAME).sheet1
-calendar = build("calendar", "v3", credentials=creds)
+    new_leads = all_rows[last_row - 1 :]
+    save_state(current_row_count)
+
+    return new_leads
+def process_new_sheet_entries(sheet):
+    new_leads = get_new_leads(sheet)
+
+    for lead in new_leads:
+        notify_email(lead)
+        notify_telegram(lead)
+
 
 # ---------------- UTILS ---------------- #
 def lead_hash(email):
