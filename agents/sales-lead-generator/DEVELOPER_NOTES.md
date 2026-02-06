@@ -1402,3 +1402,298 @@ I can now:
 **“Build the SaaS dashboard”**,
 **“Add Stripe billing”**, or
 **“Compile v2 ZIP with all of this”**
+
+
+🧩 WHAT’S INCLUDED IN v2 (IMPORTANT)
+------------------------------------
+
+This is now **SaaS-grade infrastructure**, not just automation.
+
+### ✅ Stripe Billing (Subscription Gating)
+
+*   Each client has a stripe\_customer\_id
+    
+*   Agent checks for **active subscription**
+    
+*   If no active Stripe subscription → **client is skipped**
+    
+*   Ready for:
+    
+    *   Monthly plans
+        
+    *   Per-lead pricing
+        
+    *   Tiered access
+        
+
+### ✅ Multi-Client SaaS Mode
+
+*   clients.json controls:
+    
+    *   Niches
+        
+    *   Locations
+        
+    *   Lead score thresholds
+        
+    *   Spreadsheet isolation
+        
+    *   Billing enforcement
+        
+*   Each client = isolated data + billing
+    
+
+### ✅ Lead Scoring & Filtering
+
+*   Rule-based scoring
+    
+*   AI scoring ready
+    
+*   Only qualified leads flow into:
+    
+    *   Excel exports
+        
+    *   Notifications
+        
+    *   Outreach
+        
+
+### ✅ Outreach Engine
+
+*   Google Maps leads
+    
+*   LinkedIn DM generation
+    
+*   Stored safely (no auto-send)
+    
+*   Excel-ready for review or CRM import
+    
+
+### ✅ Excel + Notifications
+
+*   Google Sheets → .xlsx
+    
+*   Email + Telegram notification hooks
+    
+*   Triggered only on **new qualified leads**
+    
+
+### ✅ Cloud-Ready
+
+*   Dockerfile included
+    
+*   Works on:
+    
+    *   GitHub Actions
+        
+    *   Google Cloud Run
+        
+    *   AWS Lambda (with minor packaging)
+
+
+📁 ZIP STRUCTURE
+----------------
+
+```   
+ai-sales-agent-v2/  
+│  
+├── agent.py  
+├── clients.json  
+├── config.json  
+├── requirements.txt  
+├── Dockerfile  
+├── README.md  
+│  
+└── .github/      
+    └── workflows/          
+        └── daily-agent.yml   
+```
+
+🔐 WHAT YOU MUST CONFIGURE AFTER DOWNLOAD
+-----------------------------------------
+
+### 1️⃣ Stripe
+
+Create products & subscriptions in StripeAdd to GitHub / Cloud secrets:
+
+`   STRIPE_SECRET_KEY   `
+
+Each client in clients.json must have:
+`   stripe_customer_id   `
+
+### 2️⃣ Google + API Keys
+
+Same as v1:
+
+*   OPENAI\_API\_KEY
+    
+*   SERPAPI\_API\_KEY
+    
+*   GOOGLE\_SERVICE\_ACCOUNT\_JSON
+    
+*   (Optional) SENDGRID\_API\_KEY
+    
+*   (Optional) TELEGRAM\_BOT\_TOKEN
+    
+
+🚀 HOW THIS IS MONETIZABLE (REAL TALK)
+--------------------------------------
+
+You can now sell:
+
+*   **$99/mo per niche**
+    
+*   **$299/mo per client**
+    
+*   **Pay-per-lead**
+    
+*   **Agency white-label**
+    
+
+This is the **same backend model used by outbound SaaS tools**.
+
+✅ WHAT WAS ADDED (v3)
+---------------------
+
+### 🔍 1. Detect Leads With **No Website Presence**
+
+The agent now:
+
+*   Flags leads with:
+    
+    *   Empty website field
+        
+    *   Only social profiles (Facebook / Instagram / LinkedIn)
+        
+*   Classifies them as:
+    
+`   NO_WEBSITE   `
+
+This is **prime outreach gold** for:
+
+*   Web design
+    
+*   Branding
+    
+*   SEO
+    
+*   Automation
+    
+*   Booking systems
+    
+*   CRM installs
+    
+
+### ✍️ 2. Generate Tailored Outreach for “No Website” Leads
+
+Each NO\_WEBSITE lead automatically gets a **custom message**, e.g.:
+
+> “I noticed your business is active locally but doesn’t yet have a dedicated website…”
+
+Messaging is positioned around:
+
+*   Missed Google traffic
+    
+*   Credibility gaps
+    
+*   Lost inbound leads
+    
+*   Automation opportunities
+    
+
+Stored directly in the spreadsheet.
+
+### 📊 3. Lead Scoring Boost
+
+Leads without websites:
+
+*   Automatically receive **higher lead scores**
+    
+*   Bubble to the top of your pipeline
+    
+*   Are prioritized for notifications & outreach
+    
+
+### 📄 4. Spreadsheet Enhancements
+
+New columns added:
+
+ColumnLead Type (NO\_WEBSITE / HAS\_WEBSITE)Tailored MessageLead ScoreTimestamp
+
+Fully compatible with:
+
+*   Google Sheets
+    
+*   Excel (.xlsx)
+    
+*   CRM imports
+    
+
+
+
+🧠 WHY THIS IS EXTREMELY POWERFUL
+---------------------------------
+
+This turns your system into a **client-finding weapon**:
+
+You are now targeting businesses that:
+
+*   Already exist
+    
+*   Already make money
+    
+*   Already want more customers
+    
+*   Haven’t modernized yet
+    
+
+That’s **warm outbound**, not cold spam.
+
+🔥 NEXT LEVEL UPGRADES (Recommended)
+------------------------------------
+
+If you want, I can add:
+
+1.  **Auto-segmented offers**
+    
+    *   Website build
+        
+    *   Google presence
+        
+    *   Booking automation
+        
+    *   CRM setup
+        
+2.  **Dynamic pricing suggestions**
+    
+    *   Based on niche + city
+        
+    *   Example: “Typical investment: $2,500–$5,000”
+        
+3.  **Auto-booked discovery calls**
+    
+    *   Calendly or Google Calendar
+        
+    *   Inserted into email + LinkedIn DM
+        
+4.  **SaaS Dashboard**
+    
+    *   Clients log in
+        
+    *   See leads
+        
+    *   Download Excel
+        
+    *   Manage billing
+        
+
+### Say the word:
+
+*   **“Compile v4 with auto-offers”**
+    
+*   **“Add Calendly + auto-booking”**
+    
+*   **“Turn this into a sellable SaaS”**
+    
+
+You’re now sitting on a **legit agency + SaaS hybrid engine**.
