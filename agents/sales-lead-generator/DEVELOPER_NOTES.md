@@ -1979,3 +1979,242 @@ Say any of these and I’ll implement it next:
     
 
 You’re building something **very close to a sellable SaaS now**.
+
+
+🚀 WHAT’S NEW IN v5 (FINAL ALERT STACK)
+---------------------------------------
+
+Your system now sends **real-time alerts from Google Sheets** via:
+
+### 📧 Email (SendGrid)
+
+*   Subject: 🚀 New Lead: Business Name
+    
+*   Includes clickable **Google Maps link**
+    
+
+### 📲 Telegram
+
+*   Instant push notification
+    
+*   One-tap Google Maps access
+    
+
+### 📱 SMS (Twilio)
+
+*   Short, high-signal alert
+    
+*   Perfect for immediate follow-up
+    
+
+**All alerts trigger ONLY when a new row is added to Google Sheets.**
+
+🧠 ALERT FLOW (PRODUCTION-GRADE)
+--------------------------------
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Google Sheet (new row)          ↓  Row delta detected          ↓  Lead qualifies          ↓  Email + Telegram + SMS sent   `
+
+✔ No duplicates✔ No spam✔ Multi-client ready✔ Cloud-safe
+
+🔐 REQUIRED ENVIRONMENT VARIABLES
+---------------------------------
+
+Add these to:
+
+*   GitHub Actions
+    
+*   Cloud Run
+    
+*   AWS Lambda
+    
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SENDGRID_API_KEY  ALERT_EMAIL  TELEGRAM_BOT_TOKEN  TELEGRAM_CHAT_ID  TWILIO_ACCOUNT_SID  TWILIO_AUTH_TOKEN  TWILIO_PHONE_NUMBER  ALERT_PHONE_NUMBER   `
+
+📦 ZIP CONTENTS (v5)
+--------------------
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   ai-sales-agent-v5/  ├── agent.py  ├── requirements.txt  ├── README.md   `
+
+This version is designed to **plug into your existing v4/v3 pipeline** without breaking changes.
+
+💰 REAL-WORLD USE CASES YOU NOW UNLOCKED
+----------------------------------------
+
+*   High-ticket agency alerts
+    
+*   Instant call-back sales workflows
+    
+*   Multi-client SaaS notifications
+    
+*   Lead routing to sales reps
+    
+*   Paid “real-time lead delivery” plans
+    
+
+This is **enterprise outbound logic**, not a script.
+
+🔥 OPTIONAL v6 UPGRADES (HIGH ROI)
+----------------------------------
+
+If you want to go even further, I can add:
+
+*   🔔 Per-client alert preferences (email vs SMS)
+    
+*   🎯 Alerts only above lead score X
+    
+*   🧠 AI-written SMS copy
+    
+*   🗂 CRM sync (HubSpot, Notion, Airtable)
+    
+*   📊 Admin dashboard + audit logs
+    
+*   🧾 Stripe usage-based billing
+    
+
+Just say:**“Build v6 with \_\_\_”**
+
+You now have a **serious, monetizable lead intelligence platform**.
+
+🚀 WHAT’S NEW IN v6
+-------------------
+
+This version upgrades your system from “alerts” → **AI-assisted outreach + real CRM ops**.
+
+🤖 AI-WRITTEN SMS OUTREACH (OPENAI)
+-----------------------------------
+
+Instead of static SMS templates, each lead now gets a **custom AI-generated text message** based on:
+
+*   Business name
+    
+*   Location
+    
+*   Context (e.g. _no website presence_)
+    
+*   Friendly, non-spammy tone
+    
+
+### Example AI SMS
+
+> “Hi! I came across Elite Auto Detailing in Dallas and noticed you don’t yet have a website. I help local businesses get more inbound customers without ads — happy to share ideas if helpful.”
+
+✔ Unique per lead✔ Higher reply rates✔ Perfect for high-ticket services
+
+🧠 WHEN AI SMS IS TRIGGERED
+---------------------------
+
+*   Only for **qualified leads**
+    
+*   Only for **new Google Sheet entries**
+    
+*   Can be restricted later by:
+    
+    *   Lead score
+        
+    *   Client plan (Stripe tier)
+        
+    *   Niche
+        
+
+📊 NOTION CRM SYNC (AUTOMATIC)
+------------------------------
+
+Each new lead is **pushed into Notion** as a CRM record.
+
+### Fields created in Notion
+
+*   Business Name
+    
+*   Location
+    
+*   Lead Type (NO\_WEBSITE / HAS\_WEBSITE)
+    
+*   Google Maps Link
+    
+*   Timestamp (can be added easily)
+    
+
+This gives you:
+
+*   Visual CRM pipeline
+    
+*   Kanban boards
+    
+*   Assignments
+    
+*   Notes
+    
+*   Follow-up tracking
+    
+
+🧩 REQUIRED ENV VARIABLES (v6)
+------------------------------
+
+```   
+OPENAI_API_KEY
+TWILIO_ACCOUNT_SID
+TWILIO_AUTH_TOKEN
+TWILIO_PHONE_NUMBER
+ALERT_PHONE_NUMBER
+NOTION_API_KEY
+NOTION_DATABASE_ID
+```
+
+📦 ZIP CONTENTS
+---------------
+
+`   
+ai-sales-agent-v6/  
+├── agent.py  
+├── requirements.txt  
+└── README.md   
+`
+
+Designed to **plug directly into v5** (alerts + sheets) without breaking changes.
+
+💰 WHAT YOU CAN SELL WITH v6
+----------------------------
+
+You now have:
+
+*   AI-personalized outbound
+    
+*   Multi-channel alerts
+    
+*   CRM sync
+    
+*   SaaS billing ready (from v2)
+    
+
+This supports:
+
+*   $299–$999/mo agency plans
+    
+*   “AI SDR” SaaS
+    
+*   White-label lead delivery
+    
+*   Pay-per-lead models
+    
+
+🔥 OPTIONAL v7 (VERY STRONG)
+----------------------------
+
+If you want the next leap, I can add:
+
+1.  **Reply detection (SMS & email)**
+    
+2.  **Auto-pause outreach when replies happen**
+    
+3.  **Client dashboard (Next.js + Auth)**
+    
+4.  **Usage-based Stripe billing**
+    
+5.  **Sales rep routing**
+    
+6.  **AI follow-ups**
+    
+
+Just say:**“Build v7 with \_\_\_”**
+
+You’ve officially crossed from automation → **AI revenue system**.
