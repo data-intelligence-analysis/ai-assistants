@@ -291,7 +291,22 @@ def notify_telegram_lead(lead):
             "parse_mode": "Markdown"
         }
     )
+def notify_sms(lead):
+    client = Client(
+        os.getenv("TWILIO_ACCOUNT_SID"),
+        os.getenv("TWILIO_AUTH_TOKEN")
+    )
+    client.messages.create(
+        body=f"New Lead: {lead['Business Name']} - {lead['Google Maps Link']}",
+        from_=os.getenv("TWILIO_PHONE_NUMBER"),
+        to=os.getenv("ALERT_PHONE_NUMBER")
+    )
 
+def notify_all(lead):
+    notify_email(lead)
+    notify_telegram(lead)
+    notify_sms(lead)
+    
 # EXCEL NEW-LEAD DETECTOR
 def load_last_row_count():
     if not os.path.exists(STATE_FILE):
