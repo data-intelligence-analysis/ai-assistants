@@ -1552,6 +1552,31 @@ You can now sell:
 
 This is the **same backend model used by outbound SaaS tools**.
 
+🔥 NEXT (HIGH-LEVERAGE UPGRADES)
+--------------------------------
+
+I can add **immediately**:
+
+*   🧠 SaaS dashboard (Next.js + Auth)
+    
+*   💳 Stripe Checkout + webhooks
+    
+*   🤖 Auto-sending DMs/emails
+    
+*   📊 Admin panel (clients, usage, revenue)
+    
+*   🧾 Per-client usage limits
+    
+*   🛑 Auto-pause on non-payment
+    
+
+### Say the next move:
+
+**“Build the SaaS dashboard”****“Add Stripe Checkout + Webhooks”****“Make it fully autonomous”**
+
+You now own a **real outbound SaaS engine**. 
+
+
 ✅ WHAT WAS ADDED (v3)
 ---------------------
 
@@ -1697,3 +1722,97 @@ If you want, I can add:
     
 
 You’re now sitting on a **legit agency + SaaS hybrid engine**.
+
+
+✅ FEATURE: CLICKABLE GOOGLE MAPS LINK (DESIGN CONFIRMED)
+--------------------------------------------------------
+
+### 🔗 What gets added to the spreadsheet
+
+A new column:
+
+`   Google Maps Link   `
+
+Each row will contain a **fully clickable URL** like:
+
+`   https://www.google.com/maps/search/?api=1&query=Elite+Auto+Detailing+Dallas+TX   `
+
+Clicking it opens the **exact business listing/search** in Google Maps.
+
+🧠 How the agent generates it (logic)
+-------------------------------------
+
+For every lead:
+
+`   def generate_maps_link(business_name, location):      
+      query = f"{business_name} {location}"      
+      encoded = urllib.parse.quote_plus(query)      
+      return f"https://www.google.com/maps/search/?api=1&query={encoded}"   
+`
+
+This works for:
+
+*   Google Sheets
+    
+*   Excel (.xlsx)
+    
+*   CSV exports
+    
+*   CRMs
+    
+
+No formulas required — just a normal clickable link.
+
+📊 Updated Spreadsheet Schema (Final)
+-------------------------------------
+
+ColumnBusiness NameLocationWebsite**Google Maps Link (clickable)**Lead Type (NO\_WEBSITE / HAS\_WEBSITE)Lead ScoreTailored MessageTimestamp
+
+🎯 WHY THIS IS HUGE FOR SALES
+-----------------------------
+
+With **one click**, you can:
+
+*   View reviews
+    
+*   Confirm no website
+    
+*   Spot bad branding
+    
+*   See photos / storefront
+    
+*   Personalize outreach faster
+    
+
+This is exactly how **top outbound agencies qualify leads fast**.
+
+🔜 NEXT ACTION (WHEN TOOL UNLOCKS)
+----------------------------------
+
+I will:
+
+1.  Compile **v4 ZIP**
+    
+2.  Merge this into the full SaaS agent
+    
+3.  Keep backward compatibility
+    
+4.  Provide download link
+    
+
+### When you’re ready, just say:
+
+**“Compile v4 ZIP now”**
+
+If you want extra power next:
+
+*   Auto-screenshot Google Maps listing
+    
+*   Review sentiment analysis
+    
+*   “Bad website” detection
+    
+*   Local competitor comparison
+    
+
+You’re building a **real lead intelligence system**, not a scraper.
