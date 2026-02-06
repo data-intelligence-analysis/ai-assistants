@@ -26,10 +26,13 @@ from sendgrid.helpers.mail import Mail
 from openpyxl import load_workbook
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
+from twilio.rest import Client
+from openai import OpenAI
 import datetime
 
 # ---------------- CONFIG ---------------- #
 openai.api_key = os.getenv("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 SERPAPI_KEY = os.getenv("SERPAPI_API_KEY")
 SENDGRID_KEY = os.getenv("SENDGRID_API_KEY")
 SPREADSHEET_NAME = "AI Sales Agent Leads"
@@ -185,27 +188,11 @@ def generate_linkedin_dm(lead, niche, location):
 
 
 
-def export_sheet_to_excel(spreadsheet_id, sheet_name="Sheet1"):
-    creds = Credentials.from_service_account_file(
-        "service_account.json",
-        scopes=["https://www.googleapis.com/auth/drive"]
-    )
 
-    drive_service = build("drive", "v3", credentials=creds)
 
-    today = datetime.date.today().isoformat()
-    file_name = f"leads_{today}.xlsx"
+# ---------------- SEND NOTIFICATIONS ---------------- #
 
-    request = drive_service.files().export_media(
-        fileId=spreadsheet_id,
-        mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-    with open(file_name, "wb") as f:
-        f.write(request.execute())
-
-    print(f"Exported Excel file: {file_name}")
-
+# EMAIL
 def notify_email(new_count, total_count):
     subject = "🚀 New Lead Added to Excel"
     body = f"""
@@ -248,7 +235,7 @@ def notify_email_lead(lead):
     sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
     sg.send(message)
     
-
+# TELEGRAM
 def notify_telegram(lead, new_count, total_count):
     message = (
         f"🚀 *New Lead Added!*\n\n"
@@ -302,10 +289,73 @@ def notify_sms(lead):
         to=os.getenv("ALERT_PHONE_NUMBER")
     )
 
+def generate_ai_sms(lead):
+    prompt = f"""Write a concise, friendly SMS for a business owner.
+Business: {lead['Business Name']}
+Location: {lead['Location']}
+Context: Business does not have a website.
+Tone: Helpful, non-salesy."""
+    resp = openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return resp.choices[0].message.content.strip()
+
+def send_sms(lead):
+    body = generate_ai_sms(lead)
+    client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
+    client.messages.create(
+        body=body,
+        from_=os.getenv("TWILIO_PHONE_NUMBER"),
+        to=os.getenv("ALERT_PHONE_NUMBER")
+    )
+    
 def notify_all(lead):
     notify_email(lead)
     notify_telegram(lead)
     notify_sms(lead)
+
+
+# ---------------- CRM UTILITY ---------------- #
+# EXPORT SHEET TO EXCEL
+def export_sheet_to_excel(spreadsheet_id, sheet_name="Sheet1"):
+    creds = Credentials.from_service_account_file(
+        "service_account.json",
+        scopes=["https://www.googleapis.com/auth/drive"]
+    )
+
+    drive_service = build("drive", "v3", credentials=creds)
+
+    today = datetime.date.today().isoformat()
+    file_name = f"leads_{today}.xlsx"
+
+    request = drive_service.files().export_media(
+        fileId=spreadsheet_id,
+        mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    with open(file_name, "wb") as f:
+        f.write(request.execute())
+
+    print(f"Exported Excel file: {file_name}")
+    
+# NOTION SYNC
+def sync_to_notion(lead):
+    headers = {
+        "Authorization": f"Bearer {os.getenv('NOTION_API_KEY')}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "parent": {"database_id": os.getenv("NOTION_DATABASE_ID")},
+        "properties": {
+            "Business Name": {"title": [{"text": {"content": lead['Business Name']}}]},
+            "Location": {"rich_text": [{"text": {"content": lead['Location']}}]},
+            "Lead Type": {"select": {"name": lead['Lead Type']}},
+            "Google Maps": {"url": lead['Google Maps Link']}
+        }
+    }
+    requests.post("https://api.notion.com/v1/pages", headers=headers, json=data)
     
 # EXCEL NEW-LEAD DETECTOR
 def load_last_row_count():
