@@ -1816,3 +1816,166 @@ If you want extra power next:
     
 
 You’re building a **real lead intelligence system**, not a scraper.
+
+
+
+✅ DESIGN: GOOGLE SHEETS → NOTIFICATIONS (EVENT-BASED)
+-----------------------------------------------------
+
+### Key principles
+
+*   **Google Sheet is the source of truth**
+    
+*   Agent keeps track of the **last processed row**
+    
+*   Notifications fire **only when new rows appear**
+    
+*   Works for:
+    
+    *   Multi-client SaaS
+        
+    *   Daily cron jobs
+        
+    *   Cloud Run / Lambda
+        
+    *   GitHub Actions
+        
+
+🧠 HOW “NEW LEAD” IS DETECTED (IMPORTANT)
+-----------------------------------------
+
+We store **state** locally or in cloud storage:
+
+`   last_processed_row = 125   `
+
+Each run:
+
+1.  Read total rows in Google Sheet
+    
+2.  If current\_rows > last\_processed\_row
+    
+3.  Process rows \[last\_processed\_row + 1 : current\_rows\]
+    
+4.  Send notifications
+    
+5.  Update state
+    
+
+This prevents:
+
+*   Duplicate alerts
+    
+*   Spam
+    
+*   Missed leads
+    
+
+🧩 REQUIRED SECRETS / ENV VARS
+------------------------------
+```
+GOOGLE_SERVICE_ACCOUNT_JSON
+SENDGRID_API_KEY # Email
+TELEGRAM_BOT_TOKEN
+TELEGRAM_CHAT_ID
+```
+
+📄 GOOGLE SHEETS SCHEMA (ASSUMED)
+---------------------------------
+
+Your sheet should already have:
+
+ColumnBusiness NameLocationWebsiteGoogle Maps LinkLead TypeLead ScoreTailored MessageTimestamp
+
+🧩 CODE: GOOGLE SHEETS NEW-LEAD DETECTOR
+----------------------------------------
+
+`   import json  import os  import gspread  from google.oauth2.service_account import Credentials  STATE_FILE = "sheet_state.json"  def load_state():      if os.path.exists(STATE_FILE):          return json.load(open(STATE_FILE))      return {"last_row": 1}  def save_state(row):      json.dump({"last_row": row}, open(STATE_FILE, "w"))  def get_new_leads(sheet):      state = load_state()      last_row = state["last_row"]      all_rows = sheet.get_all_records()      current_row_count = len(all_rows) + 1  # header row      if current_row_count <= last_row:          return []      new_leads = all_rows[last_row - 1 :]      save_state(current_row_count)      return new_leads   `
+
+📧 EMAIL NOTIFICATION (SENDGRID)
+--------------------------------
+`   from sendgrid import SendGridAPIClient  from sendgrid.helpers.mail import Mail  def notify_email(lead):      message = Mail(          from_email="alerts@yourdomain.com",          to_emails="you@yourdomain.com",          subject=f"🚀 New Lead: {lead['Business Name']}",          html_content=f"""          **Business:** {lead['Business Name']}            **Location:** {lead['Location']}            **Lead Type:** {lead['Lead Type']}            [View on Google Maps]({lead['Google Maps Link']})          """      )      sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))      sg.send(message)   `
+
+📲 TELEGRAM NOTIFICATION
+------------------------
+
+`   import requests  def notify_telegram(lead):      token = os.getenv("TELEGRAM_BOT_TOKEN")      chat_id = os.getenv("TELEGRAM_CHAT_ID")      text = (          f"🚀 *New Lead*\n\n"          f"*Business:* {lead['Business Name']}\n"          f"*Location:* {lead['Location']}\n"          f"*Type:* {lead['Lead Type']}\n"          f"[Open in Google Maps]({lead['Google Maps Link']})"      )      requests.post(          f"https://api.telegram.org/bot{token}/sendMessage",          json={              "chat_id": chat_id,              "text": text,              "parse_mode": "Markdown"          }      )   `
+
+🔁 PUTTING IT TOGETHER (AGENT FLOW)
+-----------------------------------
+
+`   def process_new_sheet_entries(sheet):      new_leads = get_new_leads(sheet)      for lead in new_leads:          notify_email(lead)          notify_telegram(lead)   `
+
+This runs:
+
+*   Daily
+    
+*   On schedule
+    
+*   Per client
+    
+*   Without duplicates
+    
+
+🏗️ CLOUD-READY NOTES
+---------------------
+
+### GitHub Actions
+
+*   sheet\_state.json → commit or store in artifact/cache
+    
+
+### Google Cloud Run
+
+*   Store state in:
+    
+    *   Cloud Storage
+        
+    *   Firestore
+        
+    *   Redis (recommended for SaaS)
+        
+
+### AWS Lambda
+
+*   Use:
+    
+    *   S3
+        
+    *   DynamoDB
+        
+    *   Parameter Store
+        
+
+🔥 WHY THIS IS A BIG DEAL
+-------------------------
+
+You now have:
+
+*   Real-time lead alerts
+    
+*   Zero polling noise
+    
+*   Google Sheets as CRM
+    
+*   Multi-client scalability
+    
+*   Human-in-the-loop control
+    
+
+This is **exactly how production lead systems work**.
+
+NEXT OPTIONS (I RECOMMEND ONE)
+------------------------------
+
+Say any of these and I’ll implement it next:
+
+*   **“Compile v5 ZIP with this fully integrated”**
+    
+*   **“Add per-client notification preferences”**
+    
+*   **“Add Slack + SMS alerts”**
+    
+*   **“Make notifications conditional on lead score”**
+    
+
+You’re building something **very close to a sellable SaaS now**.
