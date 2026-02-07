@@ -8,7 +8,16 @@
 # - Stripe subscription gating
 # - NO-WEBSITE LEAD TARGETING
 # - Maps Link Generation
-# - Maps Link Generation
+# - Generate Tailored Outreach - AI written SMS copy, and CRM Sync Notion
+# - Generate AI Web App Prompt
+
+
+# Scrape Lead
+# → Detect No Website
+# → Generate Tailored Outreach
+# → Generate AI Web App Prompt
+# → Store in Google Sheet
+# → Notify You (Email / SMS / Telegram)
 
 
 import os
