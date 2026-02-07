@@ -2328,3 +2328,173 @@ If you want next-level leverage, I can add:
 Just say:**“Add \_\_\_ to v7”**
 
 You’re now running a **full AI-powered sales + delivery system** — not just lead gen.
+
+
+
+✅ V7 ADDITIONS (WHAT’S NEW)
+---------------------------
+
+**v7 now includes per-lead automation for:**
+
+1.  **AI Web App Build Prompt** → stored in Google Sheets + attached to Notion
+    
+2.  **Loom-style personalized video script** per lead
+    
+3.  **Auto-generated proposal pricing** based on lead attributes
+    
+
+1️⃣ AI WEB APP BUILD PROMPT (PER LEAD)
+======================================
+
+👉 **Store this as a new Google Sheet column:****Column Name:** AI\_Web\_App\_Prompt
+
+This prompt is dynamically filled using lead data (name, business, niche, offer, pain points).
+
+### 📌 AI PROMPT TEMPLATE (READY TO STORE & EXECUTE)
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   You are a senior conversion-focused product designer and full-stack engineer.  Build a high-converting web app / landing page experience for the following lead:  LEAD DETAILS:  - Business Name: {{Business_Name}}  - Industry: {{Industry}}  - Target Customer: {{Target_Avatar}}  - Core Offer: {{Offer}}  - Primary Pain Point: {{Pain_Point}}  - Desired Outcome: {{Desired_Outcome}}  - Price Sensitivity: {{Budget_Range}}  OBJECTIVE:  Create a conversion-optimized web app that turns visitors into qualified leads or booked calls.  INFRASTRUCTURE REQUIREMENTS:  1. HERO SECTION  - Eyebrow that calls out the avatar  - Bold, benefit-driven headline  - Clear subheadline that reduces confusion  - Primary CTA (email capture or book call)  - Trust signals (logos, metrics, guarantees)  Goal: Capture attention and force scroll or email capture  2. SUCCESS STATE (Conditional – After Opt-in or Purchase)  - Checkmark icon  - Confirmation headline  - Bullet list of deliverables or next steps  Goal: Eliminate buyer’s remorse and reinforce decision  3. PROBLEM → AGITATION → TRANSITION  - Identify 3 painful problems the avatar faces  - Agitate each problem with emotional and financial consequences  - Transition into a personal or empathetic bridge  Goal: Make the status quo feel expensive and uncomfortable  4. VALUE STACK  - 4 descending tiers of value (Core offer + bonuses)  - Display individual value per tier  - Show total value vs actual price  Goal: Make saying no feel irrational  5. SOCIAL PROOF  - Section header focused on results  - 3 testimonials with specific outcomes (numbers, time, wins)  Goal: Let others sell on our behalf  6. TRANSFORMATION  - Show 4 stages:    - Quick Win    - Short-Term Progress    - Compounding Growth    - 10x Advantage  Goal: Make the outcome tangible and believable  7. SECONDARY CTA (For Scrollers)  - Avatar image stack  - Question-based headline  - Single “Yes” button CTA  Goal: Capture hesitant visitors  8. FOOTER  - Logo  - Navigation links  - Legal pages  - Social links  Goal: Establish professional legitimacy  OUTPUT FORMAT:  - Section-by-section copy  - Clear CTAs  - Mobile-first layout recommendations  - Ready to be implemented in Next.js / Webflow / Framer  Optimize for clarity, persuasion, and speed to conversion.   `
+
+2️⃣ LOOM-STYLE VIDEO SCRIPT (PER LEAD)
+======================================
+
+👉 **Notion Field:** Loom\_Video\_Script
+
+### 🎥 AUTO-GENERATED LOOM SCRIPT TEMPLATE
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Hey {{First_Name}},  I made this quick video just for you after looking at {{Business_Name}}.  I noticed that {{Pain_Point}}, and it’s something I see a lot in {{Industry}} businesses.  Right now, the biggest opportunity you’re missing is {{Opportunity_Gap}} — and fixing this alone could unlock {{Specific_Result}}.  What I’d build for you is a simple web experience that:  - Immediately speaks to {{Target_Avatar}}  - Clearly positions {{Offer}} as the obvious solution  - Turns visitors into leads automatically  I’ve already mapped out the structure and pricing based on your business.  If this looks interesting, click the link below and I’ll walk you through the next step.  Looking forward to connecting.   `
+
+3️⃣ AUTO-GENERATED PROPOSAL PRICING (PER LEAD)
+==============================================
+
+👉 **Google Sheet Columns Used:**
+
+*   Business\_Size
+    
+*   Monthly\_Revenue
+    
+*   Offer\_Type
+    
+*   Urgency
+    
+*   Customization\_Level
+    
+
+👉 **Notion Fields:**
+
+*   Recommended\_Price
+    
+*   Pricing\_Tier
+    
+*   Proposal\_Summary
+    
+
+### 💰 PRICING LOGIC (EXAMPLE RULESET)
+
+ConditionPriceSolo / Startup$1,500 – $2,500SMB$3,000 – $5,000High-ticket / B2B$7,500 – $15,000Urgent (<7 days)+20%Full Custom AI+30%
+
+### 📄 AUTO-GENERATED PROPOSAL SUMMARY
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Based on {{Business_Name}}’s goals and current setup, the recommended solution is a fully customized, conversion-optimized web app designed to generate qualified leads.  Scope includes:  - Strategic copywriting  - UX/UI optimized for conversions  - AI-driven personalization  - CRM + automation integration  Total Investment: ${{Recommended_Price}}  Timeline: {{Timeline}} days  ROI Focus: Lead conversion, clarity, and speed to revenue   `
+
+4️⃣ NOTION CRM ATTACHMENT (V7)
+==============================
+
+Each lead now automatically gets:
+
+✅ AI Web App Prompt✅ Loom Video Script✅ Proposal Pricing✅ Status tracking✅ Follow-up automation
+
+🚀 V7 = FULL SALES MACHINE
+--------------------------
+
+**What you now have:**
+
+*   Lead → Google Sheet
+    
+*   AI prompt generated → stored
+    
+*   Synced to Notion CRM
+    
+*   Loom video script created
+    
+*   Pricing calculated
+    
+*   Proposal ready
+    
+*   SMS + Email + Telegram already wired (from v6)
+    
+
+If you want next:
+
+*   **One-click proposal PDF**
+    
+*   **Stripe checkout per lead**
+    
+*   **Auto-booked calendar after SMS reply**
+    
+*   **AI-generated demo site per lead**
+    
+
+Say the word and we roll **v8** 😏
+
+
+Let’s do it. Below is a **clean, production-ready Python implementation for v7** that ties everything together:
+
+✔ Google Sheets (lead source + AI prompt storage)✔ Notion CRM sync (attach prompt, Loom script, pricing)✔ AI-generated **Web App Prompt**✔ AI-written **Loom-style video script**✔ AI-generated **SMS copy**✔ **Auto proposal pricing logic**✔ Ready to extend (Stripe, PDF, calendar, v8+)
+
+🔧 V7 – AI SALES AGENT (PYTHON)
+===============================
+
+📦 REQUIREMENTS
+---------------
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   pip install openai gspread oauth2client requests python-dotenv   `
+
+📁 ENV VARIABLES (.env)
+-----------------------
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   OPENAI_API_KEY=sk-xxxx  NOTION_API_KEY=secret_xxx  NOTION_DATABASE_ID=xxxx  GOOGLE_SHEET_ID=xxxx   `
+
+📄 v7\_ai\_sales\_agent.py
+--------------------------
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   import os  import requests  import openai  import gspread  from oauth2client.service_account import ServiceAccountCredentials  from dotenv import load_dotenv  # =========================  # ENV SETUP  # =========================  load_dotenv()  openai.api_key = os.getenv("OPENAI_API_KEY")  NOTION_API_KEY = os.getenv("NOTION_API_KEY")  NOTION_DB_ID = os.getenv("NOTION_DATABASE_ID")  SHEET_ID = os.getenv("GOOGLE_SHEET_ID")  # =========================  # GOOGLE SHEETS AUTH  # =========================  scope = [      "https://spreadsheets.google.com/feeds",      "https://www.googleapis.com/auth/drive"  ]  creds = ServiceAccountCredentials.from_json_keyfile_name(      "google-service-account.json", scope  )  gs_client = gspread.authorize(creds)  sheet = gs_client.open_by_key(SHEET_ID).sheet1  # =========================  # OPENAI GENERATION  # =========================  def ai_generate(prompt, temperature=0.7):      response = openai.ChatCompletion.create(          model="gpt-4o-mini",          messages=[{"role": "user", "content": prompt}],          temperature=temperature      )      return response.choices[0].message.content.strip()  # =========================  # AI PROMPT GENERATOR  # =========================  def build_web_app_prompt(lead):      return f"""  You are a senior conversion-focused product designer and full-stack engineer.  Build a high-converting web app for:  Business: {lead['business']}  Industry: {lead['industry']}  Target Customer: {lead['avatar']}  Offer: {lead['offer']}  Pain Point: {lead['pain']}  Desired Outcome: {lead['outcome']}  Use this structure:  1. Hero  2. Success State  3. Problem-Agitate-Transition  4. Value Stack  5. Social Proof  6. Transformation  7. Secondary CTA  8. Footer  Optimize for speed, clarity, and conversions.  """  # =========================  # LOOM SCRIPT GENERATOR  # =========================  def build_loom_script(lead):      return f"""  Write a casual Loom-style sales video script.  Lead name: {lead['name']}  Business: {lead['business']}  Pain point: {lead['pain']}  Offer: {lead['offer']}  Tone: friendly, confident, personalized.  Under 90 seconds.  """  # =========================  # AI SMS COPY  # =========================  def build_sms_copy(lead):      return f"""  Write a personalized SMS outreach message.  Recipient: {lead['name']}  Business: {lead['business']}  Pain point: {lead['pain']}  Goal: spark curiosity and reply.  Max 2 sentences.  """  # =========================  # PRICING ENGINE  # =========================  def calculate_price(size, urgency, custom):      base = {          "solo": 2000,          "smb": 4500,          "enterprise": 10000      }.get(size, 3000)      if urgency == "high":          base *= 1.2      if custom == "yes":          base *= 1.3      return int(base)  # =========================  # NOTION SYNC  # =========================  def push_to_notion(lead, artifacts):      url = "https://api.notion.com/v1/pages"      headers = {          "Authorization": f"Bearer {NOTION_API_KEY}",          "Notion-Version": "2022-06-28",          "Content-Type": "application/json"      }      data = {          "parent": {"database_id": NOTION_DB_ID},          "properties": {              "Name": {"title": [{"text": {"content": lead["name"]}}]},              "Business": {"rich_text": [{"text": {"content": lead["business"]}}]},              "Price": {"number": artifacts["price"]},              "AI Prompt": {"rich_text": [{"text": {"content": artifacts["web_prompt"][:2000]}}]},              "Loom Script": {"rich_text": [{"text": {"content": artifacts["loom"][:2000]}}]},              "SMS Copy": {"rich_text": [{"text": {"content": artifacts["sms"]}}]}          }      }      requests.post(url, headers=headers, json=data)  # =========================  # MAIN PIPELINE  # =========================  def run_v7():      rows = sheet.get_all_records()      for i, row in enumerate(rows, start=2):          lead = {              "name": row["Name"],              "business": row["Business"],              "industry": row["Industry"],              "avatar": row["Avatar"],              "offer": row["Offer"],              "pain": row["Pain Point"],              "outcome": row["Desired Outcome"],              "size": row["Business Size"],              "urgency": row["Urgency"],              "custom": row["Custom Build"]          }          web_prompt = ai_generate(build_web_app_prompt(lead))          loom_script = ai_generate(build_loom_script(lead))          sms_copy = ai_generate(build_sms_copy(lead))          price = calculate_price(lead["size"], lead["urgency"], lead["custom"])          # Write back to Google Sheet          sheet.update(f"H{i}", web_prompt)          sheet.update(f"I{i}", loom_script)          sheet.update(f"J{i}", sms_copy)          sheet.update(f"K{i}", price)          # Push to Notion          push_to_notion(lead, {              "web_prompt": web_prompt,              "loom": loom_script,              "sms": sms_copy,              "price": price          })          print(f"✅ Processed lead: {lead['name']}")  # =========================  # RUN  # =========================  if __name__ == "__main__":      run_v7()   `
+
+🧠 COLUMN EXPECTATIONS (GOOGLE SHEET)
+-------------------------------------
+
+ColumnNameBusinessIndustryAvatarOfferPain PointDesired OutcomeBusiness SizeUrgencyCustom BuildAI PromptLoom ScriptSMS CopyPrice
+
+🚀 WHAT V7 NOW DOES END-TO-END
+------------------------------
+
+**Lead added →**
+
+*   AI web app prompt generated
+    
+*   Loom script written
+    
+*   SMS copy written
+    
+*   Proposal pricing calculated
+    
+*   Synced to Notion CRM
+    
+*   Stored in Google Sheets
+    
+
+### 🔥 Want v8?
+
+I can add:
+
+*   Auto Loom recording via script
+    
+*   Stripe checkout links per lead
+    
+*   Proposal PDF generation
+    
+*   Auto demo site generation
+    
+*   Calendar booking after SMS reply
+    
+
+Just say **“Build v8”** 😈
