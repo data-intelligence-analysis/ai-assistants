@@ -2498,3 +2498,36 @@ I can add:
     
 
 Just say **“Build v8”** 😈
+
+
+Here’s a **clean, production-grade AI prompt** you can drop directly into GPT / Claude / Cursor / Lovable / v0 / Replit / Bolt, etc.It’s designed to generate a **single demo web app** with **multi-client high-conversion landing pages**, all under **one domain**, perfect for pitching.
+
+🔥 AI PROMPT: MULTI-CLIENT DEMO PITCH PLATFORM
+==============================================
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   You are a senior product designer, growth marketer, and full-stack engineer.  Build a single demo web application that allows me to present high-conversion landing pages to multiple clients without creating separate domains.  The app should function as a “pitch showroom” where each client has their own dedicated landing page, accessible via a selector in the navigation.  PRIMARY GOAL:  Allow seamless switching between client-specific landing pages during live sales pitches while maintaining a polished, professional SaaS-style experience.  CORE REQUIREMENTS:  1. GLOBAL APP STRUCTURE  - Single domain  - Shared layout, components, and design system  - Client-specific content rendered dynamically  - Fast switching between clients with no page reload (SPA behavior)  2. NAVBAR CLIENT SELECTOR  - Navbar includes a dropdown or selector labeled “Clients” or “Demo Pages”  - Selector displays a list of clients (name + optional logo)  - Selecting a client navigates to:    /clients/{client-slug}  - Smooth animated transitions between client pages  - URL updates for direct sharing  3. CLIENT SUBPAGE ARCHITECTURE  Each client page must be a high-conversion landing page built from structured data.  Each client page should support:  - Unique branding (logo, colors, imagery)  - Unique copy and offer  - Unique CTA links (calendar, email, form, Stripe checkout)  4. CLIENT LANDING PAGE CONVERSION STRUCTURE  Each client page MUST include:  HERO SECTION  - Eyebrow calling out the client’s target audience  - Clear, benefit-driven headline  - Subheadline addressing main pain point  - Primary CTA (Book Call / Get Demo / Contact)  - Trust indicators (metrics, testimonials, logos)  SUCCESS STATE (Conditional)  - Confirmation message after CTA interaction  - Clear “what happens next”  - Reassurance to reduce buyer’s remorse  PROBLEM → AGITATION → TRANSITION  - 3 core problems specific to the client’s industry  - Emotional and financial agitation  - Smooth transition into the solution  VALUE STACK  - 4 descending tiers of value (core offer + bonuses)  - Individual value per tier  - Total value vs actual price  - Visually stacked layout  SOCIAL PROOF  - Section header focused on outcomes  - 3 testimonials with specific, believable results  - Support for text + avatar  TRANSFORMATION  - 4 stages:    1. Quick Win    2. Short-Term Results    3. Compounding Growth    4. Long-Term 10x Advantage  SECONDARY CTA (For Scrollers)  - Avatar stack or logos  - Question-based headline  - Single low-friction CTA button  FOOTER  - Demo company logo  - Navigation links  - Legal links  - Social icons  5. DATA-DRIVEN CLIENT CONFIGURATION  Client pages should be generated from a structured data source such as:  - JSON  - Database  - CMS  - Static config file  Each client object should include:  - name  - slug  - industry  - target_avatar  - pain_points  - offer  - testimonials  - pricing  - CTAs  - brand colors  6. SALES PITCH MODE  - Optional “Pitch Mode” toggle  - Hides navigation clutter  - Enlarges typography  - Optimizes layout for screen sharing  7. TECH STACK (Preferred)  - Next.js (App Router)  - TypeScript  - Tailwind CSS  - Component-based architecture  - SEO-friendly routing  - Mobile responsive  8. OUTPUT EXPECTATIONS  - Folder structure  - Routing strategy  - Client data schema  - Reusable components  - Example client JSON objects  - Clean, production-ready UI  DESIGN PRINCIPLES:  - Minimal  - High-contrast  - Conversion-first  - SaaS-polished  - Fast and intuitive  The final result should feel like a premium sales tool that allows pitching multiple clients from one domain with zero friction.   `
+
+🔑 WHY THIS PROMPT IS POWERFUL
+------------------------------
+
+✔ One domain✔ Unlimited client demos✔ Perfect for **live pitching on Zoom / Loom / in-person**✔ No domain setup, no redeploys per client✔ Scales into a **real SaaS product later**
+
+🚀 OPTIONAL V8 EXTENSIONS (IF YOU WANT)
+---------------------------------------
+
+I can also generate prompts/code for:
+
+*   AI auto-generated client pages from Google Sheets
+    
+*   Notion → demo page sync
+    
+*   One-click “Create Client Demo”
+    
+*   Stripe checkout per client
+    
+*   White-label toggle per pitch
+    
+*   Analytics per client page
+    
+
+Just say **“Upgrade this prompt for v8”** 😈
