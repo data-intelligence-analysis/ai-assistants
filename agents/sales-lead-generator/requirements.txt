@@ -9,3 +9,5 @@ stripe
 google-auth-oauthlib
 google-auth-httplib2
 twilio
+oauth2client
+python-dotenv
