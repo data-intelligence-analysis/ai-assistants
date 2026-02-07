@@ -1,5 +1,5 @@
 # AI SALES AGENT
-# Includes:
+## - Includes:
 # - Generate Lead Scope - Google Maps, X, LinkedIn
 # - Multi-client SaaS mode
 # - Lead scoring & filtering
@@ -9,8 +9,19 @@
 # - NO-WEBSITE LEAD TARGETING
 # - Maps Link Generation
 # - Generate Tailored Outreach - AI written SMS copy, and CRM Sync Notion
-# - Generate AI Web App Prompt
+# - Notion CRM sync (attach prompt, Loom script, pricing)
+# - AI-generated Web App Prompt
+# - AI-written Loom-style video script - Video consultation
+# - AI-generated SMS copy
+# - Auto proposal pricing logic
 
+## - Overall Architecture:
+# - Google Sheets (lead source + AI prompt storage)
+# - Notion CRM sync (attach prompt, Loom script, pricing)
+# - AI-generated Web App Prompt
+# - AI-written Loom-style video script
+# - AI-generated SMS copy
+# - Auto proposal pricing logic
 
 # Scrape Lead
 # → Detect No Website
@@ -28,6 +39,8 @@ import requests
 import gspread
 import json
 import hashlib
+from reportlab.lib.pagesizes import LETTER
+from reportlab.pdfgen import canvas
 from google.oauth2.service_account import Credentials
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
@@ -35,17 +48,25 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from openpyxl import load_workbook
 from googleapiclient.discovery import build
-from google.oauth2.service_account import Credentials
+from google.oauth2.service_account import Credentials, ServiceAccountCredentials
 from twilio.rest import Client
 from openai import OpenAI
-import datetime
+from googleapiclient.discovery import build
 
-# ---------------- CONFIG ---------------- #
+
+# =========================
+# CONFIG
+# =========================
+
+# ---------------- ENV SETUP ---------------- #
 openai.api_key = os.getenv("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 SERPAPI_KEY = os.getenv("SERPAPI_API_KEY")
 SENDGRID_KEY = os.getenv("SENDGRID_API_KEY")
-SPREADSHEET_NAME = "AI Sales Agent Leads"
+NOTION_API_KEY = os.getenv("NOTION_API_KEY")
+NOTION_DB_ID = os.getenv("NOTION_DATABASE_ID")
+SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+SPREADSHEET_NAME = "SALES_AGENT_LEADS"
 CALENDAR_ID = "primary"
 STATE_FILE = "sheet_state.json" # TRACK ROW COUNT IN GOOGLE SHEET STATE FILE
 STATE_FILE = "state.json" # TRACK ROW COUNT IN EXCEL STATE FILE
@@ -59,7 +80,7 @@ creds = Credentials.from_service_account_file(
     "service_account.json",
     scopes=[
         "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/calendar"
+        "https://www.googleapis.com/auth/calendar",
     ]
 )
 
@@ -67,11 +88,183 @@ gc = gspread.authorize(creds)
 sheet = gc.open(SPREADSHEET_NAME).sheet1
 calendar = build("calendar", "v3", credentials=creds)
 
+#v2
+# scope = [
+#     "https://spreadsheets.google.com/feeds",
+#     "https://www.googleapis.com/auth/drive"
+# ]
+
+# creds = ServiceAccountCredentials.from_json_keyfile_name(
+#     "google-service-account.json", scope
+# )
+# gs_client = gspread.authorize(creds)
+# sheet = gs_client.open_by_key(SHEET_ID).sheet1
 
 
+# =========================
+# OPENAI GENERATION
+# =========================
+def ai_generate(prompt, temperature=0.7):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=temperature
+    )
+    return response.choices[0].message.content.strip()
+
+
+# =========================
+# AI PROMPT GENERATOR
+# =========================
+def build_web_app_prompt(lead):
+    return f"""
+You are a senior conversion-focused product designer and full-stack engineer.
+
+Build a high-converting web app for:
+Business: {lead['business']}
+Industry: {lead['industry']}
+Target Customer: {lead['avatar']}
+Offer: {lead['offer']}
+Pain Point: {lead['pain']}
+Desired Outcome: {lead['outcome']}
+
+Use this structure:
+1. Hero
+2. Success State
+3. Problem-Agitate-Transition
+4. Value Stack
+5. Social Proof
+6. Transformation
+7. Secondary CTA
+8. Footer
+
+Optimize for speed, clarity, and conversions.
+"""
+
+# =========================
+# LOOM SCRIPT GENERATOR
+# =========================
+def build_loom_script(lead):
+    return f"""
+Write a casual Loom-style sales video script.
+
+Lead name: {lead['name']}
+Business: {lead['business']}
+Pain point: {lead['pain']}
+Offer: {lead['offer']}
+
+Tone: friendly, confident, personalized.
+Under 90 seconds.
+"""
+
+# =========================
+# AI SMS COPY
+# =========================
+def build_sms_copy(lead):
+    return f"""
+Write a personalized SMS outreach message.
+
+Recipient: {lead['name']}
+Business: {lead['business']}
+Pain point: {lead['pain']}
+
+Goal: spark curiosity and reply.
+Max 2 sentences.
+"""
+
+# =========================
+# PRICING ENGINE
+# =========================
+def calculate_price(size, urgency, custom):
+    base = {
+        "solo": 2000,
+        "smb": 4500,
+        "enterprise": 10000
+    }.get(size, 3000)
+
+    if urgency == "high":
+        base *= 1.2
+    if custom == "yes":
+        base *= 1.3
+
+    return int(base)
+
+# =========================
+# NOTION SYNC
+# =========================
+def push_to_notion(lead, artifacts):
+    url = "https://api.notion.com/v1/pages"
+    headers = {
+        "Authorization": f"Bearer {NOTION_API_KEY}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "parent": {"database_id": NOTION_DB_ID},
+        "properties": {
+            "Name": {"title": [{"text": {"content": lead["name"]}}]},
+            "Business": {"rich_text": [{"text": {"content": lead["business"]}}]},
+            "Price": {"number": artifacts["price"]},
+            "AI Prompt": {"rich_text": [{"text": {"content": artifacts["web_prompt"][:2000]}}]},
+            "Loom Script": {"rich_text": [{"text": {"content": artifacts["loom"][:2000]}}]},
+            "SMS Copy": {"rich_text": [{"text": {"content": artifacts["sms"]}}]}
+        }
+    }
+
+    requests.post(url, headers=headers, json=data)
+
+# =========================
+# INVOICE GENERATION
+# =========================
 def has_active_subscription(customer_id):
     subs = stripe.Subscription.list(customer=customer_id, status="active")
     return len(subs.data) > 0
+
+def create_stripe_checkout(lead_name, price):
+    session = stripe.checkout.Session.create(
+        payment_method_types=["card"],
+        line_items=[{
+            "price_data": {
+                "currency": "usd",
+                "product_data": {
+                    "name": f"{lead_name} – Custom Web App Build"
+                },
+                "unit_amount": price * 100,
+            },
+            "quantity": 1,
+        }],
+        mode="payment",
+        success_url=f"{os.getenv('PUBLIC_CHECKOUT_DOMAIN')}/success",
+        cancel_url=f"{os.getenv('PUBLIC_CHECKOUT_DOMAIN')}/cancel",
+    )
+    return session.url
+    
+def create_calendar_event(service, lead):
+    event = {
+        "summary": f"Sales Call – {lead['business']}",
+        "description": "Discovery + walkthrough",
+        "start": {"dateTime": "2026-02-10T14:00:00"},
+        "end": {"dateTime": "2026-02-10T14:30:00"}
+    }
+    event = service.events().insert(calendarId="primary", body=event).execute()
+    return event.get("htmlLink")
+
+def generate_demo_site(lead):
+    prompt = f"""
+Generate a single-page HTML website for:
+Business: {lead['business']}
+Offer: {lead['offer']}
+CTA: Book a Call
+
+Use modern Tailwind-style layout.
+"""
+    html = ai_generate(prompt)
+    file_name = f"demo_{lead['business']}.html"
+    with open(file_name, "w") as f:
+        f.write(html)
+    return file_name
+
 
 def has_website(lead):
     website = lead.get("website")
@@ -501,7 +694,56 @@ def generate_follow_up(business_name, step):
     )
     return response.choices[0].message.content.strip()
 
+
+# =========================
+# MAIN PIPELINE
+# =========================
+
 # ---------------- MAIN AGENT ---------------- #
+
+def run_v7():
+    rows = sheet.get_all_records()
+
+    for i, row in enumerate(rows, start=2):
+        lead = {
+            "name": row["Name"],
+            "business": row["Business"],
+            "industry": row["Industry"],
+            "avatar": row["Avatar"],
+            "offer": row["Offer"],
+            "pain": row["Pain Point"],
+            "outcome": row["Desired Outcome"],
+            "size": row["Business Size"],
+            "urgency": row["Urgency"],
+            "custom": row["Custom Build"]
+        }
+
+        web_prompt = ai_generate(build_web_app_prompt(lead))
+        loom_script = ai_generate(build_loom_script(lead))
+        sms_copy = ai_generate(build_sms_copy(lead))
+        price = calculate_price(lead["size"], lead["urgency"], lead["custom"])
+        checkout = create_stripe_checkout(lead["business"], price)
+        proposal = generate_proposal_pdf(lead, price)
+        demo_site = generate_demo_site(lead)
+
+        # Write back to Google Sheet
+        sheet.update(f"H{i}", web_prompt)
+        sheet.update(f"I{i}", loom_script)
+        sheet.update(f"J{i}", sms_copy)
+        sheet.update(f"K{i}", price)
+        sheet.update(f"L{i}", checkout)
+        sheet.update(f"M{i}", proposal)
+        sheet.update(f"N{i}", demo_site)
+
+        # Push to Notion
+        push_to_notion(lead, {
+            "web_prompt": web_prompt,
+            "loom": loom_script,
+            "sms": sms_copy,
+            "price": price
+        })
+
+        print(f"✅ Processed lead: {lead['name']}")
 def run_agent():
     today = str(datetime.date.today())
 
@@ -625,6 +867,6 @@ if __name__ == "__main__":
 
     save_row_count(current_count)
 
-# Example usage:
+# Stripe Example usage:
 # if not has_active_subscription(client["stripe_customer_id"]):
 #     return
