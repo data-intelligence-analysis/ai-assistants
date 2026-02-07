@@ -2446,18 +2446,215 @@ Let’s do it. Below is a **clean, production-ready Python implementation for v7
 
 📦 REQUIREMENTS
 ---------------
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   pip install openai gspread oauth2client requests python-dotenv   `
+```bash
+pip install openai gspread oauth2client requests python-dotenv
+```
 
 📁 ENV VARIABLES (.env)
 -----------------------
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   OPENAI_API_KEY=sk-xxxx  NOTION_API_KEY=secret_xxx  NOTION_DATABASE_ID=xxxx  GOOGLE_SHEET_ID=xxxx   `
+```
+OPENAI_API_KEY=sk-xxxx
+NOTION_API_KEY=secret_xxx
+NOTION_DATABASE_ID=xxxx
+GOOGLE_SHEET_ID=xxxx
+```
 
 📄 v7\_ai\_sales\_agent.py
 --------------------------
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   import os  import requests  import openai  import gspread  from oauth2client.service_account import ServiceAccountCredentials  from dotenv import load_dotenv  # =========================  # ENV SETUP  # =========================  load_dotenv()  openai.api_key = os.getenv("OPENAI_API_KEY")  NOTION_API_KEY = os.getenv("NOTION_API_KEY")  NOTION_DB_ID = os.getenv("NOTION_DATABASE_ID")  SHEET_ID = os.getenv("GOOGLE_SHEET_ID")  # =========================  # GOOGLE SHEETS AUTH  # =========================  scope = [      "https://spreadsheets.google.com/feeds",      "https://www.googleapis.com/auth/drive"  ]  creds = ServiceAccountCredentials.from_json_keyfile_name(      "google-service-account.json", scope  )  gs_client = gspread.authorize(creds)  sheet = gs_client.open_by_key(SHEET_ID).sheet1  # =========================  # OPENAI GENERATION  # =========================  def ai_generate(prompt, temperature=0.7):      response = openai.ChatCompletion.create(          model="gpt-4o-mini",          messages=[{"role": "user", "content": prompt}],          temperature=temperature      )      return response.choices[0].message.content.strip()  # =========================  # AI PROMPT GENERATOR  # =========================  def build_web_app_prompt(lead):      return f"""  You are a senior conversion-focused product designer and full-stack engineer.  Build a high-converting web app for:  Business: {lead['business']}  Industry: {lead['industry']}  Target Customer: {lead['avatar']}  Offer: {lead['offer']}  Pain Point: {lead['pain']}  Desired Outcome: {lead['outcome']}  Use this structure:  1. Hero  2. Success State  3. Problem-Agitate-Transition  4. Value Stack  5. Social Proof  6. Transformation  7. Secondary CTA  8. Footer  Optimize for speed, clarity, and conversions.  """  # =========================  # LOOM SCRIPT GENERATOR  # =========================  def build_loom_script(lead):      return f"""  Write a casual Loom-style sales video script.  Lead name: {lead['name']}  Business: {lead['business']}  Pain point: {lead['pain']}  Offer: {lead['offer']}  Tone: friendly, confident, personalized.  Under 90 seconds.  """  # =========================  # AI SMS COPY  # =========================  def build_sms_copy(lead):      return f"""  Write a personalized SMS outreach message.  Recipient: {lead['name']}  Business: {lead['business']}  Pain point: {lead['pain']}  Goal: spark curiosity and reply.  Max 2 sentences.  """  # =========================  # PRICING ENGINE  # =========================  def calculate_price(size, urgency, custom):      base = {          "solo": 2000,          "smb": 4500,          "enterprise": 10000      }.get(size, 3000)      if urgency == "high":          base *= 1.2      if custom == "yes":          base *= 1.3      return int(base)  # =========================  # NOTION SYNC  # =========================  def push_to_notion(lead, artifacts):      url = "https://api.notion.com/v1/pages"      headers = {          "Authorization": f"Bearer {NOTION_API_KEY}",          "Notion-Version": "2022-06-28",          "Content-Type": "application/json"      }      data = {          "parent": {"database_id": NOTION_DB_ID},          "properties": {              "Name": {"title": [{"text": {"content": lead["name"]}}]},              "Business": {"rich_text": [{"text": {"content": lead["business"]}}]},              "Price": {"number": artifacts["price"]},              "AI Prompt": {"rich_text": [{"text": {"content": artifacts["web_prompt"][:2000]}}]},              "Loom Script": {"rich_text": [{"text": {"content": artifacts["loom"][:2000]}}]},              "SMS Copy": {"rich_text": [{"text": {"content": artifacts["sms"]}}]}          }      }      requests.post(url, headers=headers, json=data)  # =========================  # MAIN PIPELINE  # =========================  def run_v7():      rows = sheet.get_all_records()      for i, row in enumerate(rows, start=2):          lead = {              "name": row["Name"],              "business": row["Business"],              "industry": row["Industry"],              "avatar": row["Avatar"],              "offer": row["Offer"],              "pain": row["Pain Point"],              "outcome": row["Desired Outcome"],              "size": row["Business Size"],              "urgency": row["Urgency"],              "custom": row["Custom Build"]          }          web_prompt = ai_generate(build_web_app_prompt(lead))          loom_script = ai_generate(build_loom_script(lead))          sms_copy = ai_generate(build_sms_copy(lead))          price = calculate_price(lead["size"], lead["urgency"], lead["custom"])          # Write back to Google Sheet          sheet.update(f"H{i}", web_prompt)          sheet.update(f"I{i}", loom_script)          sheet.update(f"J{i}", sms_copy)          sheet.update(f"K{i}", price)          # Push to Notion          push_to_notion(lead, {              "web_prompt": web_prompt,              "loom": loom_script,              "sms": sms_copy,              "price": price          })          print(f"✅ Processed lead: {lead['name']}")  # =========================  # RUN  # =========================  if __name__ == "__main__":      run_v7()   `
+```python
+import os
+import requests
+import openai
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from dotenv import load_dotenv
+
+# =========================
+# ENV SETUP
+# =========================
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+NOTION_API_KEY = os.getenv("NOTION_API_KEY")
+NOTION_DB_ID = os.getenv("NOTION_DATABASE_ID")
+SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+
+# =========================
+# GOOGLE SHEETS AUTH
+# =========================
+scope = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/drive"
+]
+
+creds = ServiceAccountCredentials.from_json_keyfile_name(
+    "google-service-account.json", scope
+)
+gs_client = gspread.authorize(creds)
+sheet = gs_client.open_by_key(SHEET_ID).sheet1
+
+# =========================
+# OPENAI GENERATION
+# =========================
+def ai_generate(prompt, temperature=0.7):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=temperature
+    )
+    return response.choices[0].message.content.strip()
+
+# =========================
+# AI PROMPT GENERATOR
+# =========================
+def build_web_app_prompt(lead):
+    return f"""
+You are a senior conversion-focused product designer and full-stack engineer.
+
+Build a high-converting web app for:
+Business: {lead['business']}
+Industry: {lead['industry']}
+Target Customer: {lead['avatar']}
+Offer: {lead['offer']}
+Pain Point: {lead['pain']}
+Desired Outcome: {lead['outcome']}
+
+Use this structure:
+1. Hero
+2. Success State
+3. Problem-Agitate-Transition
+4. Value Stack
+5. Social Proof
+6. Transformation
+7. Secondary CTA
+8. Footer
+
+Optimize for speed, clarity, and conversions.
+"""
+
+# =========================
+# LOOM SCRIPT GENERATOR
+# =========================
+def build_loom_script(lead):
+    return f"""
+Write a casual Loom-style sales video script.
+
+Lead name: {lead['name']}
+Business: {lead['business']}
+Pain point: {lead['pain']}
+Offer: {lead['offer']}
+
+Tone: friendly, confident, personalized.
+Under 90 seconds.
+"""
+
+# =========================
+# AI SMS COPY
+# =========================
+def build_sms_copy(lead):
+    return f"""
+Write a personalized SMS outreach message.
+
+Recipient: {lead['name']}
+Business: {lead['business']}
+Pain point: {lead['pain']}
+
+Goal: spark curiosity and reply.
+Max 2 sentences.
+"""
+
+# =========================
+# PRICING ENGINE
+# =========================
+def calculate_price(size, urgency, custom):
+    base = {
+        "solo": 2000,
+        "smb": 4500,
+        "enterprise": 10000
+    }.get(size, 3000)
+
+    if urgency == "high":
+        base *= 1.2
+    if custom == "yes":
+        base *= 1.3
+
+    return int(base)
+
+# =========================
+# NOTION SYNC
+# =========================
+def push_to_notion(lead, artifacts):
+    url = "https://api.notion.com/v1/pages"
+    headers = {
+        "Authorization": f"Bearer {NOTION_API_KEY}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "parent": {"database_id": NOTION_DB_ID},
+        "properties": {
+            "Name": {"title": [{"text": {"content": lead["name"]}}]},
+            "Business": {"rich_text": [{"text": {"content": lead["business"]}}]},
+            "Price": {"number": artifacts["price"]},
+            "AI Prompt": {"rich_text": [{"text": {"content": artifacts["web_prompt"][:2000]}}]},
+            "Loom Script": {"rich_text": [{"text": {"content": artifacts["loom"][:2000]}}]},
+            "SMS Copy": {"rich_text": [{"text": {"content": artifacts["sms"]}}]}
+        }
+    }
+
+    requests.post(url, headers=headers, json=data)
+
+# =========================
+# MAIN PIPELINE
+# =========================
+def run_v7():
+    rows = sheet.get_all_records()
+
+    for i, row in enumerate(rows, start=2):
+        lead = {
+            "name": row["Name"],
+            "business": row["Business"],
+            "industry": row["Industry"],
+            "avatar": row["Avatar"],
+            "offer": row["Offer"],
+            "pain": row["Pain Point"],
+            "outcome": row["Desired Outcome"],
+            "size": row["Business Size"],
+            "urgency": row["Urgency"],
+            "custom": row["Custom Build"]
+        }
+
+        web_prompt = ai_generate(build_web_app_prompt(lead))
+        loom_script = ai_generate(build_loom_script(lead))
+        sms_copy = ai_generate(build_sms_copy(lead))
+        price = calculate_price(lead["size"], lead["urgency"], lead["custom"])
+
+        # Write back to Google Sheet
+        sheet.update(f"H{i}", web_prompt)
+        sheet.update(f"I{i}", loom_script)
+        sheet.update(f"J{i}", sms_copy)
+        sheet.update(f"K{i}", price)
+
+        # Push to Notion
+        push_to_notion(lead, {
+            "web_prompt": web_prompt,
+            "loom": loom_script,
+            "sms": sms_copy,
+            "price": price
+        })
+
+        print(f"✅ Processed lead: {lead['name']}")
+
+
+# =========================
+# RUN
+# =========================
+if __name__ == "__main__":
+    run_v7()
+
+```
 
 🧠 COLUMN EXPECTATIONS (GOOGLE SHEET)
 -------------------------------------
@@ -2505,7 +2702,140 @@ Here’s a **clean, production-grade AI prompt** you can drop directly into GPT 
 🔥 AI PROMPT: MULTI-CLIENT DEMO PITCH PLATFORM
 ==============================================
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   You are a senior product designer, growth marketer, and full-stack engineer.  Build a single demo web application that allows me to present high-conversion landing pages to multiple clients without creating separate domains.  The app should function as a “pitch showroom” where each client has their own dedicated landing page, accessible via a selector in the navigation.  PRIMARY GOAL:  Allow seamless switching between client-specific landing pages during live sales pitches while maintaining a polished, professional SaaS-style experience.  CORE REQUIREMENTS:  1. GLOBAL APP STRUCTURE  - Single domain  - Shared layout, components, and design system  - Client-specific content rendered dynamically  - Fast switching between clients with no page reload (SPA behavior)  2. NAVBAR CLIENT SELECTOR  - Navbar includes a dropdown or selector labeled “Clients” or “Demo Pages”  - Selector displays a list of clients (name + optional logo)  - Selecting a client navigates to:    /clients/{client-slug}  - Smooth animated transitions between client pages  - URL updates for direct sharing  3. CLIENT SUBPAGE ARCHITECTURE  Each client page must be a high-conversion landing page built from structured data.  Each client page should support:  - Unique branding (logo, colors, imagery)  - Unique copy and offer  - Unique CTA links (calendar, email, form, Stripe checkout)  4. CLIENT LANDING PAGE CONVERSION STRUCTURE  Each client page MUST include:  HERO SECTION  - Eyebrow calling out the client’s target audience  - Clear, benefit-driven headline  - Subheadline addressing main pain point  - Primary CTA (Book Call / Get Demo / Contact)  - Trust indicators (metrics, testimonials, logos)  SUCCESS STATE (Conditional)  - Confirmation message after CTA interaction  - Clear “what happens next”  - Reassurance to reduce buyer’s remorse  PROBLEM → AGITATION → TRANSITION  - 3 core problems specific to the client’s industry  - Emotional and financial agitation  - Smooth transition into the solution  VALUE STACK  - 4 descending tiers of value (core offer + bonuses)  - Individual value per tier  - Total value vs actual price  - Visually stacked layout  SOCIAL PROOF  - Section header focused on outcomes  - 3 testimonials with specific, believable results  - Support for text + avatar  TRANSFORMATION  - 4 stages:    1. Quick Win    2. Short-Term Results    3. Compounding Growth    4. Long-Term 10x Advantage  SECONDARY CTA (For Scrollers)  - Avatar stack or logos  - Question-based headline  - Single low-friction CTA button  FOOTER  - Demo company logo  - Navigation links  - Legal links  - Social icons  5. DATA-DRIVEN CLIENT CONFIGURATION  Client pages should be generated from a structured data source such as:  - JSON  - Database  - CMS  - Static config file  Each client object should include:  - name  - slug  - industry  - target_avatar  - pain_points  - offer  - testimonials  - pricing  - CTAs  - brand colors  6. SALES PITCH MODE  - Optional “Pitch Mode” toggle  - Hides navigation clutter  - Enlarges typography  - Optimizes layout for screen sharing  7. TECH STACK (Preferred)  - Next.js (App Router)  - TypeScript  - Tailwind CSS  - Component-based architecture  - SEO-friendly routing  - Mobile responsive  8. OUTPUT EXPECTATIONS  - Folder structure  - Routing strategy  - Client data schema  - Reusable components  - Example client JSON objects  - Clean, production-ready UI  DESIGN PRINCIPLES:  - Minimal  - High-contrast  - Conversion-first  - SaaS-polished  - Fast and intuitive  The final result should feel like a premium sales tool that allows pitching multiple clients from one domain with zero friction.   `
+```
+You are a senior product designer, growth marketer, and full-stack engineer.
+
+Build a single demo web application that allows me to present high-conversion landing pages to multiple clients without creating separate domains.
+
+The app should function as a “pitch showroom” where each client has their own dedicated landing page, accessible via a selector in the navigation.
+
+PRIMARY GOAL:
+Allow seamless switching between client-specific landing pages during live sales pitches while maintaining a polished, professional SaaS-style experience.
+
+CORE REQUIREMENTS:
+
+1. GLOBAL APP STRUCTURE
+- Single domain
+- Shared layout, components, and design system
+- Client-specific content rendered dynamically
+- Fast switching between clients with no page reload (SPA behavior)
+
+2. NAVBAR CLIENT SELECTOR
+- Navbar includes a dropdown or selector labeled “Clients” or “Demo Pages”
+- Selector displays a list of clients (name + optional logo)
+- Selecting a client navigates to:
+  /clients/{client-slug}
+- Smooth animated transitions between client pages
+- URL updates for direct sharing
+
+3. CLIENT SUBPAGE ARCHITECTURE
+Each client page must be a high-conversion landing page built from structured data.
+
+Each client page should support:
+- Unique branding (logo, colors, imagery)
+- Unique copy and offer
+- Unique CTA links (calendar, email, form, Stripe checkout)
+
+4. CLIENT LANDING PAGE CONVERSION STRUCTURE
+
+Each client page MUST include:
+
+HERO SECTION
+- Eyebrow calling out the client’s target audience
+- Clear, benefit-driven headline
+- Subheadline addressing main pain point
+- Primary CTA (Book Call / Get Demo / Contact)
+- Trust indicators (metrics, testimonials, logos)
+
+SUCCESS STATE (Conditional)
+- Confirmation message after CTA interaction
+- Clear “what happens next”
+- Reassurance to reduce buyer’s remorse
+
+PROBLEM → AGITATION → TRANSITION
+- 3 core problems specific to the client’s industry
+- Emotional and financial agitation
+- Smooth transition into the solution
+
+VALUE STACK
+- 4 descending tiers of value (core offer + bonuses)
+- Individual value per tier
+- Total value vs actual price
+- Visually stacked layout
+
+SOCIAL PROOF
+- Section header focused on outcomes
+- 3 testimonials with specific, believable results
+- Support for text + avatar
+
+TRANSFORMATION
+- 4 stages:
+  1. Quick Win
+  2. Short-Term Results
+  3. Compounding Growth
+  4. Long-Term 10x Advantage
+
+SECONDARY CTA (For Scrollers)
+- Avatar stack or logos
+- Question-based headline
+- Single low-friction CTA button
+
+FOOTER
+- Demo company logo
+- Navigation links
+- Legal links
+- Social icons
+
+5. DATA-DRIVEN CLIENT CONFIGURATION
+Client pages should be generated from a structured data source such as:
+- JSON
+- Database
+- CMS
+- Static config file
+
+Each client object should include:
+- name
+- slug
+- industry
+- target_avatar
+- pain_points
+- offer
+- testimonials
+- pricing
+- CTAs
+- brand colors
+
+6. SALES PITCH MODE
+- Optional “Pitch Mode” toggle
+- Hides navigation clutter
+- Enlarges typography
+- Optimizes layout for screen sharing
+
+7. TECH STACK (Preferred)
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- Component-based architecture
+- SEO-friendly routing
+- Mobile responsive
+
+8. OUTPUT EXPECTATIONS
+- Folder structure
+- Routing strategy
+- Client data schema
+- Reusable components
+- Example client JSON objects
+- Clean, production-ready UI
+
+DESIGN PRINCIPLES:
+- Minimal
+- High-contrast
+- Conversion-first
+- SaaS-polished
+- Fast and intuitive
+
+The final result should feel like a premium sales tool that allows pitching multiple clients from one domain with zero friction.
+```
 
 🔑 WHY THIS PROMPT IS POWERFUL
 ------------------------------
@@ -2531,3 +2861,617 @@ I can also generate prompts/code for:
     
 
 Just say **“Upgrade this prompt for v8”** 😈
+
+
+
+
+Below is a **clear, end-to-end Data Flow Diagram (DFD)** of the automation you’ve built.I’ll give you **two versions**:
+
+1.  **High-level system view (business-friendly)**
+    
+2.  **Technical flow (engineer / investor / audit ready)**
+    
+
+I’ll also include a **Mermaid diagram** you can paste into Notion, GitHub, or docs to render visually.
+
+1️⃣ HIGH-LEVEL DATA FLOW (SYSTEM VIEW)
+--------------------------------------
+
+[ Lead Sources ]
+ (Google Maps / X / LinkedIn)
+          |
+          v
+[ Lead Scraping + Enrichment ]
+ (Multi-niche, multi-location,
+ website/no-website detection)
+          |
+          v
+[ Lead Scoring & Filtering ]
+ (Quality, intent, budget signals)
+          |
+          v
+[ Google Sheets ]
+ (Single source of truth)
+  - Raw Lead Data
+  - Scores
+  - Status
+          |
+          v
+[ AI Generation Layer ]
+  ├─ Web App Build Prompt
+  ├─ Landing Page Copy
+  ├─ Loom Script
+  ├─ SMS Copy
+  ├─ Email Sequences
+  └─ Proposal Pricing
+          |
+          v
+[ Google Sheets (Enriched) ]
+  + AI Outputs
+  + Google Maps Link
+  + Outreach Assets
+          |
+          v
+[ CRM Sync ]
+ (Notion CRM)
+  - Lead Record
+  - AI Prompt
+  - Loom Script
+  - Pricing
+          |
+          v
+[ Outreach & Notifications ]
+  ├─ Email
+  ├─ SMS (AI-written)
+  ├─ LinkedIn DM
+  ├─ Telegram
+  └─ Alerts on New/Updated Lead
+          |
+          v
+[ Sales Execution ]
+  ├─ Calendar Booking
+  ├─ Demo Pitch App
+  │   └─ Client Selector → Subpages
+  └─ Proposal / Stripe Billing
+
+
+2️⃣ TECHNICAL DATA FLOW (DETAILED)
+----------------------------------
+
+CRON (Daily Trigger)
+│
+├─ GitHub Actions / Cloud Run / AWS Lambda
+│
+├─ Scrapers
+│   ├─ Google Maps Scraper
+│   ├─ X Lead Scraper
+│   └─ LinkedIn Lead Scraper
+│
+├─ Lead Normalization Engine
+│   ├─ Deduplication
+│   ├─ Location tagging
+│   ├─ Niche classification
+│   └─ Website presence detection
+│
+├─ Lead Scoring Engine
+│   ├─ Business size
+│   ├─ Online presence gap
+│   ├─ Intent signals
+│   └─ Outreach readiness
+│
+├─ Google Sheets API
+│   ├─ Create / Update Lead Row
+│   ├─ Store Google Maps Link
+│   └─ Track lead status
+│
+├─ AI Orchestration Layer (OpenAI)
+│   ├─ Web App Prompt Generator
+│   ├─ High-Conversion Page Copy
+│   ├─ Loom Video Script Generator
+│   ├─ SMS Copy Generator
+│   ├─ LinkedIn DM Generator
+│   └─ Proposal Pricing Generator
+│
+├─ Google Sheets (Enriched Columns)
+│   ├─ AI_Web_App_Prompt
+│   ├─ Loom_Script
+│   ├─ SMS_Copy
+│   ├─ Proposal_Price
+│   └─ Outreach_Status
+│
+├─ Notion API
+│   ├─ Create CRM Lead
+│   ├─ Attach AI Prompts
+│   ├─ Attach Loom Script
+│   └─ Sync Pricing
+│
+├─ Notification Engine
+│   ├─ Email Alert
+│   ├─ Telegram Alert
+│   └─ SMS Alert
+│
+└─ Sales Layer
+    ├─ Google Calendar API (Auto Booking)
+    ├─ Demo Pitch App (Client Selector)
+    └─ Stripe Billing (SaaS / Per Client)
+
+
+3️⃣ MERMAID DIAGRAM (RENDERABLE)
+--------------------------------
+
+Paste this into **Notion / Markdown / GitHub**:
+
+flowchart TD
+
+A[Lead Sources<br/>Google Maps / X / LinkedIn] --> B[Scraping & Enrichment]
+
+B --> C[Lead Scoring & Filtering]
+
+C --> D[Google Sheets<br/>Source of Truth]
+
+D --> E[AI Generation Layer]
+
+E --> E1[Web App Prompt]
+E --> E2[Loom Script]
+E --> E3[SMS Copy]
+E --> E4[Email Copy]
+E --> E5[LinkedIn DM]
+E --> E6[Proposal Pricing]
+
+E1 --> F[Google Sheets Enriched]
+E2 --> F
+E3 --> F
+E4 --> F
+E5 --> F
+E6 --> F
+
+F --> G[Notion CRM Sync]
+
+G --> H[Outreach Automation]
+H --> H1[Email]
+H --> H2[SMS]
+H --> H3[LinkedIn DM]
+H --> H4[Telegram Alerts]
+
+H --> I[Calendar Booking]
+
+I --> J[Demo Pitch Web App<br/>Client Selector → Subpages]
+
+J --> K[Stripe Billing]
+
+
+4️⃣ HOW TO USE THIS DIAGRAM
+---------------------------
+
+You can now:
+
+*   ✅ Drop this into a **pitch deck**
+    
+*   ✅ Use it for **investors / clients**
+    
+*   ✅ Include it in **technical documentation**
+    
+*   ✅ Turn it into a **SaaS architecture diagram**
+    
+*   ✅ Add compliance / security layers later
+    
+
+🔥 NEXT (OPTIONAL)
+------------------
+
+I can:
+
+*   Convert this into a **VC-ready architecture slide**
+    
+*   Generate a **system design diagram with infra icons**
+    
+*   Produce a **Notion page with visuals**
+    
+*   Map this to **SOC2 / GDPR / SaaS compliance**
+    
+
+Just say the word.
+
+Below is a **SYSTEM DESIGN DIAGRAM with infrastructure layers and cloud-style components**, laid out the way you’d present it to **investors, enterprise clients, or for SaaS architecture reviews**.
+
+I’ll give you:
+
+1.  **Conceptual Infra Diagram (Readable)**
+    
+2.  **Mermaid System Design Diagram (Renderable)**
+    
+3.  **Icon Mapping (AWS / GCP / SaaS equivalents)**
+    
+4.  **How to turn this into a slide / Figma / Lucidchart**
+    
+
+1️⃣ SYSTEM DESIGN — INFRASTRUCTURE OVERVIEW
+===========================================
+
+┌──────────────────────────────┐
+│        Lead Sources          │
+│  Google Maps | X | LinkedIn  │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│  Scraping & Ingestion Layer               │
+│  (Cloud Run / AWS Lambda)                 │
+│  - Scrapers                               │
+│  - Deduplication                          │
+│  - Website Presence Detection             │
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│  Lead Scoring & Enrichment Engine         │
+│  (Stateless Compute)                      │
+│  - Niche classification                   │
+│  - Location tagging                       │
+│  - Quality scoring                        │
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│  Data Layer (Source of Truth)             │
+│  Google Sheets API                        │
+│  - Raw leads                              │
+│  - AI outputs                             │
+│  - Status tracking                        │
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│  AI Orchestration Layer                   │
+│  OpenAI API                               │
+│  - Web App Prompt                         │
+│  - Landing Page Copy                      │
+│  - Loom Script                            │
+│  - SMS / Email / DM Copy                  │
+│  - Pricing Logic                          │
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│  CRM Sync Layer                           │
+│  Notion API                               │
+│  - Lead records                           │
+│  - Prompts & scripts                      │
+│  - Pricing                                │
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│  Outreach & Notification Layer            │
+│  - Email (SMTP / Gmail API)               │
+│  - SMS (Twilio)                           │
+│  - Telegram Bot                           │
+│  - LinkedIn DM (Generated Copy)           │
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│  Sales Execution Layer                    │
+│  - Google Calendar API                   │
+│  - Demo Pitch Web App                    │
+│    (Client Selector → Subpages)          │
+│  - Stripe Billing                        │
+└──────────────────────────────────────────┘
+
+
+2️⃣ MERMAID SYSTEM DESIGN DIAGRAM (WITH INFRA LAYERS)
+=====================================================
+
+> Paste into **Notion, GitHub, Obsidian, or Markdown**
+
+flowchart TB
+
+subgraph Lead_Sources
+    A1[Google Maps]
+    A2[X / Twitter]
+    A3[LinkedIn]
+end
+
+subgraph Compute["Cloud Compute"]
+    B[Scraping & Ingestion<br/>Cloud Run / AWS Lambda]
+    C[Lead Scoring & Enrichment]
+end
+
+subgraph Data["Data Layer"]
+    D[Google Sheets<br/>Source of Truth]
+end
+
+subgraph AI["AI Layer"]
+    E[OpenAI API<br/>Prompt & Copy Generation]
+end
+
+subgraph CRM["CRM"]
+    F[Notion Database]
+end
+
+subgraph Outreach["Notifications & Outreach"]
+    G1[Email]
+    G2[SMS]
+    G3[Telegram]
+    G4[LinkedIn DM]
+end
+
+subgraph Sales["Sales & Monetization"]
+    H1[Google Calendar]
+    H2[Demo Pitch Web App<br/>Client Selector]
+    H3[Stripe Billing]
+end
+
+A1 --> B
+A2 --> B
+A3 --> B
+
+B --> C
+C --> D
+
+D --> E
+E --> D
+
+D --> F
+
+F --> G1
+F --> G2
+F --> G3
+F --> G4
+
+G2 --> H1
+H1 --> H2
+H2 --> H3
+
+
+3️⃣ INFRA ICON MAPPING (FOR DIAGRAM TOOLS)
+==========================================
+
+Use this mapping when recreating in **Figma / Lucidchart / Draw.io**:
+
+| Component     | Icon                             |
+| ------------- | -------------------------------- |
+| Scrapers      | ⚙️ Cloud Run / AWS Lambda        |
+| Scheduler     | ⏱️ Cloud Scheduler / EventBridge |
+| AI            | 🧠 OpenAI                        |
+| Data          | 📄 Google Sheets                 |
+| CRM           | 🗂️ Notion                        |
+| Notifications | ✉️ 📱 💬                          |
+| Demo App      | 🌐 Next.js / Vercel              |
+| Billing       | 💳 Stripe                        |
+| Calendar      | 📅 Google Calendar               |
+
+
+4️⃣ HOW TO TURN THIS INTO A SLIDE (FAST)
+========================================
+
+**Option A — Figma**
+
+*   Use AWS/GCP icon pack
+    
+*   3 horizontal lanes:
+    
+    *   Ingestion
+        
+    *   Intelligence
+        
+    *   Sales
+        
+
+**Option B — Pitch Deck**
+
+*   One slide: “AI Sales Automation Architecture”
+    
+*   Highlight:
+    
+    *   One domain
+        
+    *   One source of truth
+        
+    *   Infinite client demos
+        
+
+**Option C — SaaS Audit**
+
+*   Add:
+    
+    *   Secrets Manager
+        
+    *   Rate limiting
+        
+    *   Logging (CloudWatch / GCP Logs)
+        
+
+🔥 WHAT THIS SYSTEM REPRESENTS
+------------------------------
+
+You didn’t build a scraper.
+
+You built:
+
+*   **A multi-tenant AI sales operating system**
+    
+*   **A pitch engine**
+    
+*   **A SaaS-ready lead-to-cash pipeline**
+    
+
+If you want next, I can:
+
+*   Generate a **VC architecture slide**
+    
+*   Convert this into a **SOC2-ready system**
+    
+*   Design the **multi-tenant database schema**
+    
+*   Create a **white-labeled SaaS version**
+    
+
+Just say the word 🚀
+
+Below is a **VC-ready architecture slide** you can drop directly into a pitch deck (Seed–Series A).This is written the way investors expect to see it: **clear value flow, defensibility, scalability, and monetization**.
+
+🧠 AI SALES AUTOMATION PLATFORM
+===============================
+
+### End-to-End Architecture (VC View)
+
+🚀 ONE-LINE SUMMARY (TOP OF SLIDE)
+----------------------------------
+
+**“An AI-powered, multi-tenant sales engine that turns raw internet signals into booked sales calls and revenue — automatically.”**
+
+🏗️ SYSTEM ARCHITECTURE (VC-FRIENDLY VIEW)
+------------------------------------------
+
+┌───────────────────────────────────────────┐
+│            External Signal Layer           │
+│  Google Maps | X | LinkedIn | Web Signals  │
+└───────────────────┬───────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────┐
+│     Ingestion & Intelligence Layer         │
+│  Cloud Run / AWS Lambda (Serverless)       │
+│  • Lead scraping                           │
+│  • Deduplication                           │
+│  • Website presence detection              │
+│  • Niche & geo classification              │
+│  • Lead scoring                            │
+└───────────────────┬───────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────┐
+│          Central Data Layer                │
+│      Google Sheets → DB abstraction        │
+│  • Single source of truth                  │
+│  • Multi-client SaaS separation            │
+│  • Lead lifecycle tracking                 │
+└───────────────────┬───────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────┐
+│        AI Orchestration Engine             │
+│              (OpenAI)                      │
+│  • Personalized landing pages              │
+│  • AI web app build prompts                │
+│  • Loom-style pitch scripts                │
+│  • SMS / Email / LinkedIn DM copy           │
+│  • Dynamic proposal pricing                │
+└───────────────────┬───────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────┐
+│           CRM & Sales Enablement           │
+│              Notion CRM                    │
+│  • Lead profiles                           │
+│  • AI-generated assets                     │
+│  • Sales status tracking                   │
+└───────────────────┬───────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────┐
+│      Outreach & Conversion Layer           │
+│  Email | SMS | Telegram | LinkedIn DM      │
+│  • AI-written sequences                    │
+│  • Real-time alerts                        │
+└───────────────────┬───────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────┐
+│        Revenue & Presentation Layer        │
+│  • Demo Pitch Web App (1 domain)            │
+│    → Client Selector → Subpages            │
+│  • Google Calendar Booking                 │
+│  • Stripe Billing                          │
+└───────────────────────────────────────────┘
+
+
+🔐 WHY THIS ARCHITECTURE IS DEFENSIBLE (VC TALKING POINTS)
+----------------------------------------------------------
+
+### 1️⃣ Compounding Data Advantage
+
+*   Each lead interaction improves:
+    
+    *   Scoring accuracy
+        
+    *   Pricing intelligence
+        
+    *   Conversion copy
+        
+*   Feedback loop → better AI outputs → higher close rates
+    
+
+### 2️⃣ One-to-Many Sales Leverage
+
+*   One domain
+    
+*   Infinite client demos
+    
+*   No per-client deployment
+    
+*   No new infra per customer
+    
+
+### 3️⃣ Multi-Tenant SaaS Ready
+
+*   Logical client isolation
+    
+*   Central orchestration
+    
+*   Expandable to full DB (Postgres / Supabase)
+    
+
+### 4️⃣ Serverless & Scalable
+
+*   No idle compute
+    
+*   Scales with demand
+    
+*   Low marginal cost per lead
+    
+
+💰 MONETIZATION BUILT INTO THE ARCHITECTURE
+-------------------------------------------
+
+| Layer           | Revenue          |
+| --------------- | ---------------- |
+| Lead Engine     | Usage-based      |
+| AI Generation   | Tiered plans     |
+| Demo Pages      | Premium feature  |
+| CRM Sync        | Pro / Team plans |
+| Stripe Checkout | Transactional %  |
+
+
+📈 SCALE STORY (WHAT INVESTORS CARE ABOUT)
+------------------------------------------
+
+*   **Today:** Services + internal tooling
+    
+*   **Next:** Vertical SaaS (agencies, B2B, local services)
+    
+*   **Later:** Marketplace of AI sales agents
+    
+*   **Endgame:** Sales OS for outbound-first businesses
+    
+
+🧩 OPTIONAL ADD-ON SLIDES (IF YOU WANT)
+---------------------------------------
+
+I can generate:
+
+*   **“Why Now” slide**
+    
+*   **Moat & defensibility slide**
+    
+*   **Unit economics architecture**
+    
+*   **Security / SOC2 slide**
+    
+*   **Multi-tenant DB schema slide**
+    
+*   **Infra cost vs revenue slide**
+    
+
+Just say which one — this is already **VC-grade**.
