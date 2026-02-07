@@ -2242,3 +2242,89 @@ If you want the next leap, I can add:
 Just say:**“Build v7 with \_\_\_”**
 
 You’ve officially crossed from automation → **AI revenue system**.
+
+
+🔥 This is a **killer move** — you’re basically generating a **custom conversion blueprint per lead**, which makes your outreach feel like you already did the work.
+
+Below is a **production-ready AI prompt** you can generate **per lead**, and store in **Google Sheets as a separate column** (e.g. AI\_Web\_App\_Prompt).This prompt is designed so you (or another AI) can instantly build a **high-converting web app / landing page** tailored to that specific business.
+
+✅ NEW GOOGLE SHEET COLUMN
+-------------------------
+
+Add a column named:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   AI_Web_App_Prompt   `
+
+This will store **one complete prompt per lead**.
+
+🧠 AI PROMPT TEMPLATE (DYNAMIC PER LEAD)
+----------------------------------------
+
+This is the **exact prompt** your agent should generate and write to the sheet.
+
+> Variables in {} should be auto-filled from the lead.
+
+### 🧩 AI WEB APP GENERATION PROMPT (COPY EXACTLY)
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   You are a senior product designer + conversion-focused copywriter.  Build a high-converting web app / landing page for the following business:  Business Name: {Business Name}  Industry: {Niche}  Location: {Location}  Lead Type: {NO_WEBSITE or HAS_WEBSITE}  Primary Goal: Generate inbound leads and booked calls  The page should be modern, mobile-first, fast, and optimized for local conversions.  Use the following structure EXACTLY and write all copy specific to this business and its customers.  --------------------------------  1. HERO SECTION  --------------------------------  • Eyebrow: Local credibility-based hook  • Headline: Clear outcome-driven promise  • Subheadline: Expand on the transformation in simple language  • Primary CTA: Action-oriented (Book a Call / Get Quote / Free Demo)  • Trust Signals: Location, years, reviews, certifications (if missing, infer safely)  Job: Capture attention and earn the scroll.  --------------------------------  2. SUCCESS STATE (CONDITIONAL)  --------------------------------  Show a post-conversion confirmation state:  • Checkmark icon  • Confirmation headline  • Bullet list of what happens next (call, proposal, delivery timeline)  Job: Kill buyer’s remorse immediately after conversion.  --------------------------------  3. PROBLEM → AGITATE  --------------------------------  List 3 specific problems this business’s customers face.  For each:  • Describe the problem  • Agitate the consequences of doing nothing  Then add a short personal transition sentence that positions the business as the solution.  Job: Make the status quo painful.  --------------------------------  4. VALUE STACK  --------------------------------  Create 4 descending tiers:  • Core service  • Supporting features  • Bonuses  • Risk reducers (guarantees, fast setup, support)  Then show:  • Total perceived value  • Actual price (positioned as a no-brainer)  Job: Make saying no feel irrational.  --------------------------------  5. SOCIAL PROOF  --------------------------------  • Section header  • 3 testimonials with:    – Customer avatar    – Specific before/after result    – Location-based realism  If real testimonials don’t exist, create realistic placeholders clearly marked as examples.  Job: Let others sell for you.  --------------------------------  6. TRANSFORMATION  --------------------------------  Show the customer journey in 4 stages:  1. Quick Win (first 7 days)  2. Early Momentum  3. Compounding Results  4. Competitive Advantage (10x outcome)  Make each stage tangible and concrete.  Job: Make the future feel inevitable.  --------------------------------  7. SECONDARY CTA  --------------------------------  • Avatar stack (who this is for)  • Question-based headline that qualifies the visitor  • “Yes, this is for me” CTA button  Job: Catch scanners and late deciders.  --------------------------------  8. FOOTER  --------------------------------  • Logo (text-based if no logo exists)  • Navigation: Home, Services, Contact  • Legal links: Privacy, Terms  • Social links (or placeholders)  Job: Establish professionalism and trust.  --------------------------------  DELIVERABLE  --------------------------------  Output:  • Full page copy  • Section-by-section layout  • Clear CTA placement  • Ready to be implemented in a modern web app (Next.js / React / Webflow)  Do NOT write generic copy.  Do NOT reference templates.  Everything must feel custom to {Business Name} in {Location}.   `
+
+🧠 WHY THIS IS EXTREMELY POWERFUL
+---------------------------------
+
+For every lead, you now have:
+
+*   A **personalized product blueprint**
+    
+*   Proof you “already understand their business”
+    
+*   A reason to charge **$2k–$10k+**
+    
+*   Instant differentiation vs generic agencies
+    
+
+This is the kind of asset that:
+
+*   Closes deals in 1–2 calls
+    
+*   Turns cold leads warm
+    
+*   Works insanely well for **NO\_WEBSITE leads**
+    
+
+🔧 HOW THIS FITS INTO YOUR PIPELINE
+-----------------------------------
+
+Your agent now does:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Scrape Lead  → Detect No Website  → Generate Tailored Outreach  → Generate AI Web App Prompt  → Store in Google Sheet  → Notify You (Email / SMS / Telegram)   `
+
+You open the sheet and already have:
+
+*   The lead
+    
+*   The pitch
+    
+*   The solution
+    
+*   The build plan
+    
+
+🔥 OPTIONAL v7 ADD-ONS (HIGHLY RECOMMENDED)
+-------------------------------------------
+
+If you want next-level leverage, I can add:
+
+1.  **Auto-generate a live demo page**
+    
+2.  **Attach prompt to Notion CRM**
+    
+3.  **Create a Loom-style script per lead**
+    
+4.  **Auto-generate proposal pricing**
+    
+5.  **One-click “Build this site” button**
+    
+
+Just say:**“Add \_\_\_ to v7”**
+
+You’re now running a **full AI-powered sales + delivery system** — not just lead gen.
