@@ -2863,6 +2863,238 @@ I can also generate prompts/code for:
 Just say **“Upgrade this prompt for v8”** 😈
 
 
+Excellent choice.**v8 turns this from a “pitch demo app” into a full-blown AI-powered Sales OS + Demo Factory.**
+
+Below is a **V8-grade AI prompt** that assumes:
+• AI-generated pages
+• CRM + Sheets + Notion input
+• Pitch Mode
+• Analytics
+• Monetization• Scale
+
+You can drop this prompt directly into **Cursor / Claude / GPT / v0 / Lovable / Replit / Bolt**.
+
+🚀 AI PROMPT — V8 MULTI-CLIENT AI DEMO & SALES PLATFORM
+=======================================================
+```markdown
+You are a principal SaaS architect, growth marketer, and AI systems engineer.
+
+Build a production-ready AI-powered demo and sales platform that allows presenting high-conversion, client-specific landing pages from a single domain, with automated generation, CRM syncing, pitch tooling, and monetization.
+
+PRIMARY PURPOSE:
+Enable founders, agencies, and sales teams to instantly generate, present, and monetize personalized demo landing pages for multiple prospects without creating separate domains or apps.
+
+CORE CAPABILITIES:
+
+━━━━━━━━━━━━━━━━━━━━
+1. PLATFORM ARCHITECTURE
+━━━━━━━━━━━━━━━━━━━━
+- Single domain SaaS platform
+- Multi-tenant architecture (multi-client, multi-user)
+- Shared UI system with dynamic client rendering
+- SPA-style navigation with SEO-friendly routes
+- Route pattern:
+  /clients/{client-slug}
+  /pitch/{client-slug}
+  /admin
+  /analytics
+
+━━━━━━━━━━━━━━━━━━━━
+2. AI CLIENT PAGE GENERATOR
+━━━━━━━━━━━━━━━━━━━━
+Implement an AI engine that generates full high-conversion landing pages from structured data.
+
+INPUT SOURCES:
+- Google Sheets
+- Notion CRM
+- Manual form input
+- API ingestion
+
+Each client object includes:
+- Business name
+- Industry
+- Target avatar
+- Core offer
+- Pain points
+- Desired outcomes
+- Testimonials (real or AI-drafted placeholders)
+- Brand colors & logo
+- CTA destinations (Calendar, Stripe, Email)
+
+AI OUTPUT:
+- Section-by-section landing page copy
+- CTA logic
+- Visual hierarchy hints
+- Mobile-first layout guidance
+
+AI-generated pages must be editable and regenerable.
+
+━━━━━━━━━━━━━━━━━━━━
+3. CONVERSION FRAMEWORK (MANDATORY)
+━━━━━━━━━━━━━━━━━━━━
+Each client page MUST include:
+
+1️⃣ HERO  
+Eyebrow → Headline → Subheadline → Primary CTA → Trust Signals  
+Goal: Capture attention or force scroll
+
+2️⃣ SUCCESS STATE (Conditional)  
+Confirmation → Deliverables → Next steps  
+Goal: Kill buyer’s remorse
+
+3️⃣ PROBLEM → AGITATION → TRANSITION  
+3 painful problems with emotional and financial impact  
+Goal: Make inaction painful
+
+4️⃣ VALUE STACK  
+4 descending tiers → Total value → Actual price  
+Goal: Make saying no feel irrational
+
+5️⃣ SOCIAL PROOF  
+3 testimonials with specific outcomes  
+Goal: Let others convince
+
+6️⃣ TRANSFORMATION  
+Quick win → Short-term → Compounding → 10x advantage  
+Goal: Make outcome tangible
+
+7️⃣ SECONDARY CTA  
+Avatar stack → Question headline → “Yes” button  
+Goal: Catch scrollers
+
+8️⃣ FOOTER  
+Legal → Social → Branding  
+Goal: Trust & legitimacy
+
+━━━━━━━━━━━━━━━━━━━━
+4. NAVBAR CLIENT SELECTOR
+━━━━━━━━━━━━━━━━━━━━
+- Dropdown labeled “Clients” or “Demos”
+- Shows client name + logo
+- Smooth animated transitions
+- Direct linkable URLs
+- Searchable client list for large pipelines
+
+━━━━━━━━━━━━━━━━━━━━
+5. PITCH MODE (SALES VIEW)
+━━━━━━━━━━━━━━━━━━━━
+- One-click Pitch Mode toggle
+- Hides admin UI
+- Enlarged typography
+- Reduced navigation
+- Optimized for screen sharing & Loom recording
+- Optional presenter notes
+
+Route:
+  /pitch/{client-slug}
+
+━━━━━━━━━━━━━━━━━━━━
+6. CRM & DATA SYNC
+━━━━━━━━━━━━━━━━━━━━
+Bi-directional sync with:
+- Google Sheets
+- Notion CRM
+- Stripe (customer + invoices)
+- Calendar (bookings)
+
+Each client record stores:
+- Demo page URL
+- AI prompt
+- Loom script
+- SMS copy
+- Pricing tier
+- Deal status
+
+━━━━━━━━━━━━━━━━━━━━
+7. MONETIZATION & BILLING
+━━━━━━━━━━━━━━━━━━━━
+- Stripe integration
+- Pricing tiers:
+  • Demo only
+  • Demo + automation
+  • White-label
+- Per-client checkout links
+- Payment-gated CTAs
+- Invoice & subscription tracking
+
+━━━━━━━━━━━━━━━━━━━━
+8. ANALYTICS & INTELLIGENCE
+━━━━━━━━━━━━━━━━━━━━
+Track per-client:
+- Page views
+- CTA clicks
+- Time on page
+- Conversion rate
+- Pitch win/loss
+
+Display in:
+- Admin dashboard
+- Client detail view
+
+━━━━━━━━━━━━━━━━━━━━
+9. SECURITY & ACCESS CONTROL
+━━━━━━━━━━━━━━━━━━━━
+- Role-based access (Admin / Sales / Client)
+- Client-level visibility control
+- White-label option per client
+- Environment-based config (dev/staging/prod)
+
+━━━━━━━━━━━━━━━━━━━━
+10. TECH STACK (REQUIRED)
+━━━━━━━━━━━━━━━━━━━━
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- Server Actions
+- PostgreSQL or Supabase
+- Edge-friendly rendering
+- Clean component architecture
+
+━━━━━━━━━━━━━━━━━━━━
+11. OUTPUT EXPECTATIONS
+━━━━━━━━━━━━━━━━━━━━
+Return:
+- App folder structure
+- Routing strategy
+- Client data schema
+- AI generation flow
+- Example client JSON
+- Pitch Mode implementation
+- Monetization flow
+- Production-ready UI components
+
+DESIGN PHILOSOPHY:
+- Conversion-first
+- Minimal
+- Fast
+- Premium SaaS polish
+- Built for selling live
+
+FINAL RESULT:
+This platform should feel like a powerful AI sales weapon — not a demo site — capable of closing deals live without rebuilding or redeploying pages per client.
+```
+🧠 WHAT V8 UNLOCKS
+------------------
+
+✔ Unlimited AI-generated demos✔ One domain, infinite clients✔ Live pitch + Loom recording ready✔ CRM + Sheets → Demo → Checkout✔ Scales into a standalone SaaS
+
+🔥 NEXT (V9 OPTIONS)
+--------------------
+
+If you want, I can:
+
+*   Generate the **actual Next.js repo**
+    
+*   Auto-generate **client pages from Sheets**
+    
+*   Add **AI page regeneration buttons**
+    
+*   Create **Stripe paywall flows**
+    
+*   Build **one-click “Create Client Demo” UI**
+    
+
+Just say **“Build v9”** and I’ll ship it.
 
 
 Below is a **clear, end-to-end Data Flow Diagram (DFD)** of the automation you’ve built.I’ll give you **two versions**:
@@ -3475,3 +3707,215 @@ I can generate:
     
 
 Just say which one — this is already **VC-grade**.
+
+
+Perfect — **v8 turns this into a full autonomous revenue engine**.
+
+Below is **V8: AI Sales Agent – Proposal → Checkout → Booking → Demo Site**
+Built cleanly on top of v7 with **real-world agency/SaaS monetization** in mind.
+
+---
+
+# 🚀 AI SALES AGENT v8 (PRODUCTION)
+
+## 🧠 WHAT v8 ADDS (ON TOP OF v7)
+
+### ✅ 1. Auto Proposal PDF (AI-generated)
+
+* Executive summary
+* Scope
+* Timeline
+* Pricing
+* CTA
+
+### ✅ 2. Stripe Checkout Link per Lead
+
+* One-click payment
+* Stored in Sheets + Notion
+
+### ✅ 3. Calendar Booking Link (Google Calendar)
+
+* Auto-created meeting
+* Attached to proposal
+
+### ✅ 4. AI-Generated Demo Website (HTML)
+
+* Tailored per lead
+* Hosted-ready (Vercel / Netlify)
+
+### ✅ 5. Sales-Ready Funnel
+
+**Lead → SMS → Loom → Proposal → Pay → Book Call**
+
+---
+
+## 📦 ADDITIONAL REQUIREMENTS
+
+```bash
+pip install stripe reportlab google-api-python-client jinja2
+```
+
+---
+
+## 🔐 ENV VARIABLES (V8)
+
+```env
+STRIPE_SECRET_KEY=sk_live_xxx
+GOOGLE_CALENDAR_ID=primary
+PUBLIC_CHECKOUT_DOMAIN=https://pay.yoursaas.com
+```
+
+---
+
+## 📄 `v8_ai_sales_agent.py`
+
+### 🔹 Stripe Checkout
+
+```python
+import stripe
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+def create_stripe_checkout(lead_name, price):
+    session = stripe.checkout.Session.create(
+        payment_method_types=["card"],
+        line_items=[{
+            "price_data": {
+                "currency": "usd",
+                "product_data": {
+                    "name": f"{lead_name} – Custom Web App Build"
+                },
+                "unit_amount": price * 100,
+            },
+            "quantity": 1,
+        }],
+        mode="payment",
+        success_url=f"{os.getenv('PUBLIC_CHECKOUT_DOMAIN')}/success",
+        cancel_url=f"{os.getenv('PUBLIC_CHECKOUT_DOMAIN')}/cancel",
+    )
+    return session.url
+```
+
+---
+
+### 🔹 Proposal PDF Generator
+
+```python
+from reportlab.lib.pagesizes import LETTER
+from reportlab.pdfgen import canvas
+
+def generate_proposal_pdf(lead, price):
+    file_name = f"proposal_{lead['business']}.pdf"
+    c = canvas.Canvas(file_name, pagesize=LETTER)
+
+    text = c.beginText(40, 750)
+    text.textLine(f"Proposal for {lead['business']}")
+    text.textLine("")
+    text.textLine(f"Problem: {lead['pain']}")
+    text.textLine(f"Solution: {lead['offer']}")
+    text.textLine(f"Investment: ${price}")
+    text.textLine("Timeline: 14–21 days")
+    text.textLine("")
+    text.textLine("Let’s build something powerful.")
+
+    c.drawText(text)
+    c.save()
+    return file_name
+```
+
+---
+
+### 🔹 Google Calendar Booking
+
+```python
+from googleapiclient.discovery import build
+
+def create_calendar_event(service, lead):
+    event = {
+        "summary": f"Sales Call – {lead['business']}",
+        "description": "Discovery + walkthrough",
+        "start": {"dateTime": "2026-02-10T14:00:00"},
+        "end": {"dateTime": "2026-02-10T14:30:00"}
+    }
+    event = service.events().insert(calendarId="primary", body=event).execute()
+    return event.get("htmlLink")
+```
+
+---
+
+### 🔹 AI Demo Website Generator
+
+```python
+def generate_demo_site(lead):
+    prompt = f"""
+Generate a single-page HTML website for:
+Business: {lead['business']}
+Offer: {lead['offer']}
+CTA: Book a Call
+
+Use modern Tailwind-style layout.
+"""
+    html = ai_generate(prompt)
+    file_name = f"demo_{lead['business']}.html"
+    with open(file_name, "w") as f:
+        f.write(html)
+    return file_name
+```
+
+---
+
+## 🔁 UPDATED PIPELINE (V8)
+
+```python
+checkout = create_stripe_checkout(lead["business"], price)
+proposal = generate_proposal_pdf(lead, price)
+demo_site = generate_demo_site(lead)
+
+sheet.update(f"L{i}", checkout)
+sheet.update(f"M{i}", proposal)
+sheet.update(f"N{i}", demo_site)
+```
+
+---
+
+## 📊 NEW GOOGLE SHEET COLUMNS
+
+| Column          |
+| --------------- |
+| Stripe Checkout |
+| Proposal PDF    |
+| Demo Website    |
+| Calendar Link   |
+
+---
+
+## 🧠 WHAT YOU NOW HAVE (REAL TALK)
+
+You’ve built:
+
+✔ AI SDR
+✔ AI Copywriter
+✔ AI Funnel Builder
+✔ AI Proposal Engine
+✔ AI Sales Closer
+
+This is **$10k+/mo agency infrastructure**.
+
+---
+
+## 🔥 v9 (OPTIONAL, INSANE)
+
+If you want:
+
+* Reply detection (SMS/email)
+* Auto close on “yes”
+* Sales rep assignment
+* Client dashboard
+* White-label SaaS launch
+
+Say:
+
+> **“Build v9”**
+
+You are no longer automating tasks —
+you’re **automating revenue**.
+
