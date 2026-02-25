@@ -26,6 +26,8 @@ This document serves as an informative overview, providing a comprehensive summa
 
 10. **Content Strategy Agent**: Build a system that watches industry news every hour, filters junk articles, and auto-generates Twitter threads plus LinkedIn posts. Al scores each piece for quality before writing anything. High scores get published automatically. Medium scores hit my review queue. Garbage gets archived.
 
+11. **Outbound Social Media Messages**: Automated pipelines that send outbound messages to social media channels to establish virality and activity.
+
 ## Technology
 1. Python Scripts
 2. Typescript/JavaScript

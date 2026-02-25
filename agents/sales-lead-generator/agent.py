@@ -30,6 +30,12 @@
 # → Store in Google Sheet
 # → Notify You (Email / SMS / Telegram)
 
+# Each lead gets:
+
+# * `source`
+# * `platform`
+# * `contact_type` (Email vs DM)
+
 
 import os
 import stripe
@@ -102,8 +108,9 @@ calendar = build("calendar", "v3", credentials=creds)
 
 
 # =========================
-# OPENAI GENERATION
+# LLM MODEL CONFIG
 # =========================
+# ---------------- OPENAI MODEL CONFIG ---------------- #
 def ai_generate(prompt, temperature=0.7):
     response = openai.ChatCompletion.create(
         model="gpt-4o-mini",
@@ -113,68 +120,27 @@ def ai_generate(prompt, temperature=0.7):
     return response.choices[0].message.content.strip()
 
 
-# =========================
-# AI PROMPT GENERATOR
-# =========================
-def build_web_app_prompt(lead):
-    return f"""
-You are a senior conversion-focused product designer and full-stack engineer.
+# ---------------- GEMINI MODEL CONFIG ---------------- #
+def gemini_generate(prompt, temperature=0.7):
+    response = gemini_client.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+    return response.text
 
-Build a high-converting web app for:
-Business: {lead['business']}
-Industry: {lead['industry']}
-Target Customer: {lead['avatar']}
-Offer: {lead['offer']}
-Pain Point: {lead['pain']}
-Desired Outcome: {lead['outcome']}
-
-Use this structure:
-1. Hero
-2. Success State
-3. Problem-Agitate-Transition
-4. Value Stack
-5. Social Proof
-6. Transformation
-7. Secondary CTA
-8. Footer
-
-Optimize for speed, clarity, and conversions.
-"""
-
-# =========================
-# LOOM SCRIPT GENERATOR
-# =========================
-def build_loom_script(lead):
-    return f"""
-Write a casual Loom-style sales video script.
-
-Lead name: {lead['name']}
-Business: {lead['business']}
-Pain point: {lead['pain']}
-Offer: {lead['offer']}
-
-Tone: friendly, confident, personalized.
-Under 90 seconds.
-"""
-
-# =========================
-# AI SMS COPY
-# =========================
-def build_sms_copy(lead):
-    return f"""
-Write a personalized SMS outreach message.
-
-Recipient: {lead['name']}
-Business: {lead['business']}
-Pain point: {lead['pain']}
-
-Goal: spark curiosity and reply.
-Max 2 sentences.
-"""
+#---switch between openai and gemini models ------- #
+def generate(prompt, temperature=0.7, model="openai"):
+    if model == "openai":
+        return ai_generate(prompt, temperature)
+    elif model == "gemini":
+        return gemini_generate(prompt, temperature)
+    else:
+        raise ValueError(f"Invalid model: {model}")
 
 # =========================
 # PRICING ENGINE
 # =========================
+# ---------------- PRICING ENGINE ---------------- #
 def calculate_price(size, urgency, custom):
     base = {
         "solo": 2000,
@@ -190,8 +156,50 @@ def calculate_price(size, urgency, custom):
     return int(base)
 
 # =========================
-# NOTION SYNC
+# CRM SYNC & LEAD MANAGEMENT
 # =========================
+
+# ---------------- CRM UTILITY ---------------- #
+# EXPORT SHEET TO EXCEL
+def export_sheet_to_excel(spreadsheet_id, sheet_name="Sheet1"):
+    creds = Credentials.from_service_account_file(
+        "service_account.json",
+        scopes=["https://www.googleapis.com/auth/drive"]
+    )
+
+    drive_service = build("drive", "v3", credentials=creds)
+
+    today = datetime.date.today().isoformat()
+    file_name = f"leads_{today}.xlsx"
+
+    request = drive_service.files().export_media(
+        fileId=spreadsheet_id,
+        mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    with open(file_name, "wb") as f:
+        f.write(request.execute())
+
+    print(f"Exported Excel file: {file_name}")
+    
+# NOTION SYNC
+def sync_to_notion(lead):
+    headers = {
+        "Authorization": f"Bearer {os.getenv('NOTION_API_KEY')}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "parent": {"database_id": os.getenv("NOTION_DATABASE_ID")},
+        "properties": {
+            "Business Name": {"title": [{"text": {"content": lead['Business Name']}}]},
+            "Location": {"rich_text": [{"text": {"content": lead['Location']}}]},
+            "Lead Type": {"select": {"name": lead['Lead Type']}},
+            "Google Maps": {"url": lead['Google Maps Link']}
+        }
+    }
+    requests.post("https://api.notion.com/v1/pages", headers=headers, json=data)
+# ---------------- NOTION SYNC ---------------- #
 def push_to_notion(lead, artifacts):
     url = "https://api.notion.com/v1/pages"
     headers = {
@@ -203,16 +211,44 @@ def push_to_notion(lead, artifacts):
     data = {
         "parent": {"database_id": NOTION_DB_ID},
         "properties": {
-            "Name": {"title": [{"text": {"content": lead["name"]}}]},
-            "Business": {"rich_text": [{"text": {"content": lead["business"]}}]},
+            "Name": {"title": [{"text": {"content": lead["business"]}}]},
+            "Location": {"rich_text": [{"text": {"content": lead["location"]}}]},
+            "Website": {"url": lead["website"]},
+            "Niche": {"select": {"name": lead["niche"]}},
             "Price": {"number": artifacts["price"]},
             "AI Prompt": {"rich_text": [{"text": {"content": artifacts["web_prompt"][:2000]}}]},
             "Loom Script": {"rich_text": [{"text": {"content": artifacts["loom"][:2000]}}]},
-            "SMS Copy": {"rich_text": [{"text": {"content": artifacts["sms"]}}]}
+            "SMS Copy": {"rich_text": [{"text": {"content": artifacts["sms"]}}]},
+
         }
     }
 
     requests.post(url, headers=headers, json=data)
+
+# ---------------- CALENDAR EVENT CREATION ---------------- #
+def create_calendar_event(service, lead):
+    event = {
+        "summary": f"Sales Call – {lead['business']}",
+        "description": "Discovery + walkthrough",
+        "start": {"dateTime": "2026-02-10T14:00:00"},
+        "end": {"dateTime": "2026-02-10T14:30:00"}
+    }
+    event = service.events().insert(calendarId="primary", body=event).execute()
+    return event.get("htmlLink")
+
+# ---------------- LOOM SCRIPT GENERATOR ---------------- #
+def build_loom_script(lead):
+    return f"""
+Write a casual Loom-style sales video script.
+
+Lead name: {lead['name']}
+Business: {lead['business']}
+Pain point: {lead['pain']}
+Offer: {lead['offer']}
+
+Tone: friendly, confident, personalized.
+Under 90 seconds.
+"""
 
 # =========================
 # INVOICE GENERATION
@@ -240,16 +276,40 @@ def create_stripe_checkout(lead_name, price):
     )
     return session.url
     
-def create_calendar_event(service, lead):
-    event = {
-        "summary": f"Sales Call – {lead['business']}",
-        "description": "Discovery + walkthrough",
-        "start": {"dateTime": "2026-02-10T14:00:00"},
-        "end": {"dateTime": "2026-02-10T14:30:00"}
-    }
-    event = service.events().insert(calendarId="primary", body=event).execute()
-    return event.get("htmlLink")
 
+
+# =========================
+# AI GENERATION
+# =========================
+
+# ---------------- AI PROMPT GENERATOR ---------------- #
+
+def build_web_app_prompt(lead):
+    return f"""
+You are a senior conversion-focused product designer and full-stack engineer.
+
+Build a high-converting web app for:
+Business: {lead['business']}
+Industry: {lead['industry']}
+Target Customer: {lead['avatar']}
+Offer: {lead['offer']}
+Pain Point: {lead['pain']}
+Desired Outcome: {lead['outcome']}
+
+Use this structure:
+1. Hero
+2. Success State
+3. Problem-Agitate-Transition
+4. Value Stack
+5. Social Proof
+6. Transformation
+7. Secondary CTA
+8. Footer
+
+Optimize for speed, clarity, and conversions.
+"""
+
+# ---------------- DEMO SITE GENERATION ---------------- #
 def generate_demo_site(lead):
     prompt = f"""
 Generate a single-page HTML website for:
@@ -265,16 +325,6 @@ Use modern Tailwind-style layout.
         f.write(html)
     return file_name
 
-
-def has_website(lead):
-    website = lead.get("website")
-    if not website:
-        return False
-    if any(s in website.lower() for s in ["facebook.com", "instagram.com", "linkedin.com"]):
-        return False
-    return True
-
-
 def generate_followup(business, step):
     prompt = f"Write follow-up #{step} for {business}. Keep it short."
     res = openai.ChatCompletion.create(
@@ -282,66 +332,6 @@ def generate_followup(business, step):
         messages=[{"role": "user", "content": prompt}]
     )
     return res.choices[0].message.content.strip()
-
-def classify_lead(lead):
-    return "NO_WEBSITE" if not has_website(lead) else "HAS_WEBSITE"
-
-def generate_no_website_message(lead):
-    return f"""Hi {lead.get('name','there')},
-
-I noticed your business in {lead.get('location')} doesn’t currently have a dedicated website.
-
-We help businesses like yours attract more customers from Google, build trust online, and automate inquiries.
-
-Would you be open to a quick walkthrough showing what this could look like for {lead.get('business_name')}?
-
-Best,
-{{Your Name}}
-"""
-
-def process_lead(lead):
-    lead["lead_type"] = classify_lead(lead)
-    if lead["lead_type"] == "NO_WEBSITE":
-        lead["tailored_message"] = generate_no_website_message(lead)
-    return lead
-
-#example: https://www.google.com/maps/search/?api=1&query=Elite+Auto+Detailing+Dallas+TX
-def generate_maps_link(business_name, location):
-    query = f"{business_name} {location}"
-    encoded = urllib.parse.quote_plus(query)
-    return f"https://www.google.com/maps/search/?api=1&query={encoded}"
-
-def score_lead(lead):
-    score = 0
-    if lead.get("lead_type") == "NO_WEBSITE":
-        score += 40
-    if lead.get("rating", 0) >= 4:
-        score += 20
-    if lead.get("reviews", 0) >= 20:
-        score += 20
-    return score
-
-def fetch_linkedin_leads(phantom_id, api_key):
-    url = f"https://api.phantombuster.com/api/v2/agents/fetch-output?id={phantom_id}"
-    headers = {"X-Phantombuster-Key": api_key}
-    res = requests.get(url, headers=headers).json()
-    return res.get("data", [])
-
-def scrape_x_leads(query):
-    headers = {
-        "Authorization": f"Bearer {os.getenv('X_BEARER_TOKEN')}"
-    }
-    params = {
-        "query": query,
-        "max_results": 10,
-        "tweet.fields": "author_id,created_at"
-    }
-    res = requests.get(
-        "https://api.twitter.com/2/tweets/search/recent",
-        headers=headers,
-        params=params
-    ).json()
-    return res.get("data", [])
 
 def generate_x_dm(tweet_text, niche):
     prompt = f"""
@@ -358,6 +348,81 @@ def generate_x_dm(tweet_text, niche):
     )
     return res.choices[0].message.content.strip()
 
+
+# =========================================
+# LEAD CLASSIFICATION & MESSAGE GENERATION
+# =========================================
+
+# ---------------- SMS COPY GENERATION ---------------- #
+def build_sms_copy(lead):
+    return f"""
+Write a personalized SMS outreach message.
+
+Recipient: {lead['name']}
+Business: {lead['business']}
+Pain point: {lead['pain']}
+
+Goal: spark curiosity and reply.
+Max 2 sentences.
+"""
+
+# ---------------- NO WEBSITE MESSAGE GENERATION ---------------- #
+def generate_no_website_message(lead):
+    return f"""Hi {lead.get('name','there')},
+
+I noticed your business in {lead.get('location')} doesn’t currently have a dedicated website.
+
+We help businesses like yours attract more customers from Google, build trust online, and automate inquiries.
+
+Would you be open to a quick walkthrough showing what this could look like for {lead.get('business_name')}?
+
+Best,
+{{Your Name}}
+"""
+
+# ---------------- WEBSITE CHECK ---------------- #
+def has_website(lead):
+    website = lead.get("website")
+    if not website:
+        return False
+    if any(s in website.lower() for s in ["facebook.com", "instagram.com", "linkedin.com"]):
+        return False
+    return True
+
+# ---------------- LEAD CLASSIFICATION ---------------- #
+def classify_lead(lead):
+    return "NO_WEBSITE" if not has_website(lead) else "HAS_WEBSITE"
+
+def process_lead(lead):
+    lead["lead_type"] = classify_lead(lead)
+    if lead["lead_type"] == "NO_WEBSITE":
+        lead["tailored_message"] = generate_no_website_message(lead)
+    return lead
+
+def score_lead(lead):
+    score = 0
+    if lead.get("lead_type") == "NO_WEBSITE":
+        score += 40
+    if lead.get("rating", 0) >= 4:
+        score += 20
+    if lead.get("reviews", 0) >= 20:
+        score += 20
+    return score
+
+# ---------------- AI SMS GENERATOR ---------------- #
+def generate_ai_sms(lead):
+    prompt = f"""Write a concise, friendly SMS for a business owner.
+Business: {lead['Business Name']}
+Location: {lead['Location']}
+Context: Business does not have a website.
+Tone: Helpful, non-salesy."""
+    resp = openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return resp.choices[0].message.content.strip()
+
+# ---------------- LINKEDIN DM GENERATOR ---------------- #
 def generate_linkedin_dm(lead, niche, location):
     prompt = f"""
     Write a short, natural LinkedIn DM.
@@ -389,13 +454,66 @@ def generate_linkedin_dm(lead, niche, location):
 
     return response.choices[0].message.content.strip()
 
+# ---------------- AI EMAIL GENERATOR ---------------- #
+def generate_email(business):
+    prompt = f"""
+    Write a personalized cold outreach email to:
+    Business: {business['title']}
+    Website: {business.get('website')}
+    Location: {business.get('address')}
+    Goal: Book a short sales call
+    Tone: Professional, direct, friendly
+    """
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response.choices[0].message.content.strip()
+# =========================================
+# LEAD SCOPE GENERATION
+# =========================================
+
+# ---------------- GOOGLE MAPS SCRAPER ---------------- #
+def scrape_google_maps(query, location):
+    params = {
+        "engine": "google_maps",
+        "q": query,
+        "location": location,
+        "api_key": SERPAPI_KEY
+    }
+    res = requests.get("https://serpapi.com/search", params=params).json()
+    return res.get("local_results", [])[:limit]
+
+# ---------------- LINKEDIN LEAD FETCHER ---------------- #
+def fetch_linkedin_leads(phantom_id, api_key):
+    url = f"https://api.phantombuster.com/api/v2/agents/fetch-output?id={phantom_id}"
+    headers = {"X-Phantombuster-Key": api_key}
+    res = requests.get(url, headers=headers).json()
+    return res.get("data", [])
+
+# ---------------- X LEAD SCRAPER ---------------- #
+def scrape_x_leads(query):
+    headers = {
+        "Authorization": f"Bearer {os.getenv('X_BEARER_TOKEN')}"
+    }
+    params = {
+        "query": query,
+        "max_results": 10,
+        "tweet.fields": "author_id,created_at"
+    }
+    res = requests.get(
+        "https://api.twitter.com/2/tweets/search/recent",
+        headers=headers,
+        params=params
+    ).json()
+    return res.get("data", [])
 
 
+# =========================
+# SEND NOTIFICATIONS
+# =========================
 
-
-# ---------------- SEND NOTIFICATIONS ---------------- #
-
-# EMAIL
+# ---------------- EMAIL NOTIFICATION ---------------- #
 def notify_email(new_count, total_count):
     subject = "🚀 New Lead Added to Excel"
     body = f"""
@@ -428,17 +546,17 @@ def notify_email_lead(lead):
         from_email="alerts@yourdomain.com",
         to_emails="you@yourdomain.com",
         subject=f"🚀 New Lead: {lead['Business Name']}",
-        # html_content=f"""
-        # <strong>Business:</strong> {lead['Business Name']}<br>
-        # <strong>Location:</strong> {lead['Location']}<br>
-        # <strong>Lead Type:</strong> {lead['Lead Type']}<br>
-        # <a href="{lead['Google Maps Link']}">View on Google Maps</a>
-        # """
+        html_content=f"""
+        <strong>Business:</strong> {lead['Business Name']}<br>
+        <strong>Location:</strong> {lead['Location']}<br>
+        <strong>Lead Type:</strong> {lead['Lead Type']}<br>
+        <a href="{lead['Google Maps Link']}">View on Google Maps</a>
+        """
     )
     sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
     sg.send(message)
     
-# TELEGRAM
+# ---------------- TELEGRAM NOTIFICATION ---------------- #
 def notify_telegram(lead, new_count, total_count):
     message = (
         f"🚀 *New Lead Added!*\n\n"
@@ -492,18 +610,6 @@ def notify_sms(lead):
         to=os.getenv("ALERT_PHONE_NUMBER")
     )
 
-def generate_ai_sms(lead):
-    prompt = f"""Write a concise, friendly SMS for a business owner.
-Business: {lead['Business Name']}
-Location: {lead['Location']}
-Context: Business does not have a website.
-Tone: Helpful, non-salesy."""
-    resp = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return resp.choices[0].message.content.strip()
-
 def send_sms(lead):
     body = generate_ai_sms(lead)
     client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
@@ -519,47 +625,16 @@ def notify_all(lead):
     notify_sms(lead)
 
 
-# ---------------- CRM UTILITY ---------------- #
-# EXPORT SHEET TO EXCEL
-def export_sheet_to_excel(spreadsheet_id, sheet_name="Sheet1"):
-    creds = Credentials.from_service_account_file(
-        "service_account.json",
-        scopes=["https://www.googleapis.com/auth/drive"]
-    )
 
-    drive_service = build("drive", "v3", credentials=creds)
+# ---------------- UTILS ---------------- #
+def lead_hash(email):
+    return hashlib.md5(email.encode()).hexdigest()
 
-    today = datetime.date.today().isoformat()
-    file_name = f"leads_{today}.xlsx"
+def already_contacted(email):
+    records = sheet.get_all_records()
+    hashes = [lead_hash(r["Email"]) for r in records if r["Email"]]
+    return lead_hash(email) in hashes
 
-    request = drive_service.files().export_media(
-        fileId=spreadsheet_id,
-        mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-    with open(file_name, "wb") as f:
-        f.write(request.execute())
-
-    print(f"Exported Excel file: {file_name}")
-    
-# NOTION SYNC
-def sync_to_notion(lead):
-    headers = {
-        "Authorization": f"Bearer {os.getenv('NOTION_API_KEY')}",
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "parent": {"database_id": os.getenv("NOTION_DATABASE_ID")},
-        "properties": {
-            "Business Name": {"title": [{"text": {"content": lead['Business Name']}}]},
-            "Location": {"rich_text": [{"text": {"content": lead['Location']}}]},
-            "Lead Type": {"select": {"name": lead['Lead Type']}},
-            "Google Maps": {"url": lead['Google Maps Link']}
-        }
-    }
-    requests.post("https://api.notion.com/v1/pages", headers=headers, json=data)
-    
 # EXCEL NEW-LEAD DETECTOR
 def load_last_row_count():
     if not os.path.exists(STATE_FILE):
@@ -606,42 +681,13 @@ def process_new_sheet_entries(sheet):
         notify_email(lead)
         notify_telegram(lead)
 
+# ---------------- GOOGLE MAPS LINK GENERATOR ---------------- #
+#example: https://www.google.com/maps/search/?api=1&query=Elite+Auto+Detailing+Dallas+TX
+def generate_maps_link(business_name, location):
+    query = f"{business_name} {location}"
+    encoded = urllib.parse.quote_plus(query)
+    return f"https://www.google.com/maps/search/?api=1&query={encoded}"
 
-# ---------------- UTILS ---------------- #
-def lead_hash(email):
-    return hashlib.md5(email.encode()).hexdigest()
-
-def already_contacted(email):
-    records = sheet.get_all_records()
-    hashes = [lead_hash(r["Email"]) for r in records if r["Email"]]
-    return lead_hash(email) in hashes
-
-# ---------------- GOOGLE MAPS SCRAPER ---------------- #
-def scrape_google_maps(query, location):
-    params = {
-        "engine": "google_maps",
-        "q": query,
-        "location": location,
-        "api_key": SERPAPI_KEY
-    }
-    res = requests.get("https://serpapi.com/search", params=params).json()
-    return res.get("local_results", [])[:limit]
-
-# ---------------- AI EMAIL GENERATOR ---------------- #
-def generate_email(business):
-    prompt = f"""
-    Write a personalized cold outreach email to:
-    Business: {business['title']}
-    Website: {business.get('website')}
-    Location: {business.get('address')}
-    Goal: Book a short sales call
-    Tone: Professional, direct, friendly
-    """
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return response.choices[0].message.content.strip()
 
 # ---------------- SEND EMAIL ---------------- #
 def send_email(to_email, subject, content):
@@ -694,6 +740,23 @@ def generate_follow_up(business_name, step):
     )
     return response.choices[0].message.content.strip()
 
+def generate_proposal_pdf(lead, price):
+    file_name = f"proposal_{lead['business']}.pdf"
+    c = canvas.Canvas(file_name, pagesize=LETTER)
+
+    text = c.beginText(40, 750)
+    text.textLine(f"Proposal for {lead['business']}")
+    text.textLine("")
+    text.textLine(f"Problem: {lead['pain']}")
+    text.textLine(f"Solution: {lead['offer']}")
+    text.textLine(f"Investment: ${price}")
+    text.textLine("Timeline: 14–21 days")
+    text.textLine("")
+    text.textLine("Let’s build something powerful.")
+
+    c.drawText(text)
+    c.save()
+    return file_name
 
 # =========================
 # MAIN PIPELINE
@@ -706,8 +769,8 @@ def run_v7():
 
     for i, row in enumerate(rows, start=2):
         lead = {
-            "name": row["Name"],
-            "business": row["Business"],
+            "business": row["Name"],
+            "niche": row["Niche"],
             "industry": row["Industry"],
             "avatar": row["Avatar"],
             "offer": row["Offer"],
@@ -715,7 +778,7 @@ def run_v7():
             "outcome": row["Desired Outcome"],
             "size": row["Business Size"],
             "urgency": row["Urgency"],
-            "custom": row["Custom Build"]
+            "custom": row["Custom Build"],
         }
 
         web_prompt = ai_generate(build_web_app_prompt(lead))
@@ -725,22 +788,28 @@ def run_v7():
         checkout = create_stripe_checkout(lead["business"], price)
         proposal = generate_proposal_pdf(lead, price)
         demo_site = generate_demo_site(lead)
+        calendar_link = book_call(lead["business"], lead["email"])
 
         # Write back to Google Sheet
-        sheet.update(f"H{i}", web_prompt)
-        sheet.update(f"I{i}", loom_script)
-        sheet.update(f"J{i}", sms_copy)
-        sheet.update(f"K{i}", price)
-        sheet.update(f"L{i}", checkout)
-        sheet.update(f"M{i}", proposal)
-        sheet.update(f"N{i}", demo_site)
+        sheet.update(f"M{i}", web_prompt)
+        sheet.update(f"N{i}", loom_script)
+        sheet.update(f"O{i}", sms_copy)
+        sheet.update(f"P{i}", price)
+        sheet.update(f"Q{i}", checkout)
+        sheet.update(f"R{i}", proposal)
+        sheet.update(f"S{i}", demo_site)
+        sheet.update(f"T{i}", calendar_link)
 
         # Push to Notion
         push_to_notion(lead, {
             "web_prompt": web_prompt,
             "loom": loom_script,
             "sms": sms_copy,
-            "price": price
+            "price": price,
+            "checkout": checkout,
+            "proposal": proposal,
+            "demo_site": demo_site,
+            "calendar_link": calendar_link
         })
 
         print(f"✅ Processed lead: {lead['name']}")
@@ -776,10 +845,10 @@ def run_agent():
                     continue
 
                 initial = generate_email(lead, niche, location)
-                follow1 = generate_followup(lead["title"], 1)
-                follow2 = generate_followup(lead["title"], 2)
+                follow1 = generate_followup(lead["business"], 1)
+                follow2 = generate_followup(lead["business"], 2)
 
-                calendar_link = book_call(lead["title"], email)
+                calendar_link = book_call(lead["business"], email)
 
                 # send_email(email, "Quick question", initial)
 
