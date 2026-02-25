@@ -2,6 +2,11 @@
 
 This document serves as an informative overview, providing a comprehensive summary of the various AI powered Assistants or Agents currently operational within this repository. It is designed to offer a clear and concise understanding of their functionalities and integrations.
 
+# Table Of Contents
+  - [UI/UX Template Platforms](#ui/ux-template-platforms)
+  - [AI Generative Platforms](#ai-generative-platforms)
+  - [AI Prompts](#ai-prompts)
+
 ## Agents 
 
 1.  **Vehicle Diagnostics Agent:** This agent is designed to provide in-depth analysis and insights into vehicle performance, aiding in the identification of potential issues using OBD
@@ -28,10 +33,29 @@ This document serves as an informative overview, providing a comprehensive summa
 
 11. **Outbound Social Media Messages**: Automated pipelines that send outbound messages to social media channels to establish virality and activity.
 
+
+
+## Utilities
+
+### Description
+TBA
+
+### UI/UX Template Platforms
+
+### AI Generative Platforms
+
+### AI Prompts
+### Plant Identifier App Using Google Gemini API
+1. Create a plant identifier website in next js 14 using app directory and no src folder. As spom as the website loads, the user should be given the option to upload an image of a plant. And the website should show the name and other important informations on the screen. As for identifying the plants, you can use the Google Gemini API. Also make sure to style the website in a modern way using tailwind css.
+### AI Generative Chat Website
+1. Create a generative ai chat website in next js 14 using app directory and no src folder. As soon as the website loads the user should be able to select a variety of LLM models and its respective APIs such as Gemini, chat gpt, llama, and Claude and type a message before being directed to a UI similar to the photo attached to get the response from the question. Also make sure to style the website in a modern way using tailwind css and utilize mantine for some of the UI components.
+
+
 ## Migrations 
 
 1. **Real-Time-Sports Alerts** **->** nba-api-poc app moved from integration-apps repo to ai-assistants repo
 2. **Outbound Social Media Messages** **->** viral-pipeline app and integration-app moved from integration-apps repo to ai-assistants repo
+3. **Combine backend helpers repo with ai-assistants** **->** migrated the utility.md from backend helpers repo and combined to README.md
 
 ## Technology
 1. Python Scripts
