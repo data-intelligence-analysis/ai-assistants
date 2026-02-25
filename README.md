@@ -30,8 +30,8 @@ This document serves as an informative overview, providing a comprehensive summa
 
 ## Migrations 
 
-1. **Real-Time-Sports Alerts** **->** moved from integration-apps repo to ai-assistants repo
-2. **Outbound Social Media Messages** **->** moved from integration-apps repo to ai-assistants repo
+1. **Real-Time-Sports Alerts** **->** nba-api-poc app moved from integration-apps repo to ai-assistants repo
+2. **Outbound Social Media Messages** **->** viral-pipeline app and integration-app moved from integration-apps repo to ai-assistants repo
 
 ## Technology
 1. Python Scripts
