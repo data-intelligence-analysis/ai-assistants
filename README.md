@@ -33,7 +33,7 @@ This document serves as an informative overview, providing a comprehensive summa
 
 11. **Outbound Social Media Messages**: Automated pipelines that send outbound messages to social media channels to establish virality and activity.
 
-
+12. **Google Review Agent**: Agent follows up after each visit and sends a Google review link to happy customers. It farms 5 star reviews on autopilot.
 
 ## Utilities
 
