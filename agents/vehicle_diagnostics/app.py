@@ -32,7 +32,7 @@ def parse_intent(user_input: str):
 
     return eval(response.choices[0].message.content)
 
-#Driving Efficiency Logic
+# Driving Efficiency Logic
 def analyze_efficiency(data):
     rpm = data.get("rpm") or 0
     speed = data.get("speed") or 0
@@ -51,6 +51,31 @@ def analyze_efficiency(data):
         return "You are driving efficiently."
     else:
         return "Driving is moderate, could be optimized."
+
+def advanced_efficiency(data):
+    rpm = data.get("rpm", 0)
+    speed = data.get("speed", 0)
+
+    score = 100
+
+    if rpm > 3000:
+        score -= 30
+    if speed < 20 and rpm > 2000:
+        score -= 20
+    if speed > 60 and rpm < 2000:
+        score += 10
+
+    if score > 85:
+        status = "Excellent"
+    elif score > 60:
+        status = "Good"
+    else:
+        status = "Poor"
+
+    return {
+        "score": score,
+        "status": status
+    }
 
 
 app = FastAPI()
