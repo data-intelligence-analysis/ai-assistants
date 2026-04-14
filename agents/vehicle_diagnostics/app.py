@@ -140,3 +140,7 @@ def ask(q: Query):
     return {"answer": "I don't understand yet."}
 
 
+## Bash Test
+#curl -X POST http://localhost:8000/ask \
+#-H "Content-Type: application/json" \
+#-d '{"text":"what is my speed?"}'
