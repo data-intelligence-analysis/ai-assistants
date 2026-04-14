@@ -87,8 +87,38 @@ def income_statement(df: pd.DataFrame, period='monthly'):
     net = (revenue - expenses).rename('Net Income')
     return pd.concat([revenue, expenses, net], axis=1).fillna(0)
 
-def itemized_receipts():
-    print("itemized receipt expenses")
+
+def itimize_receipts(file_path, date, merchant, item, category, amount, card_ref, payment_method):
+    """
+    Appends a new receipt line item to an Excel tracking sheet.
+    """
+    new_entry = {
+        'Date': [date],
+        'Merchant': [merchant],
+        'Item Description': [item],
+        'Category': [category],
+        'Payment Method': [f'{payment_method} (...{card_ref})'],
+        'Amount': [amount],
+        'Reimbursement Status': ['Pending']
+    }
+
+    df_new = pd.DataFrame(new_entry)
+
+    # Check if file exists; if not, create it with headers
+    if not os.path.isfile(file_path):
+        df_new.to_excel(file_path, index=False, engine='openpyxl')
+        print(f"Success: New tracking file created at {file_path}")
+    else:
+        # Append to the existing file
+        try:
+            with pd.ExcelWriter(file_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                # Load existing data to find the next empty row
+                existing_df = pd.read_excel(file_path)
+                updated_df = pd.concat([existing_df, df_new], ignore_index=True)
+                updated_df.to_excel(writer, index=False)
+            print(f"Success: Entry added to {file_path}")
+        except Exception as e:
+            print(f"Error appending to file: {e}")
 
 def balance_sheet(opening_balances: dict, df: pd.DataFrame, as_of_date):
     assets = opening_balances.get('assets',{}).copy()
