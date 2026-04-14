@@ -6,6 +6,20 @@ import socket
 from fastapi import FastAPI, WebSocket
 from pydantic import BaseModel
 from openai import OpenAI
+import os
+import threading
+
+# MAC OS VOICE
+VOICE_ENABLED = True  # toggle on/off
+
+def speak(text: str):
+    if not VOICE_ENABLED:
+        return
+
+    def _run():
+        os.system(f'say "{text}"')
+
+    threading.Thread(target=_run).start()
 
 # LLM HELPER
 client = OpenAI(api_key="YOUR_API_KEY")
@@ -124,20 +138,29 @@ def ask(q: Query):
     intent = intent_data.get("intent")
     if intent == "efficiency_check":
         result = analyze_efficiency(latest_data)
+        speak(result)
         return {"answer": result}
 
     elif intent == "get_metric":
         metric = intent_data.get("metric")
         value = latest_data.get(metric)
+        speak(f"{metric} is {value}")
         return {"answer": f"{metric} is {value}"}
     elif intent == "fuel":
+        response = f"Fuel level is {latest_data.get('fuel')}%"
+        speak(response)
         return {"answer": f"Fuel level is {latest_data.get('fuel')}%"}
     elif intent == "speed":
+        response = f"Speed is {latest_data.get('speed')} mph"
+        speak(response)
         return {"answer": f"Speed is {latest_data.get('speed')} mph"}
     elif intent == "rpm":
+        response = f"RPM is {latest_data.get('rpm')}"
+        speak(response)
         return {"answer": f"RPM is {latest_data.get('rpm')}"}
-
-    return {"answer": "I don't understand yet."}
+    response = "I don't understand yet."
+    speak(response)
+    return {"answer": response}
 
 
 ## Bash Test
