@@ -22,6 +22,53 @@ from file_loader import load_google_sheets, load_excel_files, load_csv_files
 from connectors.google_sheets import fetch_google_sheets
 from connectors.excel import fetch_excel_from_url
 
+
+import pandas as pd
+import os
+
+def log_hsa_expense(file_path, date, merchant, item, amount, card_ref):
+    """
+    Appends a new HSA line item to an Excel tracking sheet.
+    """
+    new_entry = {
+        'Date': [date],
+        'Merchant': [merchant],
+        'Item Description': [item],
+        'Category': ['HSA Qualified Medical Expense'],
+        'Payment Method': [f'Credit Card (...{card_ref})'],
+        'Amount': [amount],
+        'Reimbursement Status': ['Pending']
+    }
+
+    df_new = pd.DataFrame(new_entry)
+
+    # Check if file exists; if not, create it with headers
+    if not os.path.isfile(file_path):
+        df_new.to_excel(file_path, index=False, engine='openpyxl')
+        print(f"Success: New tracking file created at {file_path}")
+    else:
+        # Append to the existing file
+        try:
+            with pd.ExcelWriter(file_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                # Load existing data to find the next empty row
+                existing_df = pd.read_excel(file_path)
+                updated_df = pd.concat([existing_df, df_new], ignore_index=True)
+                updated_df.to_excel(writer, index=False)
+            print(f"Success: Entry added to {file_path}")
+        except Exception as e:
+            print(f"Error appending to file: {e}")
+
+# --- AI AGENT EXECUTION BLOCK ---
+# Your agent would fill these variables dynamically
+log_hsa_expense(
+    file_path='HSA_Reimbursements_2026.xlsx',
+    date='2026-04-13',
+    merchant='Amazon / CVS', 
+    item='Blood Pressure Monitor (Upper Arm Cuff)',
+    amount=54.99,
+    card_ref='1234'
+)
+
 # OUTPUT_DIR = Path(__file__).parent / 'output'
 
 # def main():
