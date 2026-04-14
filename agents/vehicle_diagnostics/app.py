@@ -164,6 +164,11 @@ def ask(q: Query):
     speak(response)
     return {"answer": response}
 
+@app.post("/voice/toggle")
+def toggle_voice():
+    global VOICE_ENABLED
+    VOICE_ENABLED = not VOICE_ENABLED
+    return {"voice_enabled": VOICE_ENABLED}
 
 ## Bash Test
 #curl -X POST http://localhost:8000/ask \
