@@ -6,7 +6,10 @@ import socket
 import json
 import time
 
-connection = obd.OBD()  # auto-connect
+#connection = obd.OBD()  # auto-connect
+connection = obd.Async()
+connection.watch(obd.commands.RPM)
+connection.start()
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(("0.0.0.0", 8765))
