@@ -1,2 +1,7 @@
 python-obd
 bleak
+fastapi 
+uvicorn 
+websockets 
+openai 
+pydantic
