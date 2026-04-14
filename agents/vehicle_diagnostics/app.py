@@ -11,6 +11,8 @@ import threading
 
 # MAC OS VOICE
 VOICE_ENABLED = True  # toggle on/off
+def format_for_speech(text):
+    return text.replace("%", " percent").replace("rpm", " R P M")
 
 def speak(text: str):
     if not VOICE_ENABLED:
