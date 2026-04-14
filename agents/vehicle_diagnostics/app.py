@@ -5,6 +5,53 @@ import json
 import socket
 from fastapi import FastAPI, WebSocket
 from pydantic import BaseModel
+from openai import OpenAI
+
+# LLM HELPER
+client = OpenAI(api_key="YOUR_API_KEY")
+
+def parse_intent(user_input: str):
+    prompt = f"""
+    You are an AI car assistant.
+    Extract the user's intent from this sentence.
+
+    Input: "{user_input}"
+
+    Return JSON:
+    {{
+      "intent": "...",
+      "metric": "...",
+      "action": "analyze | get_value"
+    }}
+    """
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return eval(response.choices[0].message.content)
+
+#Driving Efficiency Logic
+def analyze_efficiency(data):
+    rpm = data.get("rpm") or 0
+    speed = data.get("speed") or 0
+    fuel = data.get("fuel") or 0
+
+    if speed == 0:
+        return "Vehicle is stationary."
+
+    ratio = rpm / max(speed, 1)
+
+    if rpm > 3000:
+        return "You are driving aggressively (high RPM)."
+    elif ratio > 120:
+        return "Engine load is high for your speed. Try smoother acceleration."
+    elif rpm < 2000 and speed > 40:
+        return "You are driving efficiently."
+    else:
+        return "Driving is moderate, could be optimized."
+
 
 app = FastAPI()
 
