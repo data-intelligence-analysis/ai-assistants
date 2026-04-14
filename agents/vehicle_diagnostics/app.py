@@ -94,13 +94,24 @@ class Query(BaseModel):
 
 @app.post("/ask")
 def ask(q: Query):
-    text = q.text.lower()
+    #text = q.lower()
+    intent_data = parse_intent(q.text)
+    intent = intent_data.get("intent")
+    if intent == "efficiency_check":
+        result = analyze_efficiency(latest_data)
+        return {"answer": result}
 
-    if "fuel" in text:
+    elif intent == "get_metric":
+        metric = intent_data.get("metric")
+        value = latest_data.get(metric)
+        return {"answer": f"{metric} is {value}"}
+    elif intent == "fuel":
         return {"answer": f"Fuel level is {latest_data.get('fuel')}%"}
-    elif "speed" in text:
+    elif intent == "speed":
         return {"answer": f"Speed is {latest_data.get('speed')} mph"}
-    elif "rpm" in text:
+    elif intent == "rpm":
         return {"answer": f"RPM is {latest_data.get('rpm')}"}
 
     return {"answer": "I don't understand yet."}
+
+
