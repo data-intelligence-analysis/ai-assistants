@@ -33,6 +33,9 @@ Run entirely in a Docker container
    ├── WebSocket (streaming)
    ├── Voice + LLM (commands)
 
+```bash
+Mic → Wake Word ("Hey Car") → Listen → Transcribe → LLM → OBD Data → Response → Speak
+```
 
 ---
 
