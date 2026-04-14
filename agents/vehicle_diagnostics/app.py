@@ -8,8 +8,41 @@ from pydantic import BaseModel
 from openai import OpenAI
 import os
 import threading
+import pyttsx3
 
-# MAC OS VOICE
+client = OpenAI()
+engine = pyttsx3.init()
+
+def speak(text: str, system):
+    match system
+        case "openai":
+            audio = client.audio.speech.create(
+        model="gpt-4o-mini-tts",
+        voice="alloy",
+        input=text
+    )
+            with open("speech.mp3", "wb") as f:
+        f.write(audio.read())
+    
+            os.system("afplay speech.mp3")
+        case "offline":
+            engine.say(text)
+            engine.runAndWait()
+        case "macos":
+            if not VOICE_ENABLED:
+               return
+
+    def _run():
+        os.system(f'say "{text}"')
+        # select a voice
+        # os.system(f'say -v Samantha "{text}"')
+   threading.Thread(target=_run).start()
+         case _:
+            # Raising an error for invalid input
+            raise ValueError(f"Invalid command: '{command}'. Expected 'start' or 'stop'.")
+        
+
+# MAC OS VOICE ENABLED SPEECH
 VOICE_ENABLED = True  # toggle on/off
 def format_for_speech(text):
     return text.replace("%", " percent").replace("rpm", " R P M")
@@ -20,8 +53,11 @@ def speak(text: str):
 
     def _run():
         os.system(f'say "{text}"')
+        # select a voice
+        # os.system(f'say -v Samantha "{text}"')
+   threading.Thread(target=_run).start()
 
-    threading.Thread(target=_run).start()
+
 
 # LLM HELPER
 client = OpenAI(api_key="YOUR_API_KEY")
@@ -174,3 +210,6 @@ def toggle_voice():
 #curl -X POST http://localhost:8000/ask \
 #-H "Content-Type: application/json" \
 #-d '{"text":"what is my speed?"}'
+
+# List Voices
+# say -v "?"
