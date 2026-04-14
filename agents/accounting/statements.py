@@ -87,6 +87,9 @@ def income_statement(df: pd.DataFrame, period='monthly'):
     net = (revenue - expenses).rename('Net Income')
     return pd.concat([revenue, expenses, net], axis=1).fillna(0)
 
+def itemized_receipts():
+    print("itemized receipt expenses")
+
 def balance_sheet(opening_balances: dict, df: pd.DataFrame, as_of_date):
     assets = opening_balances.get('assets',{}).copy()
     liabilities = opening_balances.get('liabilities',{}).copy()
