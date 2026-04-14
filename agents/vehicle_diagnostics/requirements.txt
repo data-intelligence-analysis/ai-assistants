@@ -5,3 +5,7 @@ uvicorn
 websockets 
 openai 
 pydantic
+pyttsx3
+vosk
+sounddevice
+numpy
