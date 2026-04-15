@@ -1,3 +1,4 @@
+#!usr/bin/python3
 
 #AI OBD Agent
 import asyncio
