@@ -213,3 +213,9 @@ def toggle_voice():
 
 # List Voices
 # say -v "?"
+
+# wake word + Continuous Listening engine
+#mkdir model
+#cd model
+#wget #https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
+unzip vosk-model-small-en-us-0.15.zip
