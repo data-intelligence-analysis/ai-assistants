@@ -139,6 +139,28 @@ def broadcast(event):
         except:
             pass
 
+def handle_voice_command(text):
+    broadcast({"type": "processing", "text": text})
+
+    intent_data = parse_intent(text)
+
+    broadcast({
+        "type": "intent_detected",
+        "intent": intent_data
+    })
+
+    response = ask(Query(text=text))
+    answer = response["answer"]
+
+    broadcast({
+        "type": "response",
+        "text": answer
+    })
+
+    speak(answer)
+
+    broadcast({"type": "idle"})
+
 app = FastAPI()
 
 OBD_HOST = "host.docker.internal"
