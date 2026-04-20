@@ -15,28 +15,6 @@ WAKE_WORD = "hey car"
 def audio_callback(indata, frames, time, status):
     q.put(bytes(indata))
 
-def handle_voice_command(text):
-    broadcast({"type": "processing", "text": text})
-
-    intent_data = parse_intent(text)
-
-    broadcast({
-        "type": "intent_detected",
-        "intent": intent_data
-    })
-
-    response = ask(Query(text=text))
-    answer = response["answer"]
-
-    broadcast({
-        "type": "response",
-        "text": answer
-    })
-
-    speak(answer)
-
-    broadcast({"type": "idle"})
-
 def listen_loop(on_command):
     with sd.RawInputStream(
         samplerate=16000,
