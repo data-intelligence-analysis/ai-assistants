@@ -130,6 +130,14 @@ def advanced_efficiency(data):
         "status": status
     }
 
+connected_clients = []
+
+def broadcast(event):
+    for client in connected_clients:
+        try:
+            asyncio.create_task(client.send_json(event))
+        except:
+            pass
 
 app = FastAPI()
 
@@ -150,6 +158,18 @@ async def obd_listener():
                 latest_data = json.loads(line.strip())
             except:
                 pass
+
+
+@app.websocket("/ui-stream")
+async def ui_stream(ws: WebSocket):
+    await ws.accept()
+    connected_clients.append(ws)
+
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except:
+        connected_clients.remove(ws)
 
 @app.on_event("startup")
 async def startup():
