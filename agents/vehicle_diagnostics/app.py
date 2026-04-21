@@ -10,6 +10,8 @@ from openai import OpenAI
 import os
 import threading
 import pyttsx3
+from fastapi.responses import HTMLResponse
+
 
 client = OpenAI()
 engine = pyttsx3.init()
@@ -181,6 +183,10 @@ async def obd_listener():
             except:
                 pass
 
+@app.get("/")
+def ui():
+    with open("templates/index.html") as f:
+        return HTMLResponse(f.read())
 
 @app.websocket("/ui-stream")
 async def ui_stream(ws: WebSocket):
