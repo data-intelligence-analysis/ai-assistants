@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jarvis Car AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-black text-white flex items-center justify-center h-screen">
+
+<div class="text-center w-full max-w-xl">
+
+  <h1 class="text-3xl font-bold mb-6">🚗 Jarvis Vehicle AI</h1>
+
+  <!-- Waveform -->
+  <canvas id="waveform" class="w-full h-32 hidden"></canvas>
+
+  <!-- Status -->
+  <div id="status" class="mt-6 text-lg text-gray-400">
+    Idle
+  </div>
+
+  <!-- Voice → Intent → Response -->
+  <div class="mt-8 space-y-4">
+
+    <div id="voiceText" class="opacity-0 transition-all duration-500 text-yellow-400"></div>
+    <div id="intentText" class="opacity-0 transition-all duration-500 text-blue-400"></div>
+    <div id="responseText" class="opacity-0 transition-all duration-500 text-green-400"></div>
+
+  </div>
+
+</div>
+
+<script>
+const ws = new WebSocket("ws://localhost:8000/ui-stream");
+
+const statusEl = document.getElementById("status");
+const voiceEl = document.getElementById("voiceText");
+const intentEl = document.getElementById("intentText");
+const responseEl = document.getElementById("responseText");
+
+const canvas = document.getElementById("waveform");
+const ctx = canvas.getContext("2d");
+
+let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let analyser = audioContext.createAnalyser();
+analyser.fftSize = 256;
+
+navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+  const source = audioContext.createMediaStreamSource(stream);
+  source.connect(analyser);
+});
+
+function drawWaveform() {
+  requestAnimationFrame(drawWaveform);
+
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+  analyser.getByteFrequencyData(dataArray);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let barWidth = canvas.width / bufferLength;
+  let x = 0;
+
+  for (let i = 0; i < bufferLength; i++) {
+    let barHeight = dataArray[i] / 2;
+    ctx.fillStyle = "lime";
+    ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+    x += barWidth;
+  }
+}
+
+drawWaveform();
+
+ws.onmessage = (msg) => {
+  const data = JSON.parse(msg.data);
+
+  if (data.type === "listening") {
+    statusEl.innerText = "🎤 Listening...";
+    canvas.classList.remove("hidden");
+  }
+
+  if (data.type === "processing") {
+    statusEl.innerText = "🧠 Understanding...";
+    voiceEl.innerText = `"${data.text}"`;
+    voiceEl.classList.remove("opacity-0");
+  }
+
+  if (data.type === "intent") {
+    intentEl.innerText = "Intent: " + JSON.stringify(data.intent);
+    intentEl.classList.remove("opacity-0");
+  }
+
+  if (data.type === "response") {
+    statusEl.innerText = "🔊 Speaking...";
+    responseEl.innerText = data.text;
+    responseEl.classList.remove("opacity-0");
+  }
+
+  if (data.type === "idle") {
+    statusEl.innerText = "Idle";
+    canvas.classList.add("hidden");
+
+    setTimeout(() => {
+      voiceEl.classList.add("opacity-0");
+      intentEl.classList.add("opacity-0");
+      responseEl.classList.add("opacity-0");
+    }, 2000);
+  }
+};
+</script>
+
+</body>
+</html>
