@@ -163,6 +163,9 @@ def handle_voice_command(text):
 
     broadcast({"type": "idle"})
 
+    #add inside voice loop
+    broadcast({"type": "listening"})
+
 app = FastAPI()
 
 OBD_HOST = "host.docker.internal"
