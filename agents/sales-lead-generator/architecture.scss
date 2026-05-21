@@ -1,10 +1,54 @@
+/*
+Architecture
+
 Daily Cron GitHub Actions / Cloud Run
-   ↓
+  ↓
 AI Lead Agent
-   ├── Google Maps [SerpAPI]
-   ├── LinkedIn [PhantombusterApolloAPI]
-   ├── X [TwitterAPIv2]
-   ├── Deduplicate leads
-   ├── AI personalization [platform-aware]
-   ├── Outreach copy per platform
-   └── Store everything in Google Sheets
+  ├── Google Maps [SerpAPI]
+  ├── LinkedIn [PhantombusterApolloAPI]
+  ├── X [TwitterAPIv2]
+  ├── Deduplicate leads
+  ├── AI personalization [platform-aware]
+  ├── Outreach copy per platform
+  └── Store everything in Google Sheets
+*/
+
+.lead-generator {
+  &__cron {
+    // scheduled trigger for the lead generation workflow
+  }
+
+  &__agent {
+    // core AI lead discovery and orchestration
+  }
+
+  &__sources {
+    &-google-maps {
+      // SerpAPI integration for local business discovery
+    }
+
+    &-linkedin {
+      // Phantombuster/Apollo integration for profile lookup
+    }
+
+    &-x-twitter {
+      // Twitter API v2 integration for social signals
+    }
+  }
+
+  &__dedupe {
+    // lead deduplication and cleanup
+  }
+
+  &__personalization {
+    // platform-aware AI outreach personalization
+  }
+
+  &__copy {
+    // generate outreach copy per channel
+  }
+
+  &__storage {
+    // persist results into Google Sheets
+  }
+}

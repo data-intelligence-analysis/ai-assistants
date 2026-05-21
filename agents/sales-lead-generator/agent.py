@@ -45,6 +45,7 @@ import requests
 import gspread
 import json
 import hashlib
+from google import genai
 from reportlab.lib.pagesizes import LETTER
 from reportlab.pdfgen import canvas
 from google.oauth2.service_account import Credentials
@@ -70,16 +71,19 @@ openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 SERPAPI_KEY = os.getenv("SERPAPI_API_KEY")
 SENDGRID_KEY = os.getenv("SENDGRID_API_KEY")
 NOTION_API_KEY = os.getenv("NOTION_API_KEY")
-NOTION_DB_ID = os.getenv("NOTION_DATABASE_ID")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
 SPREADSHEET_NAME = "SALES_AGENT_LEADS"
 CALENDAR_ID = "primary"
-STATE_FILE = "sheet_state.json" # TRACK ROW COUNT IN GOOGLE SHEET STATE FILE
+# STATE_FILE = "sheet_state.json" # TRACK ROW COUNT IN GOOGLE SHEET STATE FILE
 STATE_FILE = "state.json" # TRACK ROW COUNT IN EXCEL STATE FILE
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 with open("config.json") as f:
     CONFIG = json.load(f)
+
+# ---------------- INTIALIZE CLIENT ---------------- #
+gemini_client = genai.Client()
 
 # ---------------- GOOGLE AUTH ---------------- #
 creds = Credentials.from_service_account_file(
@@ -630,7 +634,7 @@ def notify_all(lead):
 def lead_hash(email):
     return hashlib.md5(email.encode()).hexdigest()
 
-def already_contacted(email):
+def already_queued(email):
     records = sheet.get_all_records()
     hashes = [lead_hash(r["Email"]) for r in records if r["Email"]]
     return lead_hash(email) in hashes
@@ -772,7 +776,7 @@ def run_v7():
             "business": row["Name"],
             "niche": row["Niche"],
             "industry": row["Industry"],
-            "avatar": row["Avatar"],
+            # "avatar": row["Avatar"],
             "offer": row["Offer"],
             "pain": row["Pain Point"],
             "outcome": row["Desired Outcome"],
@@ -785,20 +789,20 @@ def run_v7():
         loom_script = ai_generate(build_loom_script(lead))
         sms_copy = ai_generate(build_sms_copy(lead))
         price = calculate_price(lead["size"], lead["urgency"], lead["custom"])
-        checkout = create_stripe_checkout(lead["business"], price)
-        proposal = generate_proposal_pdf(lead, price)
-        demo_site = generate_demo_site(lead)
-        calendar_link = book_call(lead["business"], lead["email"])
+        # checkout = create_stripe_checkout(lead["business"], price)
+        # proposal = generate_proposal_pdf(lead, price)
+        # demo_site = generate_demo_site(lead)
+        # calendar_link = book_call(lead["business"], lead["email"])
 
         # Write back to Google Sheet
         sheet.update(f"M{i}", web_prompt)
         sheet.update(f"N{i}", loom_script)
         sheet.update(f"O{i}", sms_copy)
         sheet.update(f"P{i}", price)
-        sheet.update(f"Q{i}", checkout)
-        sheet.update(f"R{i}", proposal)
-        sheet.update(f"S{i}", demo_site)
-        sheet.update(f"T{i}", calendar_link)
+        # sheet.update(f"Q{i}", checkout)
+        # sheet.update(f"R{i}", proposal)
+        # sheet.update(f"S{i}", demo_site)
+        # sheet.update(f"T{i}", calendar_link)
 
         # Push to Notion
         push_to_notion(lead, {
@@ -806,91 +810,94 @@ def run_v7():
             "loom": loom_script,
             "sms": sms_copy,
             "price": price,
-            "checkout": checkout,
-            "proposal": proposal,
-            "demo_site": demo_site,
-            "calendar_link": calendar_link
+            # "checkout": checkout,
+            # "proposal": proposal,
+            # "demo_site": demo_site,
+            # "calendar_link": calendar_link
         })
 
         print(f"✅ Processed lead: {lead['name']}")
 def run_agent():
-    today = str(datetime.date.today())
+	today = str(datetime.date.today())
 
-    sources = ["google_maps", "linkedin", "x"]
+	sources = ["google_maps", "linkedin", "x"]
 
-    for source in sources:
-        if source == "google_maps":
-            ...
-        elif source == "linkedin":
-            ...
-        elif source == "x":
-            ...
+	for source in sources:
+		if source == "google_maps":
+			# 10 niches × 20 cities × 10 leads/day = 2,000 new leads/day
+			for niche in CONFIG["niches"]:
+				for location in CONFIG["locations"]:
+					# leads = scrape_google_maps("Marketing Agency", "New York")
+					leads = scrape_google_maps(
+						niche["search_query"],
+						location,
+						CONFIG["daily_limit_per_combo"]
+					)
 
-    # 10 niches × 20 cities × 10 leads/day = 2,000 new leads/day
-    for niche in CONFIG["niches"]:
-        for location in CONFIG["locations"]:
-            leads = scrape_maps(
-                niche["search_query"],
-                location,
-                CONFIG["daily_limit_per_combo"]
-            )
-            linkedin_leads = fetch_linkedin_leads(
-                phantom_id=os.getenv("PHANTOM_ID"),
-                api_key=os.getenv("PHANTOMBUSTER_API_KEY")
-            )
+					for lead in leads:
+						email = lead.get("email")
+						if not email or already_queued(email):
+								continue
 
-            for lead in leads:
-                email = lead.get("email")
-                if not email or already_contacted(email):
-                    continue
+						initial = generate_email(lead, niche, location)
+						follow1 = generate_followup(lead["business"], 1)
+						follow2 = generate_followup(lead["business"], 2)
 
-                initial = generate_email(lead, niche, location)
-                follow1 = generate_followup(lead["business"], 1)
-                follow2 = generate_followup(lead["business"], 2)
+						calendar_link = book_call(lead["business"], email)
 
-                calendar_link = book_call(lead["business"], email)
+						# send_email(email, "Quick question", initial)
 
-                # send_email(email, "Quick question", initial)
+						sheet.append_row([
+							niche["name"],
+							location,
+							lead["title"], #company
+							lead.get("website"),
+							lead.get("phone"),
+							email,
+							initial,
+							follow1,
+							follow2,
+							calendar_link, #" ",
+							"Queued",
+							today,
+							"Google Maps",
+							lead["profileUrl"]
+						])
 
-                sheet.append_row([
-                    niche["name"],
-                    location,
-                    lead["title"],
-                    lead.get("website"),
-                    email,
-                    lead.get("phone"),
-                    initial,
-                    follow1,
-                    follow2,
-                    calendar_link, #" ",
-                    "Contacted",
-                    today,
-                    "Google Maps"
-                ])
-            
-            for lead in linkedin_leads:
-                sheet.append_row([
-                    niche["name"],
-                    lead["location"],  #lead.get("location")
-                    lead["company"],   #lead.get("company")
-                    "",                #website
-                    lead.get("email"), #email address
-                    "",                #phone number
-                    initial_email,     #initial email
-                    follow1,           #follow-up 1
-                    follow2,           #follow-up 2
-                    "",                #calendar link
-                    "Queued",          #status
-                    today,             #last contacted
-                    "LinkedIn",        #lead source
-                    lead["profileUrl"],#lead.get("profileUrl")
-                    lead["name"],      #lead.get("name")
-                    "DM",              #outreach type
-                    "",
-                    linkedin_dm,
-                    "Not Sent"
-                ])
-    # leads = scrape_google_maps("Marketing Agency", "New York")
+		elif source == "linkedin":
+      # 10 niches × 20 cities × 10 leads/day = 2,000 new leads/day
+			for niche in CONFIG["niches"]:
+				for location in CONFIG["locations"]:
+						
+					linkedin_leads = fetch_linkedin_leads(
+							phantom_id=os.getenv("PHANTOM_ID"),
+							api_key=os.getenv("PHANTOMBUSTER_API_KEY")
+					)
+					for lead in linkedin_leads:
+							sheet.append_row([
+									niche["name"],
+									lead["location"],  #lead.get("location")
+									lead["company"],   #lead.get("company")
+									"",                #website
+									lead.get("email"), #email address
+									"",                #phone number
+									email,             #initial email - leag.get("email")
+									follow1,           #follow-up 1
+									follow2,           #follow-up 2
+									"",                #calendar link
+									"Queued",          #status
+									today,             #last contacted
+									"LinkedIn",        #lead source
+									lead["profileUrl"],#lead.get("profileUrl")
+									# lead["name"],      #lead.get("name")
+									# "DM",              #outreach type
+									# "",
+									# linkedin_dm,
+									# "Not Sent"
+							])
+		elif source == "x":
+			...
+
 
     # for lead in leads:
     #     email = lead.get("email")
