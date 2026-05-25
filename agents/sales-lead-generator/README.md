@@ -38,3 +38,14 @@ Q: Outreach Type     (Email / DM)
 R: LinkedIn DM
 S: DM Status
 
+## Docker Configuration
+```bash
+# Build the core image container asset
+docker build -t sales-agent-layer .
+
+# Trigger a standard Text Summary Briefing output on console
+docker run --env-file .env sales-agent-layer --format text
+
+# Trigger an Audio Voice Summary compilation file dump
+docker run --env-file .env -v $(pwd):/app sales-agent-layer --format voice
+```
