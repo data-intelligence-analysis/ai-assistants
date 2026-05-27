@@ -1,6 +1,8 @@
 {
   "lead_score_threshold": 60,
   "excel_export": true,
+  "rapidapi_key": "YOUR_RAPIDAPI_KEY_HERE",
+  "rapidapi_host": "zillow56.p.rapidapi.com",
   "niches": [
     {
       "name": "Dental Clinics",
@@ -16,8 +18,37 @@
       "name": "Fitness Studios",
       "search_query": "Gym",
       "value_prop": "helping gyms increase membership sign-ups"
+    },
+    {
+      "name": "Zillow Real Estate",
+      "search_query": "Zillow API Property Extraction",
+      "value_prop": "extracting and analyzing property listings and agent data from Zillow"
     }
   ],
+  "real_estate_config": {
+    "property_types": ["SINGLE_FAMILY", "MULTI_FAMILY", "LAND"],
+    "strategies": {
+      "investment_buy_hold": {
+        "max_price": 450000,
+        "min_bedrooms": 3,
+        "min_bathrooms": 2,
+        "target_status": "FOR_SALE",
+        "requires_zestimate": true
+      },
+      "wholesaling": {
+        "max_price": 250000,
+        "max_days_on_zillow": 90,
+        "keywords": ["motivated", "fixer upper", "as-is", "handyman special"],
+        "target_status": "FOR_SALE"
+      },
+      "buying_premium": {
+        "min_price": 500000,
+        "max_price": 1200000,
+        "min_year_built": 2010,
+        "target_status": "FOR_SALE"
+      }
+    }
+  },
   "locations": [
     "New York, NY",
     "Boston, MA",

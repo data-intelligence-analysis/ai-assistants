@@ -47,6 +47,7 @@ import json
 import hashlib
 import csv
 import urllib
+from real_estate import fetch_zillow_properties
 from datetime import datetime
 from typing import List, Dict, Any
 
@@ -599,12 +600,6 @@ def notify_email(new_count, total_count):
         to_emails=os.getenv("NOTIFY_EMAIL_TO"),
         subject=subject,
         plain_text_content=body
-        # html_content=f"""
-        # <strong>Business:</strong> {lead['Business Name']}<br>
-        # <strong>Location:</strong> {lead['Location']}<br>
-        # <strong>Lead Type:</strong> {lead['Lead Type']}<br>
-        # <a href="{lead['Google Maps Link']}">View on Google Maps</a>
-        # """
     )
     sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
     sg.send(message)
@@ -671,19 +666,11 @@ def notify_telegram_lead(lead):
         }
     )
 def notify_sms(lead):
+    body = generate_ai_sms(lead)
     client = Client(
         os.getenv("TWILIO_ACCOUNT_SID"),
         os.getenv("TWILIO_AUTH_TOKEN")
     )
-    client.messages.create(
-        body=f"New Lead: {lead['Business Name']} - {lead['Google Maps Link']}",
-        from_=os.getenv("TWILIO_PHONE_NUMBER"),
-        to=os.getenv("ALERT_PHONE_NUMBER")
-    )
-
-def send_sms(lead):
-    body = generate_ai_sms(lead)
-    client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
     client.messages.create(
         body=body,
         from_=os.getenv("TWILIO_PHONE_NUMBER"),
