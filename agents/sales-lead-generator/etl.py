@@ -509,6 +509,40 @@ def generate_linkedin_dm(lead, niche, location):
 # =========================================
 # LEAD SCOPE GENERATION
 # =========================================
+# ---------------- FETCH METRICS FROM OUTREACH SOURCE ---------------- #
+def fetch_metrics_from_source(source_type, client, kwargs):
+    """
+    Helper function to dynamically pull metrics based on the target platform.
+    """
+    # Fallback default values
+    total_count, new_count = "N/A", "N/A"
+    
+    try:
+        if source_type == "google_sheets":
+            # Expecting client to be an authorized gspread client
+            sheet_name = kwargs.get("sheet_name", "LeadsSheet")
+            sheet = client.open(sheet_name).sheet1
+            total_count = len(sheet.get_all_values()) - 1
+            new_count = "Dynamic Fetch"  # Replace with explicit cell fetch if tracked
+            
+        elif source_type == "notion":
+            # Expecting client to be a notion_client.Client instance
+            database_id = kwargs.get("database_id")
+            response = client.databases.query(database_id=database_id)
+            total_count = len(response.get("results", []))
+            new_count = "Dynamic Fetch"  # Replace with filtering logic for 'New' status
+            
+        elif source_type == "outreach":
+            # Expecting client to be an Outreach API client instance
+            # Example logic leveraging an Outreach SDK wrapper
+            response = client.prospects.list()
+            total_count = response.get("meta", {}).get("count", "N/A")
+            new_count = "Dynamic Fetch"
+            
+    except Exception as e:
+        print(f"⚠️ Failed to fetch metrics from {source_type}: {e}")
+        
+    return total_count, new_count
 
 # ---------------- GOOGLE MAPS SCRAPER ---------------- #
 def scrape_google_maps(query: str, location: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -584,53 +618,93 @@ def scrape_x_leads(query: str) -> List[Dict[str, Any]]:
 # =========================
 
 # ---------------- EMAIL NOTIFICATION ---------------- #
-def notify_email(new_count, total_count):
-    subject = "🚀 New Lead Added to Excel"
-    body = f"""
-    A new lead has been added to your Excel file.
+# def notify_email(new_count, total_count):
+#     subject = "🚀 New Lead Added"
+#     body = f"""
+#     A new lead has been added to your outreach list.
 
-    ➕ New entries: {new_count}
-    📊 Total leads: {total_count}
+#     New entries: {new_count}
+#     Total leads: {total_count}
 
-    Check your Excel file for details.
+#     Check your Excel file for details.
+#     """
+
+#     message = Mail(
+#         from_email=os.getenv("NOTIFY_EMAIL_FROM"),
+#         to_emails=os.getenv("NOTIFY_EMAIL_TO"),
+#         subject=subject,
+#         plain_text_content=body
+#     )
+#     sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+#     sg.send(message)
+#     print(f"📧 Sending SendGrid Digest Alert: {new_count} newly injected platform leads added.")
+
+
+def notify_email(lead, source_type="google_sheets", db_client=None, **kwargs):
     """
+    Sends an email notification for a new lead, dynamically fetching 
+    metrics based on the active source pipeline (Google Sheets, Notion, or Outreach).
+    """
+    # body = f"""
+    # A new lead has been added to your outreach list.
 
+    # New entries: {new_count}
+    # Total leads: {total_count}
+
+    # Check your Excel file for details.
+    # """
+    
+    # 1. Dynamically pull metrics depending on the platform source
+    total_count, new_count = fetch_metrics_from_source(source_type, db_client, kwargs)
+
+    # 2. Map source type to a clean display name for the email template
+    source_names = {
+        "google_sheets": "Google Sheets file",
+        "notion": "Notion CRM Board",
+        "outreach": "Outreach Database"
+    }
+    display_source = source_names.get(source_type, "Outreach list")
     message = Mail(
         from_email=os.getenv("NOTIFY_EMAIL_FROM"),
         to_emails=os.getenv("NOTIFY_EMAIL_TO"),
-        subject=subject,
-        plain_text_content=body
-    )
-    sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
-    sg.send(message)
-    print(f"📧 Sending SendGrid Digest Alert: {new_count} newly injected platform leads added.")
-
-
-def notify_email_lead(lead):
-    message = Mail(
-        from_email="alerts@yourdomain.com",
-        to_emails="you@yourdomain.com",
-        subject=f"🚀 New Lead: {lead['Business Name']}",
+        subject=f"🚀 New Lead Added to {source_type.replace('_', ' ').title()}: {lead['Business Name']}",
+        # plain_text_content=body,
         html_content=f"""
+        <h1>A new lead has been added to your {display_source} outreach list.</h1>
+        <br/>
         <strong>Business:</strong> {lead['Business Name']}<br>
         <strong>Location:</strong> {lead['Location']}<br>
         <strong>Lead Type:</strong> {lead['Lead Type']}<br>
         <a href="{lead['Google Maps Link']}">View on Google Maps</a>
+        <br/>
+        <strong>New entrY:</strong> {new_count}<br>
+        <strong>Total leads:</strong> {total_count}<br><br>
+        <p>Check your {display_source} for details.</p>
         """
     )
-    sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
-    sg.send(message)
+    try:
+        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg.send(message)
+        print(f"📧 Sending SendGrid Digest Alert [{source_type.upper()}]: {new_count} updated leads for {lead['Business Name']} from {lead['Location']}") # print(f"📧 Sending SendGrid Digest Alert [{source_type.upper()}]: Updated metrics for {lead['Business Name']}")
+    except Exception as e:
+        print(f"❌ Failed to send SendGrid email: {e}")
     
 # ---------------- TELEGRAM NOTIFICATION ---------------- #
-def notify_telegram(lead, new_count, total_count):
+def notify_telegram(lead, source_type="google_sheets", db_client=None, **kwargs):
+    """
+    Sends a Telegram markdown notification for a new lead, dynamically fetching 
+    metrics based on the active source pipeline (Google Sheets, Notion, or Outreach).
+    """
+    
+    # 1. Dynamically pull metrics using the same core logic
+    total_count, new_count = fetch_metrics_from_source(source_type, db_client, kwargs)
     message = (
         f"🚀 *New Lead Added!*\n\n"
         f"➕ New entries: {new_count}\n"
-        f"📊 Total leads: {total_count}"
+        f"📊 Total leads: {total_count}\n"
         f"*Business:* {lead['Business Name']}\n"
         f"*Location:* {lead['Location']}\n"
         f"*Type:* {lead['Lead Type']}\n"
-        f"*Score:* {lead['Lead Score']}\n"
         f"[Open in Google Maps]({lead['Google Maps Link']})"
     )
 
@@ -641,30 +715,13 @@ def notify_telegram(lead, new_count, total_count):
         "parse_mode": "Markdown"
     }
 
-    requests.post(url, json=payload)
-    print(f"📱 Dispatched Telegram Notification Payload. Total repository count: {total_count}")
+    try:
+        requests.post(url, json=payload)
+        print(f"Dispatched Telegram Notification Payload [{source_type.upper()}]. Total repository count: {total_count}")
+    except Exception as e:
+        print(f"❌ Failed to send Telegram notification: {e}")
 
 
-def notify_telegram_lead(lead):
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-
-    text = (
-        f"🚀 *New Lead*\n\n"
-        f"*Business:* {lead['Business Name']}\n"
-        f"*Location:* {lead['Location']}\n"
-        f"*Type:* {lead['Lead Type']}\n"
-        f"[Open in Google Maps]({lead['Google Maps Link']})"
-    )
-
-    requests.post(
-        f"https://api.telegram.org/bot{token}/sendMessage",
-        json={
-            "chat_id": chat_id,
-            "text": text,
-            "parse_mode": "Markdown"
-        }
-    )
 def notify_sms(lead):
     body = generate_ai_sms(lead)
     client = Client(
@@ -678,8 +735,18 @@ def notify_sms(lead):
     )
     
 def notify_all(lead):
-    notify_email(lead)
-    notify_telegram(lead)
+    notify_email(
+        lead, 
+        source_type="google_sheets", 
+        db_client=gspread_client, 
+        sheet_name="Client Outreach CRM"
+    )
+    notify_telegram(
+        lead, 
+        source_type="google_sheets", 
+        db_client=gspread_client, 
+        sheet_name="Client Outreach CRM"
+    )
     notify_sms(lead)
 
 
@@ -860,19 +927,36 @@ def run_agent():
 
 						# Transformation matrix processing phase
 						for lead in leads:
-								email = lead.get("email") or f"info@{lead.get('company','').lower().replace(' ','')}.com"
+                                # Clean the lead key-structure slightly to match your layout checks
+                                # Ensure location and business names carry safely into classification frameworks
+                                lead["Location"] = location
+                                lead["Company"] = lead.get("company", "Unknown Business")
+
+                                # --- Step 1: Execute Website Check, Classification & Scoring ---
+                                lead = process_lead(lead)
+                                lead_score = score_lead(lead)
+                                lead_type = lead.get("lead_type", "HAS_WEBSITE")
+                        
+                                # Deduplication filtering logic               
+								email = lead.get("email") or f"info@{lead.get('Company').lower().replace(' ','')}.com"
 								if already_queued(email):
 										continue
 
 								# High level copy synthesis generation routines
-								initial = generate_email(lead["company"], niche, location)
-								follow1 = generate_followup(lead["company"], 1)
-								follow2 = generate_followup(lead["company"], 2)
+								# initial = generate_email(lead["Company"], niche, location)
+                                # --- Step 2: High level copy synthesis generation routines ---
+                                # Use the specific tailored message if it was generated by the classifier
+                                if lead_type == "NO_WEBSITE" and "tailored_message" in lead:
+                                    initial = lead["tailored_message"]
+                                else:
+                                    initial = generate_email(lead["Company"], niche, location)
+								follow1 = generate_followup(lead["Company"], 1)
+								follow2 = generate_followup(lead["Company"], 2)
 								
 								web_prompt = ai_generate(build_web_app_prompt(lead))
 								loom_script = ai_generate(build_loom_script(lead))
 								sms_copy = ai_generate(build_sms_copy(lead))
-								calendar_link = book_call(lead["company"], email)
+								calendar_link = book_call(lead["Company"], email)
 
 								row_payload = [
 										niche["name"],
@@ -891,13 +975,189 @@ def run_agent():
 										lead.get("profileUrl", "N/A"),
 										web_prompt,
 										loom_script,
-										sms_copy
+										sms_copy,
+                                        lead_type,     # Added classification column data
+                                        lead_score     # Added prioritization scoring data
 								]
 
 								if sheet:
 										sheet.append_row(row_payload)
-										print(f"✅ Injected lead row: {lead['company']} from {source_label}")
-	# for source in sources:
+										print(f"✅ Injected classified [{lead_type} | Score: {lead_score}] lead row: {lead['Company']} from {source_label}")
+	
+
+
+if __name__ == "__main__":
+	workflow = input("Press Enter the following to start the Lead Generation Agent (main/tst): ")
+	if workflow == "tst":
+		# # Simulate a full loop over your targeted upstream channels
+		# channels = ["x", "linkedin", "google_maps"]
+		# for channel in channels:
+		# 	tst_run_agent(source=channel)
+		# 	print("-" * 60)
+		print("Telemetry Dry Run Complete. Done.")
+	elif workflow == "main":
+		# 1. Save the row count BEFORE running the morning scrape
+		previous_count = load_last_row_count()
+    # Explicit convert Google Sheets To Excel extraction configuration
+		# excel_file = export_sheet_to_excel(SPREADSHEET_ID)
+		# current_count = get_excel_row_count(excel_file)
+
+    # 2. Run your scraper agent to append new data rows        
+		run_agent()
+    # 3. Get the updated row count directly from Google Sheets
+		current_count = get_google_sheet_row_count()
+                 
+		# 4. Compare and fire notifications if new leads exist
+		if current_count > previous_count:
+				new_entries = current_count - previous_count
+				notify_email(new_entries, current_count)
+				notify_telegram(new_entries, current_count)
+
+		# 5. Persist the current count to your state.json file
+		save_row_count(current_count)
+	else:
+    # print("Invalid workflow selection. Program ended.")
+		raise NameError("Invalid workflow selection. Please choose 'main' or 'tst'.")
+    
+
+
+
+
+
+
+
+
+
+# =========================
+# MAIN PIPELINE
+# =========================
+
+
+#Previous Implementation
+
+# def run_agent():
+#     today = str(datetime.date.today())
+
+#     sources = ["google_maps", "linkedin", "x"]
+
+#     for source in sources:
+#         for niche in CONFIG.get("niches", []):
+#             for location in CONFIG.get("locations", []):
+                
+#                 # Fetch routing phase
+#                 if source == "google_maps":
+#                     leads = scrape_google_maps(niche["search_query"], location, CONFIG.get("daily_limit_per_combo", 10))
+#                     source_label = "Google Maps"
+#                 elif source == "linkedin":
+#                     leads = fetch_linkedin_leads(os.getenv("PHANTOM_ID", ""), os.getenv("PHANTOMBUSTER_API_KEY", ""))
+#                     source_label = "LinkedIn"
+#                 elif source == "x":
+#                     query = niche.get("x_query", f"{niche['search_query']} {location}")
+#                     leads = scrape_x_leads(query)
+#                     source_label = "X"
+
+#                 # Transformation matrix processing phase
+#                 for lead in leads:
+#                     # Clean the lead key-structure slightly to match your layout checks
+#                     # Ensure location and business names carry safely into classification frameworks
+#                     lead["Location"] = location
+#                     lead["Business Name"] = lead.get("company", "Unknown Business")
+
+#                     # --- Step 1: Execute Website Check, Classification & Scoring ---
+#                     lead = process_lead(lead)
+#                     lead_score = score_lead(lead)
+#                     lead_type = lead.get("lead_type", "HAS_WEBSITE")
+
+#                     # Deduplication filtering logic 
+#                     email = lead.get("email") or f"info@{lead['Business Name'].lower().replace(' ','')}.com"
+#                     if already_queued(email):
+#                         continue
+
+#                     # --- Step 2: High level copy synthesis generation routines ---
+#                     # Use the specific tailored message if it was generated by the classifier
+#                     if lead_type == "NO_WEBSITE" and "tailored_message" in lead:
+#                         initial = lead["tailored_message"]
+#                     else:
+#                         initial = generate_email(lead["Business Name"], niche, location)
+
+#                     follow1 = generate_followup(lead["Business Name"], 1)
+#                     follow2 = generate_followup(lead["Business Name"], 2)
+                    
+#                     web_prompt = ai_generate(build_web_app_prompt(lead))
+#                     loom_script = ai_generate(build_loom_script(lead))
+#                     sms_copy = ai_generate(build_sms_copy(lead))
+#                     calendar_link = book_call(lead["Business Name"], email)
+
+#                     # --- Step 3: Append Processed Payload Matrix ---
+#                     row_payload = [
+#                         niche["name"],
+#                         location,
+#                         lead["Business Name"],
+#                         lead.get("website", ""),
+#                         lead.get("phone", ""),
+#                         email,
+#                         initial,
+#                         follow1,
+#                         follow2,
+#                         calendar_link,
+#                         "Queued",
+#                         today,
+#                         source_label,
+#                         lead.get("profileUrl", "N/A"),
+#                         web_prompt,
+#                         loom_script,
+#                         sms_copy,
+#                         lead_type,     # Added classification column data
+#                         lead_score     # Added prioritization scoring data
+#                     ]
+
+#                     if sheet:
+#                         sheet.append_row(row_payload)
+#                         print(f"✅ Injected classified [{lead_type} | Score: {lead_score}] lead row: {lead['Business Name']} from {source_label}")
+
+# ---------------- EMAIL NOTIFICATION ---------------- #
+# def notify_telegram_lead(lead):
+#     token = os.getenv("TELEGRAM_BOT_TOKEN")
+#     chat_id = os.getenv("TELEGRAM_CHAT_ID")
+
+#     text = (
+#         f"🚀 *New Lead*\n\n"
+#         f"*Business:* {lead['Business Name']}\n"
+#         f"*Location:* {lead['Location']}\n"
+#         f"*Type:* {lead['Lead Type']}\n"
+#         f"[Open in Google Maps]({lead['Google Maps Link']})"
+#     )
+
+#     requests.post(
+#         f"https://api.telegram.org/bot{token}/sendMessage",
+#         json={
+#             "chat_id": chat_id,
+#             "text": text,
+#             "parse_mode": "Markdown"
+#         }
+#     )
+# def notify_email(new_count, total_count):
+#     subject = "🚀 New Lead Added"
+#     body = f"""
+#     A new lead has been added to your outreach list.
+
+#     New entries: {new_count}
+#     Total leads: {total_count}
+
+#     Check your Excel file for details.
+#     """
+
+#     message = Mail(
+#         from_email=os.getenv("NOTIFY_EMAIL_FROM"),
+#         to_emails=os.getenv("NOTIFY_EMAIL_TO"),
+#         subject=subject,
+#         plain_text_content=body
+#     )
+#     sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+#     sg.send(message)
+#     print(f"📧 Sending SendGrid Digest Alert: {new_count} newly injected platform leads added.")
+# ---------------- MAIN AGENT ---------------- #
+# for source in sources:
 	# 	if source == "google_maps":
 	# 		# 10 niches × 20 cities × 10 leads/day = 2,000 new leads/day
 	# 		for niche in CONFIG["niches"]:
@@ -1046,44 +1306,6 @@ def run_agent():
 	# 							loom_script,                    # Loom script
 	# 							sms_copy                        # SMS copy
 	# 						])
-
-
-if __name__ == "__main__":
-	workflow = input("Press Enter the following to start the Lead Generation Agent (main/tst): ")
-	if workflow == "tst":
-		# # Simulate a full loop over your targeted upstream channels
-		# channels = ["x", "linkedin", "google_maps"]
-		# for channel in channels:
-		# 	tst_run_agent(source=channel)
-		# 	print("-" * 60)
-		print("Telemetry Dry Run Complete. Done.")
-	elif workflow == "main":
-		# 1. Save the row count BEFORE running the morning scrape
-		previous_count = load_last_row_count()
-    # Explicit convert Google Sheets To Excel extraction configuration
-		# excel_file = export_sheet_to_excel(SPREADSHEET_ID)
-		# current_count = get_excel_row_count(excel_file)
-
-    # 2. Run your scraper agent to append new data rows        
-		run_agent()
-    # 3. Get the updated row count directly from Google Sheets
-		current_count = get_google_sheet_row_count()
-                 
-		# 4. Compare and fire notifications if new leads exist
-		if current_count > previous_count:
-				new_entries = current_count - previous_count
-				notify_email(new_entries, current_count)
-				notify_telegram(new_entries, current_count)
-
-		# 5. Persist the current count to your state.json file
-		save_row_count(current_count)
-	else:
-    # print("Invalid workflow selection. Program ended.")
-		raise NameError("Invalid workflow selection. Please choose 'main' or 'tst'.")
-    
-    
-    
-
 # Stripe Example usage:
 # if not has_active_subscription(client["stripe_customer_id"]):
 #     return
