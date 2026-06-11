@@ -1025,7 +1025,7 @@ def run_agent():
                     
                 # Fetch routing phase
                 if source == "google_maps":
-                        leads = scrape_google_maps(niche["search_query"], location, CONFIG.get("daily_limit_per_combo", 10))
+                        leads = scrape_google_maps("googleapis",niche["search_query"], location, CONFIG.get("daily_limit_per_combo", 10))
                         source_label = "Google Maps"
                 elif source == "linkedin":
                         leads = fetch_linkedin_leads(os.getenv("PHANTOM_ID", ""), os.getenv("PHANTOMBUSTER_API_KEY", ""))
