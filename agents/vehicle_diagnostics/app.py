@@ -20,13 +20,12 @@ def speak(text: str, system):
     match system
         case "openai":
             audio = client.audio.speech.create(
-        model="gpt-4o-mini-tts",
-        voice="alloy",
-        input=text
-    )
+                model="gpt-4o-mini-tts",
+                voice="alloy",
+                input=text
+            )
             with open("speech.mp3", "wb") as f:
-        f.write(audio.read())
-    
+                f.write(audio.read())
             os.system("afplay speech.mp3")
         case "offline":
             engine.say(text)
@@ -35,11 +34,11 @@ def speak(text: str, system):
             if not VOICE_ENABLED:
                return
 
-    def _run():
-        os.system(f'say "{text}"')
-        # select a voice
-        # os.system(f'say -v Samantha "{text}"')
-   threading.Thread(target=_run).start()
+            def _run():
+                os.system(f'say "{text}"')
+                # select a voice
+                # os.system(f'say -v Samantha "{text}"')
+            threading.Thread(target=_run).start()
          case _:
             # Raising an error for invalid input
             raise ValueError(f"Invalid command: '{command}'. Expected 'start' or 'stop'.")
@@ -50,15 +49,15 @@ VOICE_ENABLED = True  # toggle on/off
 def format_for_speech(text):
     return text.replace("%", " percent").replace("rpm", " R P M")
 
-def speak(text: str):
-    if not VOICE_ENABLED:
-        return
+# def speak(text: str):
+#     if not VOICE_ENABLED:
+#         return
 
-    def _run():
-        os.system(f'say "{text}"')
-        # select a voice
-        # os.system(f'say -v Samantha "{text}"')
-   threading.Thread(target=_run).start()
+#     def _run():
+#         os.system(f'say "{text}"')
+#         # select a voice
+#         # os.system(f'say -v Samantha "{text}"')
+#    threading.Thread(target=_run).start()
 
 
 
