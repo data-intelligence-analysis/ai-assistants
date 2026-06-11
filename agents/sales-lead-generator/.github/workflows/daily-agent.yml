@@ -3,7 +3,7 @@ name: Daily AI Sales Agent
 on:
   schedule:
     - cron: "0 13 * * *"
-  workflow_dispatch:
+  workflow_dispatch: # Maintains a manual trigger mechanism inside your GitHub UI
 
 jobs:
   run-agent:
@@ -19,19 +19,22 @@ jobs:
           python-version: "3.11"
 
       #Install dependencies
-      - run: pip install -r requirements.txt
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       #Create service account file
       - run: |
           echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}" > service_account.json
           
       #Run AI Agent
-      - run: python agent.py
+      - run: python etl.py
         env: 
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
 
 
 # name: Daily Outreach Lead Generation Run

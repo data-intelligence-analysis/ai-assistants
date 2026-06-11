@@ -44,10 +44,10 @@ import openai
 import requests
 import gspread
 import json
-import requests
 import hashlib
 import csv
 import urllib
+import logging
 from real_estate import fetch_zillow_properties
 from datetime import datetime
 from typing import List, Dict, Any
@@ -78,6 +78,13 @@ cloud_sheet_file = "cloud_sheet.xlsx"
 SPREADSHEET_ID = os.getenv("GOOGLE_SHEET_ID", "YOUR_SPREADSHEET_ID")
 STATE_FILE = "state.json" # TRACK ROW COUNT IN EXCEL STATE FILE
 GC_QUOTA_LIMIT = 50
+# Configure logging to output to standard out for GitHub Actions
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger(__name__)
 
 # ---------------- ENV SETUP ---------------- #
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -89,7 +96,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
 CALENDAR_ID = "primary"
 NOTION_DB_ID = os.getenv("NOTION_DB_ID")
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 SEARCH_QUERY = "local coffee shops in Austin"
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
@@ -475,7 +482,7 @@ def score_lead(lead):
 #             if any(s in website.lower() for s in ["facebook.com", "instagram.com", "linkedin.com"]):
 #                 classify_lead(False) #return False
 #             return classify_lead(False) #return True
-#         elif (lead != True or lead == None) and query and GOOGLE_MAPS_API_KEY:
+#         elif (lead != True or lead == None) and query and GOOGLE_API_KEY:
             
 #     elif lead_source == "linkedin":
 #         website = lead.get("website")
@@ -571,7 +578,7 @@ def fetch_metrics_from_source(source_type, client, kwargs):
             new_count = "Dynamic Fetch"
             
     except Exception as e:
-        print(f"⚠️ Failed to fetch metrics from {source_type}: {e}")
+        logger.error(f"⚠️ Failed to fetch metrics from {source_type}: {e}")
         
     return total_count, new_count
 
@@ -583,6 +590,7 @@ def scrape_google_maps(api: str, query: str, location: str, limit: int = 10) -> 
         if api == "serpapi":
             if not get_and_update_daily_count():
                 return None
+            logger.info(f"Initiating Google Places API search for query: '{query}'")
             try:
                 res = requests.get("https://serpapi.com/search", params=params, timeout=15).json()
                 raw_results = res.get("local_results", [])[:limit]
@@ -598,30 +606,32 @@ def scrape_google_maps(api: str, query: str, location: str, limit: int = 10) -> 
                     })
                 return normalized
             except requests.exceptions.RequestException as e:
-                print(f"SerpAPI Network Error: {e}")
+                logger.error(f"SerpAPI Network Error: {e}")
+                print("::endgroup::")
                 return None
         elif api == "googleapi":
             if not get_and_update_daily_count():
                 return None
-            params = {"engine": "google", "q": query, "api_key": GOOGLE_MAPS_API_KEY}
+            params = {"engine": "google", "q": query, "api_key": GOOGLE_API_KEY}
             url = "https://googleapis.com"
             headers = {
                 "Content-Type": "application/json",
-                "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+                "X-Goog-Api-Key": GOOGLE_API_KEY,
                 "X-Goog-FieldMask": "places.displayName,places.websiteUri"
             }
             payload = {
                 "textQuery": query,
                 "maxResultCount": limit
             }
-            
+            logger.info(f"Initiating Google Places API search for query: '{query}'")
             try:
                 response = requests.post(url, json=payload, headers=headers)
                 response.raise_for_status()
                 #extract all the results similar to the serpapi logic but using the google maps api response structure and then check if they have a website listed or not and return true or false accordingly
                 results = res.get("places", [])
+                logger.info(f"Successfully retrieved {len(raw_results)} raw results.")
                 normalized = []
-                for item in raw_results:
+                for item in results:
                     normalized.append({
                         "company": item.get("displayName", {}).get("text", "Unknown Local Business"),
                         "website": item.get("websiteUri", ""),
@@ -630,9 +640,11 @@ def scrape_google_maps(api: str, query: str, location: str, limit: int = 10) -> 
                         "industry": item.get("primaryType", "Local Business"),
                         "pain": "No prominent digital presence matching search metrics",
                     })
+                logger.info("Data extraction and normalization complete.")
                 return normalized     
             except requests.exceptions.RequestException as e:
-                print(f"API Network Error: {e}")
+                logger.error(f"API Request failed: {e}")
+                print("::endgroup::")
                 return None
     except Exception as e:
         print(f"Google Maps scrape exception: {e}")
@@ -642,6 +654,7 @@ def scrape_google_maps(api: str, query: str, location: str, limit: int = 10) -> 
 def fetch_linkedin_leads(phantom_id: str, api_key: str) -> List[Dict[str, Any]]:
     url = f"https://api.phantombuster.com/api/v2/agents/fetch-output?id={phantom_id}"
     headers = {"X-Phantombuster-Key": api_key}
+    logger.info(f"Initiating LinkedIn lead fetch for ID: {phantom_id}")
     try:
         res = requests.get(url, headers=headers, timeout=15).json()
         raw_data = res.get("data", [])
@@ -656,15 +669,18 @@ def fetch_linkedin_leads(phantom_id: str, api_key: str) -> List[Dict[str, Any]]:
                 "industry": item.get("industry", "Corporate Enterprise"),
                 "pain": "Optimizing B2B outreach conversion channels"
             })
+
         return normalized
     except Exception as e:
-        print(f"LinkedIn fetch exception: {e}")
+        logger.error(f"LinkedIn fetch exception: {e}")
+        print("::endgroup::")
         return []
 
 # ---------------- X LEAD SCRAPER ---------------- #
 def scrape_x_leads(query: str) -> List[Dict[str, Any]]:
     headers = {"Authorization": f"Bearer {os.getenv('X_BEARER_TOKEN')}"}
     params = {"query": query, "max_results": 10, "tweet.fields": "author_id,id"}
+    logger.info(f"Initiating X (Twitter) scrape for query: '{query}'")
     try:
         res = requests.get("https://api.twitter.com/2/tweets/search/recent", headers=headers, params=params, timeout=15).json()
         raw_data = res.get("data", [])
@@ -681,7 +697,8 @@ def scrape_x_leads(query: str) -> List[Dict[str, Any]]:
             })
         return normalized
     except Exception as e:
-        print(f"X (Twitter) scrape exception: {e}")
+        logger.error(f"X (Twitter) scrape exception: {e}")
+        print("::endgroup::")
         return []
 
 
@@ -759,7 +776,8 @@ def notify_email(lead, source_type="google_sheets", db_client=None, **kwargs):
         sg.send(message)
         print(f"📧 Sending SendGrid Digest Alert [{source_type.upper()}]: {new_count} updated leads for {lead['Business Name']} from {lead['Location']}") # print(f"📧 Sending SendGrid Digest Alert [{source_type.upper()}]: Updated metrics for {lead['Business Name']}")
     except Exception as e:
-        print(f"❌ Failed to send SendGrid email: {e}")
+        logger.error(f"❌ Failed to send SendGrid email: {e}")
+        print("::endgroup::")
     
 # ---------------- TELEGRAM NOTIFICATION ---------------- #
 def notify_telegram(lead, source_type="google_sheets", db_client=None, **kwargs):
@@ -791,7 +809,8 @@ def notify_telegram(lead, source_type="google_sheets", db_client=None, **kwargs)
         requests.post(url, json=payload)
         print(f"Dispatched Telegram Notification Payload [{source_type.upper()}]. Total repository count: {total_count}")
     except Exception as e:
-        print(f"❌ Failed to send Telegram notification: {e}")
+        logger.error(f"❌ Failed to send Telegram notification: {e}")
+        print("::endgroup::")
 
 
 def notify_sms(lead):
@@ -1022,18 +1041,17 @@ def run_agent():
 	for source in sources:
 		for niche in CONFIG.get("niches", []):
             for location in CONFIG.get("locations", []):
-                    
                 # Fetch routing phase
                 if source == "google_maps":
-                        leads = scrape_google_maps("googleapis",niche["search_query"], location, CONFIG.get("daily_limit_per_combo", 10))
-                        source_label = "Google Maps"
+                    leads = scrape_google_maps("googleapis",niche["search_query"], location, CONFIG.get("daily_limit_per_combo", 10))
+                    source_label = "Google Maps"
                 elif source == "linkedin":
-                        leads = fetch_linkedin_leads(os.getenv("PHANTOM_ID", ""), os.getenv("PHANTOMBUSTER_API_KEY", ""))
-                        source_label = "LinkedIn"
+                    leads = fetch_linkedin_leads(os.getenv("PHANTOM_ID", ""), os.getenv("PHANTOMBUSTER_API_KEY", ""))
+                    source_label = "LinkedIn"
                 elif source == "x":
-                        query = niche.get("x_query", f"{niche['search_query']} {location}")
-                        leads = scrape_x_leads(query)
-                        source_label = "X"
+                    query = niche.get("x_query", f"{niche['search_query']} {location}")
+                    leads = scrape_x_leads(query)
+                    source_label = "X"
 
                 # Transformation matrix processing phase
                 for lead in leads:
@@ -1069,30 +1087,30 @@ def run_agent():
                     calendar_link = book_call(lead["Company"], email)
 
                     row_payload = [
-                            niche["name"],
-                            location,
-                            lead["company"],
-                            lead.get("website", ""),
-                            lead.get("phone", ""),
-                            email,
-                            initial,
-                            follow1,
-                            follow2,
-                            calendar_link,
-                            "Queued",
-                            today,
-                            source_label,
-                            lead.get("profileUrl", "N/A"),
-                            web_prompt,
-                            loom_script,
-                            sms_copy,
-                            lead_type,     # Added classification column data
-                            lead_score     # Added prioritization scoring data
+                        niche["name"],
+                        location,
+                        lead["company"],
+                        lead.get("website", ""),
+                        lead.get("phone", ""),
+                        email,
+                        initial,
+                        follow1,
+                        follow2,
+                        calendar_link,
+                        "Queued",
+                        today,
+                        source_label,
+                        lead.get("profileUrl", "N/A"),
+                        web_prompt,
+                        loom_script,
+                        sms_copy,
+                        lead_type,     # Added classification column data
+                        lead_score     # Added prioritization scoring data
                     ]
 
                     if sheet:
-                            sheet.append_row(row_payload)
-                            print(f"✅ Injected classified [{lead_type} | Score: {lead_score}] lead row: {lead['Company']} from {source_label}")
+                        sheet.append_row(row_payload)
+                        print(f"✅ Injected classified [{lead_type} | Score: {lead_score}] lead row: {lead['Company']} from {source_label}")
 
 
 
@@ -1127,7 +1145,9 @@ if __name__ == "__main__":
 		save_row_count(current_count)
 	else:
     # print("Invalid workflow selection. Program ended.")
+		logger.error("Invalid workflow selection. Please choose 'main' or 'tst'.")
 		raise NameError("Invalid workflow selection. Please choose 'main' or 'tst'.")
+     
     
 
 

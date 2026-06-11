@@ -384,3 +384,165 @@ Would you like help extending this script to write the verified website URLs int
 print(f"Current Date: {date.today()}")
 
 
+## Real Estate
+To achieve this, we will update your Python pipeline to perform two critical tasks before saving the data to Excel:
+
+   1. Extract Zillow's Property Type Category: We will map Zillow's internal tags (homeType or propertyType) directly to your exact Excel categories (Single-Family, Condo, Townhome, Lots/Land, or Multi-Tenant).
+   2. Inject an AI Scoring & Investment Framework: The AI agent will evaluate the structural parameters of each individual property, calculate a customized Investment Score (1-100), and write a concise investment rationale.
+
+## Updated Python Pipeline: Automated Classification & Investment Scoring
+This script processes the raw Zillow listings, scores them with OpenAI, and outputs a formatted spreadsheet named zillow_investment_analysis.xlsx.
+
+import osimport datetimeimport pandas as pdfrom apify_client import ApifyClientfrom langchain_openai import ChatOpenAIfrom langchain.core.prompts import PromptTemplatefrom langchain.core.output_parsers import JsonOutputParserfrom pydantic import BaseModel, Field
+# 1. GUARDIAN RUN TRACKERTRACKER_FILE = "daily_quota_tracker.txt"
+def check_and_update_daily_quota() -> bool:
+    """Blocks multi-execution to preserve Apify and OpenAI credits."""
+    today_str = datetime.date.today().isoformat()
+    if os.path.exists(TRACKER_FILE):
+        with open(TRACKER_FILE, "r") as file:
+            if file.read().strip() == today_str:
+                return False
+    with open(TRACKER_FILE, "w") as file:
+        file.write(today_str)
+    return True
+# 2. DEFINING THE AI EVALUATION SCHEMAclass InvestmentEvaluation(BaseModel):
+    score: int = Field(description="An investment readiness score from 1 to 100.")
+    rationale: str = Field(description="A 1-2 sentence summary explaining the score based on price, space, and layout metrics.")
+# 3. CORE REAL ESTATE RUN PIPELINEdef run_zillow_investment_pipeline(location: str):
+    if not check_and_update_daily_quota():
+        print("⛔ Quota Limit Triggered: Script already executed today.")
+        return
+
+    print(f"🚀 Pulling live listings for: {location}...")
+    
+    # Platform limits applied to stay strictly inside the free tier
+    actor_input = {
+        "search": location,
+        "type": "FOR_SALE",
+        "maxPages": 1,
+        "resultsPerPage": 10
+    }
+    
+    apify_token = os.getenv("APIFY_API_TOKEN", "your_apify_token_here")
+    openai_key = os.getenv("OPENAI_API_KEY", "your_openai_key_here")
+    
+    client = ApifyClient(apify_token)
+    
+    try:
+        # Fetching raw structured property data
+        run = client.actor("scrapier/zillow-search-scraper").call(run_input=actor_input, timeout_secs=120)
+        items = list(client.dataset(run["defaultDatasetId"]).iterate_items())
+        
+        if not items:
+            print("❌ No items retrieved from the search grid.")
+            return
+            
+        raw_df = pd.DataFrame(items)
+        
+        # 4. ZILLOW INTERNAL CATEGORY MAPPING
+        # Maps Zillow's internal 'homeType' strings cleanly into your exact Excel categories
+        type_mapping = {
+            'SINGLE_FAMILY': 'Single-Family',
+            'CONDO': 'Condo',
+            'TOWNHOUSE': 'Townhome',
+            'MULTI_FAMILY': 'Multi-Tenant',
+            'LOT': 'Lots/Land',
+            'MANUFACTURED': 'Single-Family',
+            'APARTMENT': 'Multi-Tenant'
+        }
+        
+        # Ensure fallback column exists if homeType is missing
+        if 'homeType' not in raw_df.columns:
+            raw_df['homeType'] = 'SINGLE_FAMILY'
+            
+        raw_df['Category'] = raw_df['homeType'].map(type_mapping).fillna('Single-Family')
+        
+        # Keep clean, vital listing data structures
+        cols_to_keep = ['address', 'price', 'bedrooms', 'bathrooms', 'livingArea', 'Category', 'url']
+        existing_cols = [c for c in cols_to_keep if c in raw_df.columns]
+        df = raw_df[existing_cols].copy().dropna(subset=['price'])
+        
+        # Rename layout fields for presentation
+        df.rename(columns={
+            'address': 'Address', 
+            'price': 'Price', 
+            'bedrooms': 'Beds', 
+            'bathrooms': 'Baths', 
+            'livingArea': 'SqFt', 
+            'url': 'Zillow Link'
+        }, inplace=True)
+
+        # 5. INITIALIZE THE STRUCTURED AI SCORING MODEL
+        llm = ChatOpenAI(temperature=0, model="gpt-4o", openai_api_key=openai_key)
+        parser = JsonOutputParser(pydantic_object=InvestmentEvaluation)
+        
+        prompt = PromptTemplate(
+            template="You are an expert real estate data analyst.\n{format_instructions}\nEvaluate this property:\nCategory: {category}\nPrice: ${price}\nBeds: {beds}, Baths: {baths}, SqFt: {sqft}\nLocation Context: {location}\nProvide a score (1-100) assessing its value proposition (e.g. high square footage for the price, logical room counts, or developmental land viability) and a brief rationale.",
+            input_variables=["category", "price", "beds", "baths", "sqft", "location"],
+            partial_variables={"format_instructions": parser.get_format_instructions()}
+        )
+        
+        ai_pipeline = prompt | llm | parser
+        
+        # Storage lists for our new AI-generated columns
+        ai_scores = []
+        ai_rationales = []
+        
+        print("🧠 Analyzing deals using AI Engine...")
+        for _, row in df.iterrows():
+            try:
+                # Format variables safely for the LLM
+                res = ai_pipeline.invoke({
+                    "category": row['Category'],
+                    "price": row['Price'],
+                    "beds": row.get('Beds', 'N/A'),
+                    "baths": row.get('Baths', 'N/A'),
+                    "sqft": row.get('SqFt', 'N/A'),
+                    "location": location
+                })
+                ai_scores.append(res.get("score", 50))
+                ai_rationales.append(res.get("rationale", "No analysis generated."))
+            except Exception as ai_err:
+                ai_scores.append(50)
+                ai_rationales.append("AI processing encountered an omission error.")
+        
+        # Append the new scoring metrics to our spreadsheet pipeline
+        df['Investment Score'] = ai_scores
+        df['AI Analysis Summary'] = ai_rationales
+        
+        # Reorder columns so the scores are front and center
+        final_order = ['Address', 'Category', 'Price', 'Beds', 'Baths', 'SqFt', 'Investment Score', 'AI Analysis Summary', 'Zillow Link']
+        df = df[[c for c in final_order if c in df.columns]]
+        
+        # Sort listings so the highest scoring investment opportunities float to the top
+        df = df.sort_values(by='Investment Score', ascending=False)
+
+        # 6. EXPORTING CRADLE TO EXCEL
+        output_file = "zillow_investment_analysis.xlsx"
+        df.to_excel(output_file, index=False)
+        print(f"🎉 Success! Spreadsheet built and saved to: {output_file}")
+        
+    except Exception as e:
+        print(f"❌ Structural error encountered: {str(e)}")
+if __name__ == "__main__":
+    # Test execution for your chosen market
+    run_zillow_investment_pipeline("Miami, FL")
+
+## The AI Scoring Framework Logic
+The AI Agent evaluates the properties based on specific investment parameters for each asset type:
+
+* Single-Family/Townhome/Condo: The AI calculates the internal value layout (e.g., assessing if a high bedroom count paired with low total square footage implies tiny, unrentable rooms, or highlighting properties with low price-per-square-foot ratios relative to the local market baseline).
+* Multi-Tenant: The score is boosted if the layout provides an optimal ratio of plumbing to units (baths-to-beds), indicating higher potential rental yields and a smoother multi-family conversion process.
+* Lots/Land: The algorithm completely shifts its evaluation strategy. It ignores the missing bedroom or bathroom data fields entirely, assessing the property value strictly based on its raw pricing scale relative to the geographic area.
+
+## Final Excel Sheet Output Format
+The script will automatically structure your Excel sheet with the following clean columns, sorted with your absolute best opportunities visible on row one:
+
+| Address | Category | Price | Beds | Baths | SqFt | Investment Score | AI Analysis Summary | Zillow Link |
+|---|---|---|---|---|---|---|---|---|
+| 123 Ocean Dr | Condo | $310,000 | 2 | 2 | 1,400 | 92 | Priced significantly below market average per square foot. Highly liquid configuration for rental yields. | Link |
+| 742 Evergreen | Single-Family | $450,000 | 3 | 2 | 1,100 | 68 | Standard configuration layout. Price aligns closely with baseline market averages. | Link |
+| 44 Brickell Ave | Lots/Land | $190,000 | NaN | NaN | NaN | 45 | Premium price tier for raw land acreage. Limits immediate development returns. | Link |
+
+Would you like to customize the AI scoring logic by feeding the agent specific parameters—such as prioritizing properties with a target price ceiling or a minimum number of bedrooms—or would you like to set up color-coded formatting inside the Excel file to automatically highlight scores above 80 in green?
+

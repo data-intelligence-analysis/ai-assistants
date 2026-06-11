@@ -25,6 +25,13 @@
       "value_prop": "extracting and analyzing property listings and agent data from Zillow"
     }
   ],
+  "locations": [
+    "New York, NY",
+    "Boston, MA",
+    "Los Angeles, CA",
+    "Chicago, IL",
+    "Miami, FL"
+  ],
   "real_estate_config": {
     "property_types": ["SINGLE_FAMILY", "MULTI_FAMILY", "LAND"],
     "strategies": {
@@ -47,14 +54,27 @@
         "min_year_built": 2010,
         "target_status": "FOR_SALE"
       }
-    }
+    },
+    "spreadsheet_id": "your_google_sheet_id_here",
+    "settings": {
+      "max_pages_per_run": 1,
+      "results_per_page": 8,
+      "api_timeout_seconds": 120
+    },
+    "target_markets": [
+      {
+        "country": "United States",
+        "locations": ["Miami, FL", "Austin, TX", "Orlando, FL"]
+      },
+      {
+        "country": "Canada",
+        "locations": ["Toronto, ON", "Vancouver, BC"]
+      },
+      {
+        "country": "United Kingdom",
+        "locations": ["London", "Manchester"]
+      }
+    ]
   },
-  "locations": [
-    "New York, NY",
-    "Boston, MA",
-    "Los Angeles, CA",
-    "Chicago, IL",
-    "Miami, FL"
-  ],
   "daily_limit_per_combo": 10
 }
