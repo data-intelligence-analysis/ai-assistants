@@ -44,6 +44,7 @@ import openai
 import requests
 import gspread
 import json
+import requests
 import hashlib
 import csv
 import urllib
@@ -76,6 +77,7 @@ SPREADSHEET_NAME = "SALES_AGENT_LEADS"
 cloud_sheet_file = "cloud_sheet.xlsx"
 SPREADSHEET_ID = os.getenv("GOOGLE_SHEET_ID", "YOUR_SPREADSHEET_ID")
 STATE_FILE = "state.json" # TRACK ROW COUNT IN EXCEL STATE FILE
+GC_QUOTA_LIMIT = 50
 
 # ---------------- ENV SETUP ---------------- #
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -87,11 +89,14 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
 CALENDAR_ID = "primary"
 NOTION_DB_ID = os.getenv("NOTION_DB_ID")
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+SEARCH_QUERY = "local coffee shops in Austin"
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
+#config base case
 if os.path.exists("config.json"):
 	with open("config.json") as f:
-			CONFIG = json.load(f)
+		CONFIG = json.load(f)
 else:
   raise FileNotFoundError("config.json not found. Please create a config.json file with the necessary configuration.")
 
@@ -442,7 +447,8 @@ def has_website(lead):
 
 # ---------------- LEAD CLASSIFICATION ---------------- #
 def classify_lead(lead):
-    return "NO_WEBSITE" if not has_website(lead) else "HAS_WEBSITE"
+    return "NO_WEBSITE" if not lead else "HAS_WEBSITE"
+
 
 def process_lead(lead):
     lead["lead_type"] = classify_lead(lead)
@@ -459,6 +465,31 @@ def score_lead(lead):
     if lead.get("reviews", 0) >= 20:
         score += 20
     return score
+
+# def has_website(lead, query, lead_source=None):
+#     if lead_source == "google_maps" and lead != None:
+#         if lead:
+#             website = lead.get("website")
+#             if not website:
+#                 classify_lead(False) #return False
+#             if any(s in website.lower() for s in ["facebook.com", "instagram.com", "linkedin.com"]):
+#                 classify_lead(False) #return False
+#             return classify_lead(False) #return True
+#         elif (lead != True or lead == None) and query and GOOGLE_MAPS_API_KEY:
+            
+#     elif lead_source == "linkedin":
+#         website = lead.get("website")
+#         if not website:
+#             return classify_lead(False)
+#         if any(s in website.lower() for s in ["facebook.com", "instagram.com", "linkedin.com"]):
+#             return classify_lead(False)
+#         return classify_lead(True)
+#     elif lead_source == "x":
+#         return classify_lead(True)
+#     else:
+#         print(ValueError("Invalid lead source specified for website check."))
+#         return None
+
 
 # ---------------- AI SMS GENERATOR ---------------- #
 def generate_ai_sms(lead):
@@ -545,23 +576,64 @@ def fetch_metrics_from_source(source_type, client, kwargs):
     return total_count, new_count
 
 # ---------------- GOOGLE MAPS SCRAPER ---------------- #
-def scrape_google_maps(query: str, location: str, limit: int = 10) -> List[Dict[str, Any]]:
+def scrape_google_maps(api: str, query: str, location: str, limit: int = 10) -> List[Dict[str, Any]]:
     """Fetches local business data from SerpAPI Maps engine, normalizing keys."""
     params = {"engine": "google_maps", "q": query, "location": location, "api_key": SERPAPI_KEY}
     try:
-        res = requests.get("https://serpapi.com/search", params=params, timeout=15).json()
-        raw_results = res.get("local_results", [])[:limit]
-        normalized = []
-        for item in raw_results:
-            normalized.append({
-                "company": item.get("title", "Unknown Local Business"),
-                "website": item.get("website", ""),
-                "phone": item.get("phone", ""),
-                "profileUrl": item.get("gps_coordinates", {}).get("links", "N/A"),
-                "industry": item.get("type", "Local Business"),
-                "pain": "No prominent digital presence matching search metrics",
-            })
-        return normalized
+        if api == "serpapi":
+            if not get_and_update_daily_count():
+                return None
+            try:
+                res = requests.get("https://serpapi.com/search", params=params, timeout=15).json()
+                raw_results = res.get("local_results", [])[:limit]
+                normalized = []
+                for item in raw_results:
+                    normalized.append({
+                        "company": item.get("title", "Unknown Local Business"),
+                        "website": item.get("website", ""),
+                        "phone": item.get("phone", ""),
+                        "profileUrl": item.get("gps_coordinates", {}).get("links", "N/A"),
+                        "industry": item.get("type", "Local Business"),
+                        "pain": "No prominent digital presence matching search metrics",
+                    })
+                return normalized
+            except requests.exceptions.RequestException as e:
+                print(f"SerpAPI Network Error: {e}")
+                return None
+        elif api == "googleapi":
+            if not get_and_update_daily_count():
+                return None
+            params = {"engine": "google", "q": query, "api_key": GOOGLE_MAPS_API_KEY}
+            url = "https://googleapis.com"
+            headers = {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+                "X-Goog-FieldMask": "places.displayName,places.websiteUri"
+            }
+            payload = {
+                "textQuery": query,
+                "maxResultCount": limit
+            }
+            
+            try:
+                response = requests.post(url, json=payload, headers=headers)
+                response.raise_for_status()
+                #extract all the results similar to the serpapi logic but using the google maps api response structure and then check if they have a website listed or not and return true or false accordingly
+                results = res.get("places", [])
+                normalized = []
+                for item in raw_results:
+                    normalized.append({
+                        "company": item.get("displayName", {}).get("text", "Unknown Local Business"),
+                        "website": item.get("websiteUri", ""),
+                        "phone": item.get("nationalPhoneNumber", ""),
+                        "profileUrl": item.get("googleMapsUri", "N/A"),
+                        "industry": item.get("primaryType", "Local Business"),
+                        "pain": "No prominent digital presence matching search metrics",
+                    })
+                return normalized     
+            except requests.exceptions.RequestException as e:
+                print(f"API Network Error: {e}")
+                return None
     except Exception as e:
         print(f"Google Maps scrape exception: {e}")
         return []
@@ -781,17 +853,54 @@ def already_queued(email):
 		return lead_hash(email) in hashes
 	except Exception:
 		return False
-
-# EXCEL NEW-LEAD DETECTOR
+# ---------------- DAILY GOOGLE CLOUD QUOTA TRACKER ---------------- #
+def get_and_update_daily_count():
+    """
+    Reads the tracking file, resets the count if it's a new day, 
+    and increments the count for the current day.
+    """
+    today_str = datetime.today().strftime('%Y-%m-%d')
+    
+    # Initialize default state
+    state = {"date": today_str, "gc_api_request_count": 0}
+    
+    # Load existing tracking data if file exists
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, 'r') as f:
+                saved_state = json.load(f)
+                # If the tracking file is from today, keep its count
+                if saved_state.get("date") == today_str:
+                    state["gc_api_request_count"] = saved_state.get("gc_api_request_count", 0)
+        except (json.JSONDecodeError, KeyError):
+            pass  # Corrupted file, fallback to default state
+            
+    # Check if we have hit or breached the threshold
+    if state["count"] >= GC_QUOTA_LIMIT:
+        print(f"🛑 CRITICAL SAFETY CAP: You have already made {state['count']} API requests today ({today_str}).")
+        print(f"Aborting execution to protect your Google Cloud wallet from unexpected fees.")
+        return False
+        
+    # Increment the local counter
+    state["count"] += 1
+    
+    # Save the updated counter back to the file
+    with open(STATE_FILE, 'w') as f:
+        json.dump(state, f, indent=4)
+        
+    print(f"🛡️ Request allowed. Daily Usage: {state['count']}/{GC_QUOTA_LIMIT} calls.")
+    return True
+# ---------------- EXCEL NEW-LEAD DETECTOR ---------------- #
 def load_last_row_count():
     if not os.path.exists(STATE_FILE):
         return 0
     with open(STATE_FILE, "r") as f:
-        return json.load(f).get("row_count", 0)
+        return json.load(f).get("sheet_row_count", 0)
 
 def save_row_count(count):
+    today_str = datetime.today().strftime('%Y-%m-%d')
     with open(STATE_FILE, "w") as f:
-        json.dump({"row_count": count}, f)
+        json.dump({"date": today_str, "sheet_row_count": count}, f)
 
 def get_excel_row_count(file_name):
 	try:
@@ -801,14 +910,15 @@ def get_excel_row_count(file_name):
 		return 0
     # return ws.max_row - 1  # exclude header
     
-# GOOGLE SHEETS NEW-LEAD DETECTOR
+# ---------------- GOOGLE SHEETS NEW-LEAD DETECTOR ---------------- #
 def load_state():
     if os.path.exists(STATE_FILE):
         return json.load(open(STATE_FILE))
     return {"last_row": 1}
 
 def save_state(row):
-    json.dump({"last_row": row}, open(STATE_FILE, "w"))
+    today_str = datetime.today().strftime('%Y-%m-%d')
+    json.dump({"date": today_str, "last_row": row}, open(STATE_FILE, "w"))
 
 def get_new_leads(sheet):
     state = load_state()
@@ -911,79 +1021,79 @@ def run_agent():
 
 	for source in sources:
 		for niche in CONFIG.get("niches", []):
-				for location in CONFIG.get("locations", []):
-						
-						# Fetch routing phase
-						if source == "google_maps":
-								leads = scrape_google_maps(niche["search_query"], location, CONFIG.get("daily_limit_per_combo", 10))
-								source_label = "Google Maps"
-						elif source == "linkedin":
-								leads = fetch_linkedin_leads(os.getenv("PHANTOM_ID", ""), os.getenv("PHANTOMBUSTER_API_KEY", ""))
-								source_label = "LinkedIn"
-						elif source == "x":
-								query = niche.get("x_query", f"{niche['search_query']} {location}")
-								leads = scrape_x_leads(query)
-								source_label = "X"
+            for location in CONFIG.get("locations", []):
+                    
+                # Fetch routing phase
+                if source == "google_maps":
+                        leads = scrape_google_maps(niche["search_query"], location, CONFIG.get("daily_limit_per_combo", 10))
+                        source_label = "Google Maps"
+                elif source == "linkedin":
+                        leads = fetch_linkedin_leads(os.getenv("PHANTOM_ID", ""), os.getenv("PHANTOMBUSTER_API_KEY", ""))
+                        source_label = "LinkedIn"
+                elif source == "x":
+                        query = niche.get("x_query", f"{niche['search_query']} {location}")
+                        leads = scrape_x_leads(query)
+                        source_label = "X"
 
-						# Transformation matrix processing phase
-						for lead in leads:
-                                # Clean the lead key-structure slightly to match your layout checks
-                                # Ensure location and business names carry safely into classification frameworks
-                                lead["Location"] = location
-                                lead["Company"] = lead.get("company", "Unknown Business")
+                # Transformation matrix processing phase
+                for lead in leads:
+                    # Clean the lead key-structure slightly to match your layout checks
+                    # Ensure location and business names carry safely into classification frameworks
+                    lead["Location"] = location
+                    lead["Company"] = lead.get("company", "Unknown Business")
 
-                                # --- Step 1: Execute Website Check, Classification & Scoring ---
-                                lead = process_lead(lead)
-                                lead_score = score_lead(lead)
-                                lead_type = lead.get("lead_type", "HAS_WEBSITE")
-                        
-                                # Deduplication filtering logic               
-								email = lead.get("email") or f"info@{lead.get('Company').lower().replace(' ','')}.com"
-								if already_queued(email):
-										continue
+                    # --- Step 1: Execute Website Check, Classification & Scoring ---
+                    lead = process_lead(lead)
+                    lead_score = score_lead(lead)
+                    lead_type = lead.get("lead_type", "WEBSITE_CHECK_FAILED")
+            
+                    # Deduplication filtering logic               
+                    email = lead.get("email") or f"info@{lead.get('Company').lower().replace(' ','')}.com"
+                    if already_queued(email):
+                        continue
 
-								# High level copy synthesis generation routines
-								# initial = generate_email(lead["Company"], niche, location)
-                                # --- Step 2: High level copy synthesis generation routines ---
-                                # Use the specific tailored message if it was generated by the classifier
-                                if lead_type == "NO_WEBSITE" and "tailored_message" in lead:
-                                    initial = lead["tailored_message"]
-                                else:
-                                    initial = generate_email(lead["Company"], niche, location)
-								follow1 = generate_followup(lead["Company"], 1)
-								follow2 = generate_followup(lead["Company"], 2)
-								
-								web_prompt = ai_generate(build_web_app_prompt(lead))
-								loom_script = ai_generate(build_loom_script(lead))
-								sms_copy = ai_generate(build_sms_copy(lead))
-								calendar_link = book_call(lead["Company"], email)
+                    # High level copy synthesis generation routines
+                    # initial = generate_email(lead["Company"], niche, location)
+                    # --- Step 2: High level copy synthesis generation routines ---
+                    # Use the specific tailored message if it was generated by the classifier
+                    if lead_type == "NO_WEBSITE" and "tailored_message" in lead:
+                        initial = lead["tailored_message"]
+                    else:
+                        initial = generate_email(lead["Company"], niche, location)
+                    follow1 = generate_followup(lead["Company"], 1)
+                    follow2 = generate_followup(lead["Company"], 2)
+                    
+                    web_prompt = ai_generate(build_web_app_prompt(lead))
+                    loom_script = ai_generate(build_loom_script(lead))
+                    sms_copy = ai_generate(build_sms_copy(lead))
+                    calendar_link = book_call(lead["Company"], email)
 
-								row_payload = [
-										niche["name"],
-										location,
-										lead["company"],
-										lead.get("website", ""),
-										lead.get("phone", ""),
-										email,
-										initial,
-										follow1,
-										follow2,
-										calendar_link,
-										"Queued",
-										today,
-										source_label,
-										lead.get("profileUrl", "N/A"),
-										web_prompt,
-										loom_script,
-										sms_copy,
-                                        lead_type,     # Added classification column data
-                                        lead_score     # Added prioritization scoring data
-								]
+                    row_payload = [
+                            niche["name"],
+                            location,
+                            lead["company"],
+                            lead.get("website", ""),
+                            lead.get("phone", ""),
+                            email,
+                            initial,
+                            follow1,
+                            follow2,
+                            calendar_link,
+                            "Queued",
+                            today,
+                            source_label,
+                            lead.get("profileUrl", "N/A"),
+                            web_prompt,
+                            loom_script,
+                            sms_copy,
+                            lead_type,     # Added classification column data
+                            lead_score     # Added prioritization scoring data
+                    ]
 
-								if sheet:
-										sheet.append_row(row_payload)
-										print(f"✅ Injected classified [{lead_type} | Score: {lead_score}] lead row: {lead['Company']} from {source_label}")
-	
+                    if sheet:
+                            sheet.append_row(row_payload)
+                            print(f"✅ Injected classified [{lead_type} | Score: {lead_score}] lead row: {lead['Company']} from {source_label}")
+
 
 
 if __name__ == "__main__":

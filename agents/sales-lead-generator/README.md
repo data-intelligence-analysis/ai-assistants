@@ -286,9 +286,15 @@ You cannot configure the Google Cloud Console's internal API quotas directly ins
 To prevent your Python code from ever making more than 50 API requests within a single day—even if it is accidentally run multiple times or stuck in an infinite loop—you can track your daily request volume locally using a lightweight JSON state file.
 ## 🛠️ Python App with Local Daily Request Cap
 This updated script checks a local tracking file (api_quota_tracker.json) before executing. If the date matches today and the count is 50 or higher, it blocks the outbound call automatically.
+```python
+import os
+import json 
+import requests 
+from datetime import datetime
+# Configuration
+QUOTA_LIMIT = 50
+TRACKER_FILE = "api_quota_tracker.json"
 
-import osimport jsonimport requestsfrom datetime import datetime
-# ConfigurationQUOTA_LIMIT = 50TRACKER_FILE = "api_quota_tracker.json"
 def get_and_update_daily_count():
     """
     Reads the tracking file, resets the count if it's a new day, 
@@ -363,7 +369,7 @@ if __name__ == "__main__":
                 print(f"🌐 {name} HAS a website: {website}")
             else:
                 print(f"❌ {name} DOES NOT have a website listed.")
-
+```
 ## 🧠 How This Safeguard Works
 
    1. Creates a Tracking File: The script creates a tiny file named api_quota_tracker.json in the exact folder your script runs from.
