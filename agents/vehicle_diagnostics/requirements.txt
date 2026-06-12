@@ -1,11 +1,7 @@
-python-obd
+obd
 bleak
-fastapi 
-uvicorn 
-websockets 
+fastapi
 openai 
 pydantic
 pyttsx3
-vosk
-sounddevice
-numpy
+espeakng

@@ -3,67 +3,73 @@
 #AI OBD Agent
 import asyncio
 import json
+import time
 import socket
-from fastapi import FastAPI, WebSocket
-from pydantic import BaseModel
-from openai import OpenAI
 import os
 import threading
 import pyttsx3
+import obd
+from fastapi import FastAPI, WebSocket
+from pydantic import BaseModel
+from openai import OpenAI
 from fastapi.responses import HTMLResponse
 
+# =========================
+# CONFIG
+# =========================
+#CONFIGURE SPEECH SYSTEM
+VOICE_ENABLED = True  # Toggle speech on/off
+SPEECH_SYSTEM = "offline"  # Choose: "openai", "offline", or "macos"
 
-client = OpenAI()
+# LLM HELPER
+client = OpenAI(api_key="YOUR_API_KEY")
 engine = pyttsx3.init()
 
+# =========================
+# SPEECH SYSTEM
+# =========================
+def format_for_speech(text):
+    return text.replace("%", " percent").replace("rpm", " R P M")
+
 def speak(text: str, system):
-    match system
+    """
+    Speaks the text using the selected system. 
+    Defaults to SPEECH_SYSTEM to prevent signature mismatch errors.
+    """
+    if not VOICE_ENABLED:
+        return
+        
+    text_clean = format_for_speech(text)
+    match system:
         case "openai":
             audio = client.audio.speech.create(
                 model="gpt-4o-mini-tts",
                 voice="alloy",
-                input=text
+                input=text_clean
             )
-            with open("speech.mp3", "wb") as f:
-                f.write(audio.read())
+            # Option A: Use the SDK's built-in file-writing helper
+            audio.write_to_file("speech.mp3")
             os.system("afplay speech.mp3")
+            # Option B (Alternative): If you prefer using a 'with open' context manager:
+            # with open("speech.mp3", "wb") as f:
+            #     f.write(audio.read())
+            # os.system("afplay speech.mp3")
         case "offline":
-            engine.say(text)
+            engine.say(text_clean)
             engine.runAndWait()
         case "macos":
-            if not VOICE_ENABLED:
-               return
-
             def _run():
-                os.system(f'say "{text}"')
+                os.system(f'say "{text_clean}"')
                 # select a voice
                 # os.system(f'say -v Samantha "{text}"')
             threading.Thread(target=_run).start()
-         case _:
+        case _:
             # Raising an error for invalid input
-            raise ValueError(f"Invalid command: '{command}'. Expected 'start' or 'stop'.")
+            raise ValueError(f"Invalid command: '{system}'. Expected 'openai' or 'offline', or 'macos'.")
         
-
-# MAC OS VOICE ENABLED SPEECH
-VOICE_ENABLED = True  # toggle on/off
-def format_for_speech(text):
-    return text.replace("%", " percent").replace("rpm", " R P M")
-
-# def speak(text: str):
-#     if not VOICE_ENABLED:
-#         return
-
-#     def _run():
-#         os.system(f'say "{text}"')
-#         # select a voice
-#         # os.system(f'say -v Samantha "{text}"')
-#    threading.Thread(target=_run).start()
-
-
-
-# LLM HELPER
-client = OpenAI(api_key="YOUR_API_KEY")
-
+# =========================
+# INTENT PARSING (LLM)
+# =========================
 def parse_intent(user_input: str):
     prompt = f"""
     You are an AI car assistant.
@@ -79,14 +85,20 @@ def parse_intent(user_input: str):
     }}
     """
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}  # Forces JSON response
+        )
+        return json.loads(response.choices[0].message.content)
+    except Exception as e:
+        print(f"Failed to parse intent: {e}")
+        return {"intent": "unknown", "metric": None, "action": "get_value"}
 
-    return eval(response.choices[0].message.content)
-
-# Driving Efficiency Logic
+# =========================
+# VEHICLE TELEMETRICS ANALYTICS
+# =========================
 def analyze_efficiency(data):
     rpm = data.get("rpm") or 0
     speed = data.get("speed") or 0
@@ -106,32 +118,85 @@ def analyze_efficiency(data):
     else:
         return "Driving is moderate, could be optimized."
 
-def advanced_efficiency(data):
-    rpm = data.get("rpm", 0)
-    speed = data.get("speed", 0)
+# def advanced_efficiency(data):
+#     rpm = data.get("rpm", 0)
+#     speed = data.get("speed", 0)
 
-    score = 100
+#     score = 100
 
-    if rpm > 3000:
-        score -= 30
-    if speed < 20 and rpm > 2000:
-        score -= 20
-    if speed > 60 and rpm < 2000:
-        score += 10
+#     if rpm > 3000:
+#         score -= 30
+#     if speed < 20 and rpm > 2000:
+#         score -= 20
+#     if speed > 60 and rpm < 2000:
+#         score += 10
 
-    if score > 85:
-        status = "Excellent"
-    elif score > 60:
-        status = "Good"
-    else:
-        status = "Poor"
+#     if score > 85:
+#         status = "Excellent"
+#     elif score > 60:
+#         status = "Good"
+#     else:
+#         status = "Poor"
 
-    return {
-        "score": score,
-        "status": status
-    }
+#     return {
+#         "score": score,
+#         "status": status
+#     }
 
+# =========================
+# REAL OBD vs EMULATOR SOCKET LISTENER
+# =========================
+latest_data = {"rpm": 0, "speed": 0, "fuel": 0}
 connected_clients = []
+
+async def obd_listener():
+    """
+    To use a REAL car OBD-II adapter, replace this entire function with:
+    """
+    # connection = obd.OBD() # Auto-connects to USB/Bluetooth ELM327
+    connection = obd.Async()
+    connection.watch(obd.commands.RPM)
+    connection.start()
+
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(("0.0.0.0", 8765))
+    server.listen(1)
+
+    print("OBD Bridge running on port 8765...")
+
+    client, addr = server.accept()
+    print("Client connected:", addr)
+    
+    while True:
+        latest_data["rpm"] = connection.query(obd.commands.RPM).value.magnitude if connection.query(obd.commands.RPM).value else None,
+        latest_data["speed"] = connection.query(obd.commands.SPEED).value.magnitude if connection.query(obd.commands.SPEED).value else None,
+        latest_data["fuel"] = connection.query(obd.commands.FUEL_LEVEL).value.magnitude if connection.query(obd.commands.FUEL_LEVEL).value else None
+        client.send((json.dumps(latest_data) + "\n").encode())
+        # time.sleep(1)
+        await asyncio.sleep(1)
+    
+
+async def simulated_obd_listener():
+    """
+    If using an emulator, this connects to the TCP stream.
+    """
+    global latest_data
+    OBD_HOST = "host.docker.internal"
+    OBD_PORT = 8765
+    
+    while True:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((OBD_HOST, OBD_PORT))
+            print(f"Connected to OBD stream at {OBD_HOST}:{OBD_PORT}")
+            while True:
+                line = s.recv(1024).decode()
+                if line:
+                    latest_data = json.loads(line.strip())
+                await asyncio.sleep(0.1)
+        except Exception as e:
+            print(f"OBD Connection lost/failed: {e}. Retrying in 5 seconds...")
+            await asyncio.sleep(5)
 
 def broadcast(event):
     for client in connected_clients:
@@ -165,25 +230,10 @@ def handle_voice_command(text):
     #add inside voice loop
     broadcast({"type": "listening"})
 
+# =========================
+# API & WEB INTERFACE
+# =========================
 app = FastAPI()
-
-OBD_HOST = "host.docker.internal"
-OBD_PORT = 8765
-
-latest_data = {}
-
-async def obd_listener():
-    global latest_data
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((OBD_HOST, OBD_PORT))
-
-    while True:
-        line = s.recv(1024).decode()
-        if line:
-            try:
-                latest_data = json.loads(line.strip())
-            except:
-                pass
 
 @app.get("/")
 def ui():
@@ -203,7 +253,7 @@ async def ui_stream(ws: WebSocket):
 
 @app.on_event("startup")
 async def startup():
-    asyncio.create_task(obd_listener())
+    asyncio.create_task(simulated_obd_listener())
 
 @app.get("/data")
 def get_data():
@@ -229,12 +279,15 @@ def ask(q: Query):
         result = analyze_efficiency(latest_data)
         speak(result)
         return {"answer": result}
-
-    elif intent == "get_metric":
-        metric = intent_data.get("metric")
-        value = latest_data.get(metric)
-        speak(f"{metric} is {value}")
-        return {"answer": f"{metric} is {value}"}
+    elif intent == "get_metric" or intent in ["speed", "rpm", "fuel"]:
+        # Fallback to specific keys if generic metric isn't populated
+        metric = intent_data.get("metric") or intent 
+        value = latest_data.get(metric, "unknown")
+        
+        unit = "mph" if metric == "speed" else "percent" if metric == "fuel" else ""
+        response_text = f"{metric} is {value} {unit}".strip()
+        speak(response_text)
+        return {"answer": response_text}
     elif intent == "fuel":
         response = f"Fuel level is {latest_data.get('fuel')}%"
         speak(response)
@@ -247,7 +300,7 @@ def ask(q: Query):
         response = f"RPM is {latest_data.get('rpm')}"
         speak(response)
         return {"answer": f"RPM is {latest_data.get('rpm')}"}
-    response = "I don't understand yet."
+    response = "I don't understand that command yet."
     speak(response)
     return {"answer": response}
 
@@ -269,4 +322,4 @@ def toggle_voice():
 #mkdir model
 #cd model
 #wget #https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
-unzip vosk-model-small-en-us-0.15.zip
+# unzip vosk-model-small-en-us-0.15.zip

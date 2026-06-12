@@ -1,54 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Jarvis Car AI</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Diagnostics</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Import a sleek modern font -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #050505;
+      background-image: radial-gradient(circle at 50% 0%, #111827 0%, #000000 70%);
+    }
+    /* Custom scrollbar for intent overflow if needed */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+  </style>
 </head>
 
-<body class="bg-black text-white flex items-center justify-center h-screen">
+<body class="text-slate-200 flex items-center justify-center min-h-screen overflow-hidden relative">
 
-<div class="text-center w-full max-w-xl">
+  <!-- Ambient Background Glow -->
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-  <h1 class="text-3xl font-bold mb-6">🚗 Jarvis Vehicle AI</h1>
+  <!-- Main Glassmorphic Container -->
+  <div class="relative w-full max-w-2xl bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.5)] p-8 z-10 flex flex-col">
 
-  <!-- Waveform -->
-  <canvas id="waveform" class="w-full h-32 hidden"></canvas>
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 tracking-tight">
+        JARVIS AI
+      </h1>
+      <p class="text-slate-400 text-sm mt-1 uppercase tracking-widest">Vehicle Telemetrics Interface</p>
+    </div>
 
-  <!-- Status -->
-  <div id="status" class="mt-6 text-lg text-gray-400">
-    Idle
+    <!-- Status Indicator -->
+    <div class="flex items-center justify-center space-x-3 mb-6">
+      <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-slate-500 transition-colors duration-300"></div>
+      <div id="status" class="text-sm font-medium text-slate-300 uppercase tracking-widest transition-all">
+        System Idle
+      </div>
+    </div>
+
+    <!-- Waveform Canvas Wrapper -->
+    <div class="w-full h-24 mb-6 relative flex items-center justify-center">
+      <canvas id="waveform" class="w-full h-full opacity-0 transition-opacity duration-500"></canvas>
+    </div>
+
+    <!-- Dialogue / Logs Section -->
+    <div class="space-y-4 flex-grow flex flex-col justify-end min-h-[200px]">
+
+      <!-- Voice Input Box -->
+      <div id="voiceBox" class="opacity-0 translate-y-4 transition-all duration-500 bg-slate-800/40 rounded-2xl p-4 border border-slate-700/50">
+        <div class="flex items-center space-x-2 mb-1">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+          <span class="text-xs text-cyan-400 uppercase tracking-wider font-semibold">User Audio</span>
+        </div>
+        <div id="voiceText" class="text-lg text-white font-light"></div>
+      </div>
+
+      <!-- Intent Data Box -->
+      <div id="intentBox" class="opacity-0 translate-y-4 transition-all duration-500 bg-slate-800/40 rounded-2xl p-4 border border-slate-700/50">
+        <div class="flex items-center space-x-2 mb-2">
+          <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+          <span class="text-xs text-purple-400 uppercase tracking-wider font-semibold">Parsed Intent</span>
+        </div>
+        <div id="intentText" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- AI Response Box -->
+      <div id="responseBox" class="opacity-0 translate-y-4 transition-all duration-500 bg-slate-800/40 rounded-2xl p-4 border border-slate-700/50">
+        <div class="flex items-center space-x-2 mb-1">
+          <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          <span class="text-xs text-green-400 uppercase tracking-wider font-semibold">System Response</span>
+        </div>
+        <div id="responseText" class="text-lg text-white font-light"></div>
+      </div>
+
+    </div>
   </div>
-
-  <!-- Voice → Intent → Response -->
-  <div class="mt-8 space-y-4">
-
-    <div id="voiceText" class="opacity-0 transition-all duration-500 text-yellow-400"></div>
-    <div id="intentText" class="opacity-0 transition-all duration-500 text-blue-400"></div>
-    <div id="responseText" class="opacity-0 transition-all duration-500 text-green-400"></div>
-
-  </div>
-
-</div>
 
 <script>
+// --- WebSocket Setup ---
+// Change to your actual WebSocket URL if needed
 const ws = new WebSocket("ws://localhost:8000/ui-stream");
 
+// --- DOM Elements ---
 const statusEl = document.getElementById("status");
-const voiceEl = document.getElementById("voiceText");
-const intentEl = document.getElementById("intentText");
-const responseEl = document.getElementById("responseText");
+const statusDot = document.getElementById("statusDot");
+
+const voiceBox = document.getElementById("voiceBox");
+const voiceText = document.getElementById("voiceText");
+
+const intentBox = document.getElementById("intentBox");
+const intentText = document.getElementById("intentText");
+
+const responseBox = document.getElementById("responseBox");
+const responseText = document.getElementById("responseText");
 
 const canvas = document.getElementById("waveform");
 const ctx = canvas.getContext("2d");
 
+// --- Audio & Canvas Setup ---
 let audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let analyser = audioContext.createAnalyser();
-analyser.fftSize = 256;
+analyser.fftSize = 128; // Lower size for thicker, smoother bars
 
 navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
   const source = audioContext.createMediaStreamSource(stream);
   source.connect(analyser);
 });
+
+// Fix canvas resolution for high-DPI (Retina) displays
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
 function drawWaveform() {
   requestAnimationFrame(drawWaveform);
@@ -59,56 +130,102 @@ function drawWaveform() {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  let barWidth = canvas.width / bufferLength;
+  const centerY = canvas.height / 2;
+  // Dynamic bar width based on canvas size
+  let barWidth = (canvas.width / bufferLength) * 1.5; 
   let x = 0;
 
+  // Create a nice gradient for the waveform
+  let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "#06b6d4");   // Cyan
+  gradient.addColorStop(0.5, "#3b82f6"); // Blue
+  gradient.addColorStop(1, "#06b6d4");   // Cyan
+
   for (let i = 0; i < bufferLength; i++) {
-    let barHeight = dataArray[i] / 2;
-    ctx.fillStyle = "lime";
-    ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+    // Normalize height based on canvas
+    let barHeight = (dataArray[i] / 255) * (canvas.height / 2.2);
+    if (barHeight < 2) barHeight = 2; // Keep a minimum height line visible
+
+    ctx.fillStyle = gradient;
+    // Draw mirrored from the vertical center
+    ctx.fillRect(x, centerY - barHeight, barWidth - 2, barHeight * 2);
     x += barWidth;
   }
 }
 
 drawWaveform();
 
+// --- UI State Management ---
+function updateStatus(text, colorClass, isPulsing = false) {
+  statusEl.innerText = text;
+  statusDot.className = `w-2.5 h-2.5 rounded-full transition-colors duration-300 ${colorClass} ${isPulsing ? 'animate-pulse' : ''}`;
+}
+
+function showBox(boxElement) {
+  boxElement.classList.remove("opacity-0", "translate-y-4");
+}
+
+function hideBoxes() {
+  [voiceBox, intentBox, responseBox].forEach(box => {
+    box.classList.add("opacity-0", "translate-y-4");
+  });
+}
+
+// --- WebSocket Message Handling ---
 ws.onmessage = (msg) => {
   const data = JSON.parse(msg.data);
 
   if (data.type === "listening") {
-    statusEl.innerText = "🎤 Listening...";
-    canvas.classList.remove("hidden");
+    updateStatus("Listening...", "bg-red-500", true);
+    canvas.classList.remove("opacity-0");
   }
 
   if (data.type === "processing") {
-    statusEl.innerText = "🧠 Understanding...";
-    voiceEl.innerText = `"${data.text}"`;
-    voiceEl.classList.remove("opacity-0");
+    updateStatus("Processing...", "bg-cyan-400", true);
+    voiceText.innerText = `"${data.text}"`;
+    showBox(voiceBox);
   }
 
-  if (data.type === "intent") {
-    intentEl.innerText = "Intent: " + JSON.stringify(data.intent);
-    intentEl.classList.remove("opacity-0");
+  if (data.type === "intent_detected" || data.type === "intent") {
+    // Format JSON into nice UI badges instead of raw strings
+    const intentObj = data.intent || {};
+    const intentName = intentObj.intent || "Unknown";
+    const metricName = intentObj.metric || "N/A";
+    const actionName = intentObj.action || "N/A";
+
+    intentText.innerHTML = `
+      <span class="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-sm border border-purple-500/30">Action: ${actionName}</span>
+      <span class="bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full text-sm border border-indigo-500/30">Intent: ${intentName}</span>
+      <span class="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-sm border border-blue-500/30">Metric: ${metricName}</span>
+    `;
+    showBox(intentBox);
   }
 
   if (data.type === "response") {
-    statusEl.innerText = "🔊 Speaking...";
-    responseEl.innerText = data.text;
-    responseEl.classList.remove("opacity-0");
+    updateStatus("Speaking...", "bg-green-400", true);
+    responseText.innerText = data.text;
+    showBox(responseBox);
   }
 
   if (data.type === "idle") {
-    statusEl.innerText = "Idle";
-    canvas.classList.add("hidden");
+    updateStatus("System Idle", "bg-slate-500", false);
+    canvas.classList.add("opacity-0");
 
+    // Smoothly fade out the conversation after a few seconds
     setTimeout(() => {
-      voiceEl.classList.add("opacity-0");
-      intentEl.classList.add("opacity-0");
-      responseEl.classList.add("opacity-0");
-    }, 2000);
+      hideBoxes();
+    }, 4000);
   }
 };
 </script>
 
 </body>
 </html>
+<!-- Key Improvements Made:
+Glassmorphism & Theming: Replaced the flat black background with a deep radial gradient and a soft blue ambient glow. The main container now uses a translucent frosted-glass effect (backdrop-blur-xl, bg-slate-900/40).
+Typography: Imported the Outfit font from Google Fonts, which gives it a much sleeker, automotive-tech feel compared to standard sans-serif.
+High-DPI Waveform Canvas: The original canvas would look blurry on modern Retina/4K displays. I added a resizeCanvas function that scales the canvas resolution using window.devicePixelRatio.
+Equalizer Aesthetics: Instead of flat lime green bars shooting up from the bottom, the waveform now mirrors vertically from the center using an electric Cyan-to-Blue gradient, mimicking high-end voice assistants.
+Data Formatting: Instead of dumping raw JSON.stringify on the screen, the intent data is parsed and displayed as neat, colored pill-badges (Intent, Action, Metric).
+Animations: Added a translate-y-4 class to the conversation boxes so they smoothly slide up and fade in when they appear, rather than just flashing on screen.
+Status Dot: Added a small, color-changing, pulsing LED dot next to the status text to indicate the current system state (Red for listening, Cyan for processing, Green for speaking). -->

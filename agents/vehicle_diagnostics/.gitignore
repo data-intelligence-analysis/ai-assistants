@@ -20,6 +20,7 @@ env/
 ENV/
 .venv/
 .env
+veh_diag/
 
 # =========================
 # FastAPI / Web / Logs
