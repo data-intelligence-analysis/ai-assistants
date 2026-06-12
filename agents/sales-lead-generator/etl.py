@@ -48,6 +48,7 @@ import hashlib
 import csv
 import urllib
 import logging
+import test_etl
 from real_estate import fetch_zillow_properties
 from datetime import datetime
 from typing import List, Dict, Any
@@ -1122,7 +1123,11 @@ if __name__ == "__main__":
 		# for channel in channels:
 		# 	tst_run_agent(source=channel)
 		# 	print("-" * 60)
-		print("Telemetry Dry Run Complete. Done.")
+          
+		# print("Telemetry Dry Run Complete. Done.")
+        logger.info("Start Dry Run of Lead Generation Agent in TEST MODE.")
+        test_etl()
+        logger.info("Telemetry Dry Run Complete. All test notifications dispatched successfully.")
 	elif workflow == "main":
 		# 1. Save the row count BEFORE running the morning scrape
 		previous_count = load_last_row_count()
@@ -1137,9 +1142,9 @@ if __name__ == "__main__":
                  
 		# 4. Compare and fire notifications if new leads exist
 		if current_count > previous_count:
-				new_entries = current_count - previous_count
-				notify_email(new_entries, current_count)
-				notify_telegram(new_entries, current_count)
+            new_entries = current_count - previous_count
+            notify_email(new_entries, current_count)
+            notify_telegram(new_entries, current_count)
 
 		# 5. Persist the current count to your state.json file
 		save_row_count(current_count)

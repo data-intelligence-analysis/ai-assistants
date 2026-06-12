@@ -1,14 +1,18 @@
 import os
 import csv
 import json
+import logging
 from datetime import datetime
 from typing import List, Dict, Any
-
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+ 
 # --- CONFIGURATION MOCK ---
 if os.path.exists("config.json"):
 	with open("config.json") as f:
 			CONFIG = json.load(f)
 else:
+  logger.warning("config.json not found. Please create a config.json file with the necessary configuration.")
   raise FileNotFoundError("config.json not found. Please create a config.json file with the necessary configuration.")
 
 # --- AI & SCRAPER MOCK PIPELINES (For Simulation) ---
@@ -152,11 +156,13 @@ class LeadPipelineManager:
         with open(self.output_file, mode="a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerows(rows)
-        print(f" Successfully committed {len(rows)} processed records to database cache.")
+        logger.info(f" Successfully committed {len(rows)} processed records to database cache.")
+        # print(f" Successfully committed {len(rows)} processed records to database cache.")
 
 # --- MAIN AGENT RUNTIME EXECUTION LOOP ---
 def tst_run_agent(source: str):
-    print(f"🚀 Starting Lead Gen Extraction Agent via: [{source.upper()}] Pipeline...")
+    logger.info(f"🚀 Starting Lead Gen Extraction Agent via: [{source.upper()}] Pipeline...")
+    # print(f"🚀 Starting Lead Gen Extraction Agent via: [{source.upper()}] Pipeline...")
     manager = LeadPipelineManager()
     batch_buffer = []
 
@@ -169,7 +175,8 @@ def tst_run_agent(source: str):
 
     scraper_func = scraper_map.get(source.lower())
     if not scraper_func:
-        print(f"⚠️ Channel platform '{source}' execution path is not configured.")
+        logger.warning(f"⚠️ Channel platform '{source}' execution path is not configured.")
+        # print(f"⚠️ Channel platform '{source}' execution path is not configured.")
         return
 
     for niche in CONFIG["niches"]:
@@ -177,7 +184,8 @@ def tst_run_agent(source: str):
             # Graceful query configuration logic
             query_key = f"{source.lower()}_query"
             query = niche.get(query_key, f"{niche['search_query']} {location}")
-            print(f"🔍 [{source.upper()}] Executing Query Search: '{query}'")
+            logger.info(f"🔍 [{source.upper()}] Executing Query Search: '{query}'")
+            # print(f"🔍 [{source.upper()}] Executing Query Search: '{query}'")
             
             raw_leads = scraper_func(query)
             
@@ -193,4 +201,5 @@ if __name__ == "__main__":
     channels = ["x", "linkedin", "google_maps"]
     for channel in channels:
         tst_run_agent(source=channel)
-        print("-" * 60)
+        logger.info("-" * 60)
+        # print("-" * 60)
