@@ -1,6 +1,6 @@
 # AI SALES AGENT
 ## - Includes:
-# - Generate Lead Scope - Google Maps, X, LinkedIn
+# - Generate Lead Scope - Google Maps, X, LinkedIn, Reddit Instagram, TikTok, Quora.
 # - Multi-client SaaS mode
 # - Lead scoring & filtering
 # - LinkedIn DM generation
@@ -35,6 +35,10 @@
 # * `source`
 # * `platform`
 # * `contact_type` (Email vs DM)
+
+# FUTURE ENHANCEMENTS
+# Add the following lead scopes for getting first time users and customers: Reddit Instagram, TikTok, Quora 
+
 
 import os
 import stripe
