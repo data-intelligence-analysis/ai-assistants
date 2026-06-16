@@ -1,6 +1,7 @@
 obd
 bleak
 fastapi
+fastapi[standard]
 openai 
 pydantic
 pyttsx3

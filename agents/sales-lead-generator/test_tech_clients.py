@@ -83,7 +83,7 @@ def tst_book_call(company: str, email: str) -> str: return f"https://cal.com/acm
 # --- CORE DATA ENGINEERING LAYER ---
 class LeadPipelineManager:
     def __init__(self, output_file: str = "outreach_tst.csv"):
-        self.output_file = output_file
+        self.output_file = os.path.join("/extracts", output_file)
         # Defined matrix schema matching standard modern outreach/CRM structures
         self.headers = [
             "Niche", "Location", "Company", "Website", "Phone", "Email Address",

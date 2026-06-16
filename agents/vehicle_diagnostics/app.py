@@ -9,10 +9,16 @@ import os
 import threading
 import pyttsx3
 import obd
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Request
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from openai import OpenAI
-from fastapi.responses import HTMLResponse
+
+
+
 
 # =========================
 # CONFIG
@@ -24,6 +30,7 @@ SPEECH_SYSTEM = "offline"  # Choose: "openai", "offline", or "macos"
 # LLM HELPER
 client = OpenAI(api_key="YOUR_API_KEY")
 engine = pyttsx3.init()
+
 
 # =========================
 # SPEECH SYSTEM
@@ -176,24 +183,34 @@ async def obd_listener():
         await asyncio.sleep(1)
     
 
-async def simulated_obd_listener():
+async def simulated_obd_listener(obd=None):
     """
     If using an emulator, this connects to the TCP stream.
     """
     global latest_data
-    OBD_HOST = "host.docker.internal"
-    OBD_PORT = 8765
+    OBD_HOST = "0.0.0.0" #"host.docker.internal"
+    OBD_PORT = 8000
     
     while True:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((OBD_HOST, OBD_PORT))
+            s.bind(("0.0.0.0", 8765)) # s.connect((OBD_HOST, OBD_PORT))
             print(f"Connected to OBD stream at {OBD_HOST}:{OBD_PORT}")
             while True:
-                line = s.recv(1024).decode()
-                if line:
-                    latest_data = json.loads(line.strip())
-                await asyncio.sleep(0.1)
+                #provide simulated data for testing
+                #Fix this error - Connected to OBD stream at 0.0.0.0:8000 OBD Connection lost/failed: [Errno 107] Transport endpoint is not connected. Retrying in 5 seconds...
+                if obd:
+                    line = s.recv(1024).decode()
+                    if line:
+                        latest_data = json.loads(line.strip())
+                    await asyncio.sleep(1)
+                else:
+                    # Simulate data for testing without an actual OBD stream
+                    latest_data["rpm"] = 1500 + int(500 * time.time() % 1)  # Simulated RPM
+                    latest_data["speed"] = 30 + int(10 * time.time() % 1)   # Simulated Speed
+                    latest_data["fuel"] = 50 - int(5 * time.time() % 1)      # Simulated Fuel Level
+                    print(f"Simulated Data: {latest_data}")
+                    await asyncio.sleep(5)
         except Exception as e:
             print(f"OBD Connection lost/failed: {e}. Retrying in 5 seconds...")
             await asyncio.sleep(5)
@@ -234,11 +251,26 @@ def handle_voice_command(text):
 # API & WEB INTERFACE
 # =========================
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+# Point FastAPI to your templates directory
+# templates = Jinja2Templates(directory="templates")
+base_dir = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(base_dir, "templates"))
+# @app.get("/")
+# async def ui():
+#     # with open("templates/index.html") as f:
+#     #     return HTMLResponse(f.read())
+#     return FileResponse("templates/index.html")
+# This calculates the exact absolute directory path dynamically
 
-@app.get("/")
-def ui():
-    with open("templates/index.html") as f:
-        return HTMLResponse(f.read())
+@app.get("/", response_class=HTMLResponse)
+async def read_item(request: Request):
+    # Pass data to the HTML template via a dictionary context
+    return templates.TemplateResponse(
+        request=request, 
+        name="index.html", 
+        context={"username": "Dennis", "latest_data": latest_data}
+    )
 
 @app.websocket("/ui-stream")
 async def ui_stream(ws: WebSocket):
@@ -251,9 +283,18 @@ async def ui_stream(ws: WebSocket):
     except:
         connected_clients.remove(ws)
 
-@app.on_event("startup")
-async def startup():
-    asyncio.create_task(simulated_obd_listener())
+# @app.on_event("startup")
+# async def startup():
+#     asyncio.create_task(simulated_obd_listener())
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting up...")
+    asyncio.create_task(simulated_obd_listener(obd=False)) #set to true to connect to obd, false for simulated data
+    yield
+    print("Shutting down...")
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/data")
 def get_data():
