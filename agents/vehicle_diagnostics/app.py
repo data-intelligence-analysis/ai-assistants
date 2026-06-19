@@ -250,12 +250,21 @@ def handle_voice_command(text):
 # =========================
 # API & WEB INTERFACE
 # =========================
-app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 # Point FastAPI to your templates directory
 # templates = Jinja2Templates(directory="templates")
 base_dir = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(base_dir, "templates"))
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting up...")
+    asyncio.create_task(simulated_obd_listener(obd=False)) #set to true to connect to obd, false for simulated data
+    yield
+    print("Shutting down...")
+
+app = FastAPI(lifespan=lifespan)
+
 # @app.get("/")
 # async def ui():
 #     # with open("templates/index.html") as f:
@@ -287,17 +296,15 @@ async def ui_stream(ws: WebSocket):
 # async def startup():
 #     asyncio.create_task(simulated_obd_listener())
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("Starting up...")
-    asyncio.create_task(simulated_obd_listener(obd=False)) #set to true to connect to obd, false for simulated data
-    yield
-    print("Shutting down...")
 
-app = FastAPI(lifespan=lifespan)
 
 @app.get("/data")
 def get_data():
+    return latest_data
+
+@app.get("/ws")
+def get_ws_data():
+    # Fallback for browser access or when WebSocket isn't available.
     return latest_data
 
 @app.websocket("/ws")

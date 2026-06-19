@@ -19,7 +19,7 @@ Run entirely in a Docker container
 ```bash
 fastapi dev app.py --host 0.0.0.0 || uvicorn main:app --host: 0.0.0.0
 #restart the server
-uvicorn main:app --reload
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
 uvicorn app:app --host 0.0.0.0 --port 8000 --forwarded-allow-ips='*'
 ```
