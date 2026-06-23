@@ -20,6 +20,8 @@ env/
 ENV/
 .venv/
 .env
+.env*
+/*/.env*
 
 # =========================
 # FastAPI / Web / Logs
