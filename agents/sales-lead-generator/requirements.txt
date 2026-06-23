@@ -13,3 +13,6 @@ oauth2client
 python-dotenv
 google-genai
 logging
+flask
+pandas
+oepnpyxl

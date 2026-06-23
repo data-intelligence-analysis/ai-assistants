@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zentro — Overview</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="d-flex" id="wrapper">
+      <!-- Sidebar -->
+      <div class="border-end sidebar" id="sidebar-wrapper">
+        <div class="sidebar-heading">Zentro</div>
+        <div class="list-group list-group-flush">
+          <a class="list-group-item list-group-item-action active">Overview</a>
+          <a class="list-group-item list-group-item-action">Leads <span class="badge bg-primary float-end">842</span></a>
+          <!-- <a class="list-group-item list-group-item-action">LinkedIn Search</a>
+          <a class="list-group-item list-group-item-action">Verification</a>
+          <a class="list-group-item list-group-item-action">Exports</a>
+          <a class="list-group-item list-group-item-action">Integrations</a>
+          <a class="list-group-item list-group-item-action">Analytics</a>
+          <a class="list-group-item list-group-item-action">Settings</a> -->
+        </div>
+        <div class="sidebar-footer p-3">
+          <div class="d-flex align-items-center">
+            <div class="avatar">D</div>
+            <div class="ms-2">Dennis</div>
+          </div>
+        </div>
+      </div>
+      <!-- /#sidebar-wrapper -->
+
+      <!-- Page content -->
+      <div id="page-content-wrapper" class="w-100">
+        <nav class="navbar navbar-light bg-light border-bottom">
+          <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Overview</span>
+            <div class="d-flex align-items-center">
+              <input class="form-control me-2" type="search" placeholder="Search leads..." style="width:240px">
+
+              <form action="/load" method="get" class="d-flex align-items-center me-2">
+                <input name="local_path" placeholder="local path (e.g. extracts/outreach.xlsx)" class="form-control form-control-sm me-2" style="width:260px">
+                <input name="google_sheet_id" placeholder="Google Sheet ID" class="form-control form-control-sm me-2" style="width:220px">
+                <button class="btn btn-outline-secondary btn-sm me-2" type="submit">Load</button>
+              </form>
+
+              <form action="/upload" method="post" enctype="multipart/form-data" class="d-flex align-items-center me-2">
+                <input type="file" name="file" accept=".xlsx,.xls,.csv" class="form-control form-control-sm" style="width:220px">
+                <button class="btn btn-outline-secondary btn-sm ms-2" type="submit">Upload</button>
+              </form>
+
+              <button class="btn btn-primary">+ New</button>
+            </div>
+          </div>
+        </nav>
+
+        <div class="container-fluid px-4 mt-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h2>Hi Dennis 👋. Welcome Back</h2>
+            </div>
+            <div class="text-end">
+            </div>
+          </div>
+
+          <!-- Cards -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="card stat-card p-3">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <small class="text-muted">Total Leads</small>
+                    <h3 id="totalLeads">{{ total_leads }}</h3>
+                  </div>
+                  <div class="stat-delta text-success">+12.5%</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card stat-card p-3">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <small class="text-muted">Verified Emails</small>
+                    <h3 id="verifiedEmails">{{ verified_count }}</h3>
+                  </div>
+                  <div class="stat-delta text-success">+8.2%</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card stat-card p-3">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <small class="text-muted">Verification Rate</small>
+                    <h3 id="verificationRate">{{ verification_rate }}%</h3>
+                  </div>
+                  <div class="stat-delta text-success">+2.1%</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card stat-card p-3">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <small class="text-muted">Total Exports</small>
+                    <h3 id="totalExports">{{ exports }}</h3>
+                  </div>
+                  <div class="stat-delta text-success">+15.3%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-8">
+              <div class="card mb-3">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between mb-3">
+                    <h5 class="card-title">Lead Generation Trends</h5>
+                    <div class="text-muted">Total Leads</div>
+                  </div>
+                  <canvas id="trendChart" height="150"></canvas>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Recent Leads</h5>
+                  <ul class="list-group list-group-flush">
+                    {% for lead in recent %}
+                    <li class="list-group-item d-flex align-items-center">
+                      <div class="avatar-sm me-3">{{ lead.name[0]|upper }}</div>
+                      <div class="flex-grow-1">
+                        <div class="fw-bold">{{ lead.name }}</div>
+                        <div class="text-muted small">{{ lead.company }} • {{ lead.email }}</div>
+                      </div>
+                      <div>
+                        {% if lead.status and lead.status|lower == 'valid' %}
+                          <span class="badge bg-success">valid</span>
+                        {% elif lead.status and lead.status|lower == 'risky' %}
+                          <span class="badge bg-warning text-dark">risky</span>
+                        {% else %}
+                          <span class="badge bg-secondary">unknown</span>
+                        {% endif %}
+                      </div>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-4">
+              <div class="card mb-3 p-3">
+                <h6>Lead Sources</h6>
+                <div>
+                  {% for name, count in lead_sources.items() %}
+                    <div class="d-flex justify-content-between small mb-1">
+                      <div>{{ name }}</div>
+                      <div>{{ count }}</div>
+                    </div>
+                    <div class="progress mb-2" style="height:8px;">
+                      <div class="progress-bar" role="progressbar" style="width: {{ (count / (total_leads or 1) * 100)|round(1) }}%"></div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="card p-3">
+                <h6>Quick Actions</h6>
+                <ul class="list-unstyled mb-0">
+                  <li>- Start LinkedIn Search</li>
+                  <li>- Verify Emails</li>
+                  <li>- Export Leads</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const trendLabels = {{ trend_labels|tojson }};
+      const trendValues = {{ trend_values|tojson }};
+    </script>
+    <script src="/static/js/dashboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

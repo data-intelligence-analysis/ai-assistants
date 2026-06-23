@@ -1,0 +1,32 @@
+:root{
+  --sidebar-width: 220px;
+  --muted:#6c757d;
+}
+body,html{height:100%;}
+.d-flex#wrapper{min-height:100vh}
+.sidebar{
+  width:var(--sidebar-width);
+  background:#fff;
+  border-right:1px solid #e6e9ef;
+  padding:0;
+}
+.sidebar .sidebar-heading{font-weight:700;padding:20px;font-size:1.25rem}
+.sidebar .list-group-item{border:0;border-radius:0;padding:14px 20px}
+.sidebar .list-group-item.active{background:#f6f8fb;color:#111;border-left:4px solid #0d6efd}
+.sidebar-footer{position:absolute;bottom:0;width:100%}
+.avatar{width:36px;height:36px;border-radius:50%;background:#0d6efd;color:#fff;display:flex;align-items:center;justify-content:center}
+.avatar-sm{width:36px;height:36px;border-radius:50%;background:#e9eefb;color:#0d6efd;display:flex;align-items:center;justify-content:center;font-weight:600}
+.stat-card{background:#fff;border:1px solid #eef2f7}
+.stat-delta{font-weight:600}
+.card{box-shadow:none;border:1px solid #eef2f7}
+.list-group-item{background:transparent}
+.progress{background:#f1f3f6}
+.progress-bar{background:#0d6efd}
+
+/* Page content adjustments */
+#page-content-wrapper{padding-left:24px;padding-right:24px}
+
+/* Responsive tweaks */
+@media (max-width: 768px){
+  .sidebar{display:none}
+}
