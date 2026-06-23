@@ -32,6 +32,99 @@ This repository contains tools to build video generation agent that supports gro
 ## Architecture
 
 
+                       +-------------------------+
+
+                       |       USER INPUT        |
+                       | (Idea, Target Audience) |
+                       +------------+------------+
+                                    |
+                                    v
++-----------------------------------------------------------------------+
+
+| 1. CORE CONTENT ENGINE                                                |
+|                                                                       |
+|   +-------------------+     Prompt      +-------------------------+   |
+|   |  Financial Topic  | --------------->|       ChatGPT / LLM     |   |
+|   +-------------------+                 +------------+------------+   |
+|                                                      |                |
+|                                                      v                |
+|                                         +-------------------------+   |
+|                                         |  Structured Video Script|   |
+|                                         | (Scenes, Visual Prompts)|   |
+|                                         +------------+------------+   |
++------------------------------------------------------|----------------+
+                                                       |
+                             +-------------------------+-------------------------+
+
+                             |                                                   |
+                             v                                                   v
++--------------------------------------------+      +--------------------------------------------+
+
+| 2. AUDIO GENERATION PIPELINE               |      | 3. VISUAL GENERATION PIPELINE              |
+|                                            |      |                                            |
+|   +------------------------------------+   |      |   +------------------------------------+   |
+|   |          Dialogue / Script         |   |      |   |        Scene Visual Prompts        |   |
+|   +-----------------+------------------+   |      |   +-----------------+------------------+   |
+|                     |                      |      |                     |                      |
+|                     v                      |      |                     v                      |
+|   +------------------------------------+   |      |   +------------------------------------+   |
+|   |      ElevenLabs (TTS Engine)       |   |      |   |  ImageFX / Midjourney (Image Gen)  |   |
+|   +-----------------+------------------+   |      |   +-----------------+------------------+   |
+|                     |                      |      |                     |                      |
+|                     v                      |      |                     v                      |
+|   +------------------------------------+   |      |   +------------------------------------+   |
+|   |             Voiceover Audio File (.mp3)|   |  |   |      Static Stick Figure Asset     |   |
+|   +-----------------+------------------+   |      |   +-----------------+------------------+   |
+|                     |                      |      |                     |                      |
+|                     |                      |      |                     v                      |
+|                     |                      |      |   +------------------------------------+   |
+|                     |                      |      |   |    Kling AI / Hailuo AI (Video Gen)|   |
+|                     |                      |      |   +-----------------+------------------+   |
+|                     |                      |      |                     |                      |
+|                     |                      |      |                     v                      |
+|                     |                      |      |   +------------------------------------+   |
+|                     |                      |      |   |        Animated Video Clip (.mp4)  |   |
+|                     |                      |      |   +-----------------+------------------+   |
++---------------------|----------------------+      +---------------------|----------------------+
+
+                      |                                                   |
+                      +-------------------------+-------------------------+
+                                                |
+                                                v
++-----------------------------------------------------------------------+
+
+| 4. VIDEO EDITING & SYNCHRONIZATION                                     |
+|                                                                       |
+|   +-------------------+                 +-------------------------+   |
+|   |   Audio Track     | --------------> |      Video Editor       |   |
+|   +-------------------+                 | (CapCut / Premiere Pro) |   |
+|                                         +------------+------------+   |
+|   +-------------------+                              ^                |
+|   | Animated Clips    | -----------------------------+                |
+|   +-------------------+                                               |
++------------------------------------------------------|----------------+
+                                                       |
+                                                       v
+                                          +-------------------------+
+
+                                          |   FINAL EXPLAINER VIDEO  |
+                                          |         (.mp4)          |
+                                          +-------------------------+
+
+## System Components
+
+* User Input: Defines the specific financial topic (e.g., hidden credit card fees).
+* Core Content Engine: Uses a Large Language Model to turn abstract finance concepts into an ordered, scene-by-scene script.
+* Audio Generation Pipeline: Translates the written script into spoken dialogue using Text-to-Speech (TTS).
+* Visual Generation Pipeline: A two-stage process. First, it generates consistent static stick figures. Second, it uses an Image-to-Video model to animate them.
+* Editing & Synchronization: The final assembly point. It matches the generated clip lengths to the pacing of the audio track.
+
+## Key Data Formats
+
+* Prompts: Text strings sent to the LLM and Image Generator.
+* Assets: Static images (.png), audio voiceovers (.mp3), and raw animated clips (.mp4).
+* Final Product: A fully synthesized video file ready for publishing.
+
 ## Recommended AI tools
 
 - Large language models: content generation for ideas, titles, scripts, tags.
