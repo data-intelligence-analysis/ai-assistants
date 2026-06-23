@@ -9,6 +9,7 @@ import os
 import threading
 import pyttsx3
 import obd
+import requests
 from fastapi import FastAPI, WebSocket, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -153,15 +154,71 @@ def analyze_efficiency(data):
 # =========================
 # REAL OBD vs EMULATOR SOCKET LISTENER
 # =========================
-latest_data = {"rpm": 0, "speed": 0, "fuel": 0}
+latest_data = {"vin": None, "make": None, "model": None, "year": None, "rpm": 0, "speed": 0, "fuel": 0}
 connected_clients = []
+def decode_vin(vin):
+    """
+    Queries the official NHTSA API to decode a 17-character VIN.
+    Returns a dictionary with Make, Model, Model Year, and Body Class.
+    """
+    # Clean up the input string (remove spaces and convert to uppercase)
+    vin = str(vin).strip().upper()
+    
+    # Validation: VINs must be exactly 17 characters
+    if len(vin) != 17:
+        print(f"Error: Invalid VIN length ({len(vin)} characters). A standard VIN must be 17 characters.")
+        return None
 
+    print(f"Querying NHTSA database for VIN: {vin}...")
+    
+    # Official NHTSA vPIC API URL (returns data in JSON format)
+    url = f"https://dot.gov{vin}?format=json"
+    
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status() # Raise an error for bad HTTP status codes
+        data = response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Network or API Error: {e}")
+        return None
+
+    # Dictionary to map the target variable IDs from the NHTSA response
+    # 26 = Make, 28 = Model, 29 = Model Year, 14 = Body Class
+    target_variable_ids = {
+        26: "Make",
+        28: "Model",
+        29: "Year",
+    }
+    
+    vehicle_info = {}
+    
+    # Loop through the results to extract the specific data fields we want
+    if "Results" in data:
+        for item in data["Results"]:
+            var_id = item.get("VariableId")
+            if var_id in target_variable_ids:
+                field_name = target_variable_ids[var_id]
+                field_value = item.get("Value")
+                vehicle_info[field_name] = field_value if field_value else "Not Available"
+                
+        return vehicle_info
+    else:
+        print("Error: No results found in the API response.")
+        return None
 async def obd_listener():
     """
     To use a REAL car OBD-II adapter, replace this entire function with:
     """
     # connection = obd.OBD() # Auto-connects to USB/Bluetooth ELM327
     connection = obd.Async()
+    # Check if the script successfully established a connection with the adapter
+    if not connection.is_connected():
+        print("Error: Could not connect to the OBD-II adapter.")
+        print("Please check your USB/Bluetooth connection and ensure the vehicle ignition is ON.")
+        return None
+
+    print(f"Connected! Adapter status: {connection.status()}")
+    
     connection.watch(obd.commands.RPM)
     connection.start()
 
@@ -173,7 +230,22 @@ async def obd_listener():
 
     client, addr = server.accept()
     print("Client connected:", addr)
-    
+    #extract vin details and add to latest data for display in UI
+    print("Querying the ECU for the Vehicle Identification Number (VIN)...")
+    vin = connection.query(obd.commands.VIN).value
+    # Check if the vehicle returned a valid, un-corrupted response
+    # latest_data["vin"] = connection.query(obd.commands.VIN).value if connection.query(obd.commands.VIN).value else None
+    if vin.is_null():
+        print("Error: The vehicle ECU did not return a VIN.")
+        print("Some vehicles require the engine to be running, or use proprietary protocols.")
+        latest_data["vin"] = None
+    if vin:
+        vehicle_info = decode_vin(vin)
+        if vehicle_info:
+            latest_data["make"] = vehicle_info.get("Make")
+            latest_data["model"] = vehicle_info.get("Model")
+            latest_data["year"] = vehicle_info.get("Year")
+
     while True:
         latest_data["rpm"] = connection.query(obd.commands.RPM).value.magnitude if connection.query(obd.commands.RPM).value else None,
         latest_data["speed"] = connection.query(obd.commands.SPEED).value.magnitude if connection.query(obd.commands.SPEED).value else None,
@@ -209,6 +281,10 @@ async def simulated_obd_listener(obd=None):
                     latest_data["rpm"] = 1500 + int(500 * time.time() % 1)  # Simulated RPM
                     latest_data["speed"] = 30 + int(10 * time.time() % 1)   # Simulated Speed
                     latest_data["fuel"] = 50 - int(5 * time.time() % 1)      # Simulated Fuel Level
+                    latest_data["vin"] = "WRT12345678902"  # Simulated VIN
+                    latest_data["make"] = "Toyota"
+                    latest_data["model"] = "Rav4"
+                    latest_data["year"] = "2022"
                     print(f"Simulated Data: {latest_data}")
                     await asyncio.sleep(5)
         except Exception as e:
