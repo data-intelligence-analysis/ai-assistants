@@ -187,6 +187,7 @@ X
 
 
 ## System Prompt
+
 Got it! I understand completely now. You want a System Prompt for an Agent (like Claude Code or Open Interpreter) that instructs the AI agent to take action, write the python code, install the packages, manage files, and execute the entire end-to-end pipeline automatically for you.
 When you load this prompt into your agentic environment, it tells the agent exactly how to act as your autonomous software developer to build, debug, and run the video generator.
 ------------------------------
