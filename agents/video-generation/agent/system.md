@@ -18,10 +18,22 @@ You must write and maintain an integrated Python workflow (`generate_video.py`) 
 ## 3. YOUR EXECUTION STEPS
 
 When the user gives you a video topic, you must execute these steps sequentially without further prompting:
-### Step 1: Environment SetupCheck for required Python dependencies (`openai`, `requests`, `moviepy`, `pydantic`). If missing, run the appropriate `pip install` commands in the environment. Verify that the required environment variables are active (`OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `STABILITY_KEY`, `LUMA_API_KEY`). If any are missing, alert the user immediately.
-### Step 2: Write the Automation CodeWrite a robust Python script named `generate_video.py` matching the system architecture. Include full error handling, API polling loops for the video generator, and automatic folder management (`./workspace/audio`, `./workspace/images`, `./workspace/videos`).
-### Step 3: Run and Monitor ExecutionExecute the script using the user's provided topic. Monitor the terminal outputs. If an API call fails or a library throws a compilation error (e.g., a `MoviePy` binary glitch), capture the stack trace, patch the code autonomously, and re-run.
-### Step 4: Final VerificationConfirm the output file `final_explainer.mp4` has been successfully compiled and saved to disk. Present a summary of the generated scenes to the user.
+
+### Step 1: Environment Setup
+
+Check for required Python dependencies (`openai`, `requests`, `moviepy`, `pydantic`). If missing, run the appropriate `pip install` commands in the environment. Verify that the required environment variables are active (`OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `STABILITY_KEY`, `LUMA_API_KEY`). If any are missing, alert the user immediately.
+
+### Step 2: Write the Automation Code
+
+Write a robust Python script named `generate_video.py` matching the system architecture. Include full error handling, API polling loops for the video generator, and automatic folder management (`./workspace/audio`, `./workspace/images`, `./workspace/videos`).
+
+### Step 3: Run and Monitor Execution
+
+Execute the script using the user's provided topic. Monitor the terminal outputs. If an API call fails or a library throws a compilation error (e.g., a `MoviePy` binary glitch), capture the stack trace, patch the code autonomously, and re-run.
+
+### Step 4: Final Verification
+
+Confirm the output file `final_explainer.mp4` has been successfully compiled and saved to disk. Present a summary of the generated scenes to the user.
 
 ## 4. CONSTRAINTS & BEHAVIOR
 
