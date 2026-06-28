@@ -221,3 +221,8 @@ def animate_image(scene_id: int, image_path: Path, duration: float) -> Path:
                     with open(output_video_path, "wb") as f:
                         f.write(video_bytes)
                     print(f"   [✓] Tier 2 Success: Scene {scene_id} rendered via Runway.")
+
+==============================================================================WORKFLOW ORCHESTRATION GATEWAY==============================================================================
+def main():
+topic = sys.argv[1] if len(sys.argv) > 1 else "Lifestyle Creep"
+# 1. Generate Narrative Scriptblueprint = generate_script(topic)audio_assets = []video_assets = []# 2. Iterate and generate scene assetsfor scene in blueprint.scenes:print(f"\n====== PROCESSING SCENE {scene.scene_id} ======")audio_path = generate_audio(scene.scene_id, scene.narration_text)audio_assets.append(audio_path)# Calculate narration audio duration for pacing downstreamvoice_duration = AudioFileClip(str(audio_path)).durationimage_path = generate_image(scene.scene_id, scene.visual_prompt)video_path = animate_image(scene.scene_id, image_path, voice_duration)video_assets.append(video_path)# 3. Master Mix Edit Assemblyassemble_final_video(blueprint, audio_assets, video_assets)if name == "main":main()
