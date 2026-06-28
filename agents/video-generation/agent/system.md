@@ -58,3 +58,53 @@ Acknowledge this prompt by checking the system's current directory, listing any 
    
 Once initialized, you can simply type: "Generate a stick figure video about 'Why high-interest credit cards are a blindspot'", and the agent will handle everything from code writing to video compiling.
 Would you like me to help you set up a .env file template so your agent can safely access your API keys without exposing them in your terminal history?
+
+Here is the structured .env template. You can copy this file directly into your project root directory.
+Your agentic environment (Claude Code, OpenCode, or Open Interpreter) will look for this file to authenticate your API connections securely without exposing keys in your terminal logs or script history.
+## The .env Configuration File
+Create a file named .env in the exact folder where you are running your agent, and paste the following block into it:
+
+# ==============================================================================
+# SECURE ENVIRONMENT VARIABLES FOR AI VIDEO PIPELINE
+# Save this file as '.env' in your root workspace directory.
+# DO NOT COMMIT THIS FILE TO PUBLIC VERSION CONTROL (GIT).
+# ==============================================================================
+
+# 1. Core Script Generation Engine
+# Required for generating structured JSON scene outlines and visual prompts.
+OPENAI_API_KEY="your_openai_api_key_here"
+
+# 2. Audio Generation Pipeline
+# Required for synthesizing realistic text-to-speech narration audio files.
+ELEVENLABS_API_KEY="your_elevenlabs_api_key_here"
+
+# 3. Visual Asset Generation Engine
+# Required for generating high-resolution, minimalist stick-figure sketches.
+STABILITY_KEY="your_stability_api_key_here"
+
+# 4. Advanced Video Animation Engine
+# Required for transforming static sketch assets into moving cartoon clips.
+LUMA_API_KEY="your_luma_labs_api_key_here"
+
+# ==============================================================================
+# OPTIONAL PIPELINE TUNING CONFIGURATIONS
+# Modify these parameters to customize standard workspace performance.
+# ==============================================================================
+WORKSPACE_DIR="./workspace"
+VIDEO_CODEC="libx264"
+OUTPUT_FPS=24
+DEFAULT_VOICEOVER_ID="21m00Tcm4TlvDq8ikWAM"
+
+------------------------------
+## How to use this with your AI Agent
+
+   1. Paste your live keys inside the double quotes for each respective variable.
+   2. Ensure you add .env to a .gitignore file if you are tracking your workspace using Git, to avoid accidentally publishing your secret credentials.
+   3. Once created, you can prompt your agent like this:
+   
+   "Read the credentials inside the local .env file, install python-dotenv if needed, and run the video generation script for the topic: 'Hidden Bank Account Maintenance Fees'."
+   
+   
+The agent will seamlessly extract the keys and run the backend script cleanly.
+Would you like me to rewrite the Step 1 Initialization block of your Python code to automatically include python-dotenv handling so it loads these file variables natively?
+
