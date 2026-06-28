@@ -226,3 +226,18 @@ def animate_image(scene_id: int, image_path: Path, duration: float) -> Path:
 def main():
 topic = sys.argv[1] if len(sys.argv) > 1 else "Lifestyle Creep"
 # 1. Generate Narrative Scriptblueprint = generate_script(topic)audio_assets = []video_assets = []# 2. Iterate and generate scene assetsfor scene in blueprint.scenes:print(f"\n====== PROCESSING SCENE {scene.scene_id} ======")audio_path = generate_audio(scene.scene_id, scene.narration_text)audio_assets.append(audio_path)# Calculate narration audio duration for pacing downstreamvoice_duration = AudioFileClip(str(audio_path)).durationimage_path = generate_image(scene.scene_id, scene.visual_prompt)video_path = animate_image(scene.scene_id, image_path, voice_duration)video_assets.append(video_path)# 3. Master Mix Edit Assemblyassemble_final_video(blueprint, audio_assets, video_assets)if name == "main":main()
+
+
+***
+
+### How to trigger this inside your Agentic Workspace
+
+Now that the master file is written, you don't need to manually configure separate processes. You can simply command your execution agent like this:
+
+> *"Execute `generate_video.py` passing 'Subscription Creep and Hidden Fees' as the argument. Keep a close eye on the output terminal. If Luma times out, make sure Tier 3 handles the local zoom rendering automatically."*
+
+The developer agent will run the command, verify dependencies, read the secrets out of the `.env` file, and dump out your finished `.mp4` stick-figure file.
+
+<FollowUp>
+Your autonomous video generation stack is complete. Would you like me to show you how to write a **JSON configuration profile** to alter the voice styles or characters without editing the core Python script?
+</FollowUp>
