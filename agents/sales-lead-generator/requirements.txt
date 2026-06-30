@@ -13,6 +13,14 @@ oauth2client
 python-dotenv
 google-genai
 logging
+# Web framework
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+aiofiles
+# Optional compatibility
 flask
+
+# Data
 pandas
-oepnpyxl

@@ -1,5 +1,21 @@
 # AI SALES AGENT
 
+## Run the FastAPI Appliation
+```bash
+fastapi dev app.py --host 0.0.0.0 || uvicorn main:app --host: 0.0.0.0
+#restart the server
+uvicorn app:app --host 0.0.0.0 --port 5000 --reload
+
+uvicorn app:app --host 0.0.0.0 --port 5000 --forwarded-allow-ips='*'
+
+python -m uvicorn app:app --host 0.0.0.0 --port 5000 --reload
+```
+
+## Run the Flask Appliation
+```bash
+python app.py
+```
+
 ## Features:
 - Stripe billing (subscription enforced)
 - Multi-client SaaS mode

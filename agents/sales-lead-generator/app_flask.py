@@ -1,13 +1,9 @@
-from fastapi import FastAPI, Request, UploadFile, File, Form, BackgroundTasks
-from fastapi.responses import RedirectResponse, HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from flask import Flask, render_template, send_from_directory, request, redirect, url_for, flash
 import pandas as pd
 import os
 from pathlib import Path
 import requests
 import io
-import asyncio
 
 # optional gspread import for service-account access to Google Sheets
 try:
@@ -17,13 +13,8 @@ try:
 except Exception:
     GSPREAD_AVAILABLE = False
 
-app = FastAPI()
-BASE_DIR = Path(__file__).resolve().parents[0]
-TEMPLATES_DIR = BASE_DIR / 'templates'
-STATIC_DIR = BASE_DIR / 'static'
-
-app.mount('/static', StaticFiles(directory=str(STATIC_DIR)), name='static')
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+app = Flask(__name__, static_folder='static', template_folder='templates')
+app.secret_key = os.environ.get('FLASK_SECRET', 'dev-secret')
 
 
 DEFAULT_LEAD_COLUMNS = [
@@ -35,7 +26,8 @@ DEFAULT_LEAD_COLUMNS = [
 
 
 def get_data_paths():
-    extracts = BASE_DIR / 'extracts'
+    base = Path(__file__).resolve().parents[0]
+    extracts = base / 'extracts'
     extracts.mkdir(parents=True, exist_ok=True)
     return {
         'csv': extracts / 'outreach.csv',
@@ -44,7 +36,7 @@ def get_data_paths():
     }
 
 
-def load_data_sync():
+def load_data():
     paths = get_data_paths()
     csv_path = paths['csv']
     xlsx_path = paths['xlsx']
@@ -71,20 +63,13 @@ def load_data_sync():
     return pd.DataFrame(columns=DEFAULT_LEAD_COLUMNS)
 
 
-async def load_data():
-    return await asyncio.to_thread(load_data_sync)
-
-
-def save_data_sync(df):
+def save_data(df):
     csv_path = get_data_paths()['csv']
     df.to_csv(csv_path, index=False)
 
 
-async def save_data(df):
-    await asyncio.to_thread(save_data_sync, df)
-
-
-def fetch_google_sheet_csv_sync(sheet_id, gid=0):
+def fetch_google_sheet_csv(sheet_id, gid=0):
+    """Try to fetch Google Sheet as CSV via export URL (works for public or shared sheets)."""
     url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
     try:
         r = requests.get(url, timeout=15)
@@ -97,11 +82,10 @@ def fetch_google_sheet_csv_sync(sheet_id, gid=0):
     return None
 
 
-async def fetch_google_sheet_csv(sheet_id, gid=0):
-    return await asyncio.to_thread(fetch_google_sheet_csv_sync, sheet_id, gid)
-
-
-def fetch_google_sheet_service_sync(sheet_id, sheet_name=None):
+def fetch_google_sheet_service(sheet_id, sheet_name=None):
+    """Fetch Google Sheet using a service account JSON pointed by GOOGLE_SERVICE_ACCOUNT_FILE env var.
+    Requires gspread to be installed and a valid service account JSON file path set in env.
+    """
     if not GSPREAD_AVAILABLE:
         return None
     sa_file = os.environ.get('GOOGLE_SERVICE_ACCOUNT_FILE')
@@ -121,13 +105,10 @@ def fetch_google_sheet_service_sync(sheet_id, sheet_name=None):
         return df
     except Exception:
         return None
+    return df
 
 
-async def fetch_google_sheet_service(sheet_id, sheet_name=None):
-    return await asyncio.to_thread(fetch_google_sheet_service_sync, sheet_id, sheet_name)
-
-
-def compute_metrics_sync(df):
+def compute_metrics(df):
     total_leads = int(len(df))
 
     # Best-effort detection for verified email column
@@ -139,19 +120,22 @@ def compute_metrics_sync(df):
     elif 'verification_status' in df.columns:
         verified_count = int((df['verification_status'].astype(str).str.lower() == 'valid').sum())
     else:
+        # fallback: count non-null emails as "verified"
         if 'email' in df.columns:
             verified_count = int(df['email'].notna().sum())
 
     verification_rate = round((verified_count / total_leads * 100), 1) if total_leads else 0
 
+    # total exports: try to detect an 'exported' or 'exports' column
     exports = 0
     if 'exported' in df.columns:
         exports = int(df['exported'].astype(bool).sum())
     elif 'exports' in df.columns:
         exports = int(df['exports'].astype(bool).sum())
 
+    # lead sources
     source_col = None
-    for candidate in ['source', 'lead_source', 'platform', 'Lead Source']:
+    for candidate in ['source', 'lead_source', 'platform']:
         if candidate in df.columns:
             source_col = candidate
             break
@@ -160,10 +144,11 @@ def compute_metrics_sync(df):
     if source_col:
         lead_sources = df[source_col].fillna('Unknown').value_counts().to_dict()
 
+    # generate a simple trend: count per year or per date column if present
     trend_labels = []
     trend_values = []
     date_col = None
-    for c in ['created_at', 'date', 'timestamp', 'Last Contacted']:
+    for c in ['created_at', 'date', 'timestamp']:
         if c in df.columns:
             date_col = c
             break
@@ -175,16 +160,22 @@ def compute_metrics_sync(df):
             trend_values = [int(v) for v in by_period.values]
         except Exception:
             pass
+    else:
+        # fallback: simple monthly buckets from index
+        trend_labels = []
+        trend_values = []
 
+    # recent leads
     recent = []
     if not df.empty:
+        # determine name and email columns
         name_col = None
-        for c in ['name', 'full_name', 'contact_name', 'Company']:
+        for c in ['name', 'full_name', 'contact_name']:
             if c in df.columns:
                 name_col = c
                 break
         email_col = None
-        for c in ['email', 'contact_email', 'Email Address', 'Email']:
+        for c in ['email', 'contact_email']:
             if c in df.columns:
                 email_col = c
                 break
@@ -194,8 +185,8 @@ def compute_metrics_sync(df):
             recent.append({
                 'name': r[name_col] if name_col else (r[email_col] if email_col else 'Lead'),
                 'email': r[email_col] if email_col else '',
-                'company': r.get('Company', ''),
-                'status': r.get('Status', '')
+                'company': r.get('company', ''),
+                'status': r.get('verification_status', '')
             })
 
     return {
@@ -209,24 +200,18 @@ def compute_metrics_sync(df):
         'recent': recent,
     }
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     print("Starting up...")
-#     asyncio.create_task(simulated_obd_listener(obd=False)) #set to true to connect to obd, false for simulated data
-#     yield
-#     print("Shutting down...")
 
-# app = FastAPI(lifespan=lifespan)
-
-async def compute_metrics(df):
-    return await asyncio.to_thread(compute_metrics_sync, df)
+@app.route('/static/<path:path>')
+def static_files(path):
+    return send_from_directory('static', path)
 
 
-@app.get('/', response_class=HTMLResponse)
-async def index(request: Request):
-    df = await load_data()
-    metrics = await compute_metrics(df)
+@app.route('/')
+def index():
+    df = load_data()
+    metrics = compute_metrics(df)
 
+    # Provide sane defaults if empty
     if not metrics['trend_labels']:
         metrics['trend_labels'] = ['2022-01','2022-02','2022-03','2022-04','2022-05','2022-06']
         metrics['trend_values'] = [120,150,200,250,300,450]
@@ -238,15 +223,18 @@ async def index(request: Request):
         metrics['recent'] = [
             {'name':'Sarah Johnson','email':'sarah.j@techcorp.com','company':'TechCorp Inc.','status':'valid'},
             {'name':'Michael Chen','email':'michael@dataflow.io','company':'DataFlow Systems','status':'valid'},
+            {'name':'Emma Williams','email':'emma.w@cloudsync.com','company':'CloudSync Ltd','status':'valid'},
+            {'name':'James Anderson','email':'james@aisolutions.net','company':'AI Solutions','status':'risky'},
+            {'name':'Lisa Martinez','email':'lisa@devtools.com','company':'DevTools Pro','status':'valid'},
+            {'name':'Michael Chen','email':'michael@dataflow.io','company':'DataFlow Systems','status':'valid'},
         ]
 
-    context = {**metrics, 'request': request, 'current_page': 'overview'}
-    return templates.TemplateResponse(request, 'index.html', context)
+    return render_template('index.html', **metrics)
 
 
-@app.get('/leads', response_class=HTMLResponse)
-async def leads(request: Request, message: str = ''):
-    df = await load_data()
+@app.route('/leads')
+def leads():
+    df = load_data()
     columns = list(df.columns) if not df.empty else DEFAULT_LEAD_COLUMNS
     records = df.fillna('').to_dict(orient='records')
 
@@ -255,12 +243,12 @@ async def leads(request: Request, message: str = ''):
     conversion_rate = round((qualified_leads / total_leads * 100), 1) if total_leads else 0
     pipeline_value = f"${total_leads * 1200:,.0f}" if total_leads else '$0'
     avg_response = f"{max(1, min(5, total_leads // 20))}h {max(0, min(59, total_leads * 3 % 60))}m"
+    # build filter lists
     status_options = sorted(df['Status'].dropna().unique().tolist()) if 'Status' in df.columns else []
     source_options = sorted(df['Lead Source'].dropna().unique().tolist()) if 'Lead Source' in df.columns else []
 
-    context = dict(
-        request=request,
-        current_page='leads',
+    return render_template(
+        'leads.html',
         columns=columns,
         records=records,
         total_leads=total_leads,
@@ -270,102 +258,143 @@ async def leads(request: Request, message: str = ''):
         avg_response=avg_response,
         status_options=status_options,
         source_options=source_options,
-        message=message,
-        get_flashed_messages=(lambda: [message] if message else []),
     )
-    return templates.TemplateResponse(request, 'leads.html', context)
 
 
-@app.post('/lead/create')
-async def create_lead(request: Request):
-    form = await request.form()
-    df = await load_data()
-    row = {col: form.get(col, '') for col in df.columns}
+@app.route('/lead/create', methods=['POST'])
+def create_lead():
+    df = load_data()
+    row = {col: request.form.get(col, '') for col in df.columns}
     df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
-    await save_data(df)
-    return RedirectResponse(url='/leads?message=Lead+created', status_code=303)
+    save_data(df)
+    flash('Lead created successfully')
+    return redirect(url_for('leads'))
 
 
-@app.post('/lead/update/{index}')
-async def update_lead(index: int, request: Request):
-    form = await request.form()
-    df = await load_data()
+@app.route('/lead/update/<int:index>', methods=['POST'])
+def update_lead(index):
+    df = load_data()
     if 0 <= index < len(df):
         for col in df.columns:
-            df.at[index, col] = form.get(col, df.at[index, col])
-        await save_data(df)
-        return RedirectResponse(url='/leads?message=Lead+updated', status_code=303)
-    return RedirectResponse(url='/leads?message=Lead+not+found', status_code=303)
+            df.at[index, col] = request.form.get(col, df.at[index, col])
+        save_data(df)
+        flash('Lead updated successfully')
+    else:
+        flash('Lead not found')
+    return redirect(url_for('leads'))
 
 
-@app.post('/lead/delete/{index}')
-async def delete_lead(index: int):
-    df = await load_data()
+@app.route('/lead/delete/<int:index>', methods=['POST'])
+def delete_lead(index):
+    df = load_data()
     if 0 <= index < len(df):
         df = df.drop(index).reset_index(drop=True)
-        await save_data(df)
-        return RedirectResponse(url='/leads?message=Lead+deleted', status_code=303)
-    return RedirectResponse(url='/leads?message=Lead+not+found', status_code=303)
+        save_data(df)
+        flash('Lead deleted successfully')
+    else:
+        flash('Lead not found')
+    return redirect(url_for('leads'))
 
 
-@app.post('/upload')
-async def upload(file: UploadFile = File(...)):
-    extracts = get_data_paths()
-    extracts_dir = BASE_DIR / 'extracts'
-    extracts_dir.mkdir(parents=True, exist_ok=True)
-    dest = extracts_dir / file.filename
-    content = await file.read()
-    dest.write_bytes(content)
+@app.route('/upload', methods=['POST'])
+def upload():
+    # handle file upload from form
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(url_for('index'))
+    f = request.files['file']
+    if f.filename == '':
+        flash('No selected file')
+        return redirect(url_for('index'))
 
+    # save to extracts/outreach.xlsx (or outreach.csv if csv)
+    base = Path(__file__).resolve().parents[0]
+    extracts = base / 'extracts'
+    extracts.mkdir(parents=True, exist_ok=True)
+
+    filename = f.filename
+    dest = extracts / filename
+    f.save(dest)
+
+    # normalize to outreach.xlsx or outreach.csv
+    target = extracts / 'outreach.xlsx'
+    # if uploaded csv, also allow csv
     if dest.suffix.lower() in ['.xls', '.xlsx', '.csv']:
-        final = extracts_dir / ('outreach' + dest.suffix.lower())
+        # rename to outreach with same suffix
+        final = extracts / ('outreach' + dest.suffix.lower())
         if final.exists():
             final.unlink()
         dest.rename(final)
-        return RedirectResponse(url='/?message=File+uploaded', status_code=303)
-    return RedirectResponse(url='/?message=Unsupported+file+type', status_code=303)
+        flash('File uploaded')
+    else:
+        flash('Unsupported file type')
+
+    return redirect(url_for('index'))
 
 
-@app.get('/load')
-async def load_from_source(local_path: str = '', google_sheet_id: str = ''):
-    extracts_dir = BASE_DIR / 'extracts'
-    extracts_dir.mkdir(parents=True, exist_ok=True)
+@app.route('/load')
+def load_from_source():
+    """Load data from either a provided local path or a Google Sheet ID (via query params).
+    Example: /load?local_path=extracts/outreach.xlsx
+             /load?google_sheet_id=SPREADSHEET_ID
+    """
+    local_path = request.args.get('local_path', '').strip()
+    sheet_id = request.args.get('google_sheet_id', '').strip()
 
+    base = Path(__file__).resolve().parents[0]
+    extracts = base / 'extracts'
+    extracts.mkdir(parents=True, exist_ok=True)
+
+    # 1) local path
     if local_path:
         cand = Path(local_path)
+        # if relative, resolve relative to agent folder
         if not cand.exists():
-            cand = BASE_DIR / local_path
+            cand = base / local_path
         if not cand.exists():
-            return RedirectResponse(url='/leads?message=Local+file+not+found', status_code=303)
+            flash(f'Local file not found: {local_path}')
+            return redirect(url_for('index'))
+
+        # try reading as excel or csv and save to extracts
         try:
             if cand.suffix.lower() in ['.xls', '.xlsx']:
-                df = await asyncio.to_thread(pd.read_excel, cand, engine='openpyxl')
-                target = extracts_dir / 'outreach.xlsx'
-                await asyncio.to_thread(df.to_excel, target, index=False)
+                df = pd.read_excel(cand, engine='openpyxl')
+                target = extracts / 'outreach.xlsx'
+                df.to_excel(target, index=False)
             else:
-                df = await asyncio.to_thread(pd.read_csv, cand)
-                target = extracts_dir / 'outreach.csv'
-                await asyncio.to_thread(df.to_csv, target, index=False)
-            return RedirectResponse(url='/leads?message=Loaded+local+file', status_code=303)
+                df = pd.read_csv(cand)
+                target = extracts / 'outreach.csv'
+                df.to_csv(target, index=False)
+            flash('Loaded local file successfully')
+            return redirect(url_for('index'))
         except Exception as e:
-            return RedirectResponse(url=f'/leads?message=Failed+to+load+local+file:+{e}', status_code=303)
+            flash(f'Failed to load local file: {e}')
+            return redirect(url_for('index'))
 
-    if google_sheet_id:
-        df = await fetch_google_sheet_csv(google_sheet_id)
+    # 2) google sheet id
+    if sheet_id:
+        # try export CSV first
+        df = fetch_google_sheet_csv(sheet_id)
         if df is not None:
-            target = extracts_dir / 'outreach.csv'
-            await asyncio.to_thread(df.to_csv, target, index=False)
-            return RedirectResponse(url='/leads?message=Loaded+Google+Sheet+via+export', status_code=303)
-        df = await fetch_google_sheet_service(google_sheet_id)
-        if df is not None:
-            target = extracts_dir / 'outreach.csv'
-            await asyncio.to_thread(df.to_csv, target, index=False)
-            return RedirectResponse(url='/leads?message=Loaded+Google+Sheet+via+service', status_code=303)
-        return RedirectResponse(url='/leads?message=Could+not+load+Google+Sheet', status_code=303)
+            target = extracts / 'outreach.csv'
+            df.to_csv(target, index=False)
+            flash('Loaded Google Sheet via export URL')
+            return redirect(url_for('index'))
 
-    return RedirectResponse(url='/leads?message=No+source+provided', status_code=303)
+        # try service account
+        df = fetch_google_sheet_service(sheet_id)
+        if df is not None:
+            target = extracts / 'outreach.csv'
+            df.to_csv(target, index=False)
+            flash('Loaded Google Sheet via service account')
+            return redirect(url_for('index'))
+
+        flash('Could not load Google Sheet. Ensure the sheet is shared or service account is configured.')
+        return redirect(url_for('index'))
+
+    flash('No source provided')
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
-    import uvicorn
-    uvicorn.run('app:app', host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), reload=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)

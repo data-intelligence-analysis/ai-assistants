@@ -3919,3 +3919,21 @@ Say:
 You are no longer automating tasks —
 you’re **automating revenue**.
 
+## Fix Python Application Issues
+Done — I fixed the FastAPI runtime errors and validated the server starts.
+
+What I changed: updated app.py:1-400
+
+TemplateResponse calls: corrected argument order to templates.TemplateResponse(request, 'name.html', context) so Jinja2 receives the right params.
+Flask flash shim: added a get_flashed_messages() lambda in the leads context so existing templates using Flask flashes don't error.
+Pandas threading fixes: fixed asyncio.to_thread calls to pass pandas kwargs correctly (e.g., engine='openpyxl', index=False) to avoid unhashable/argument errors.
+What I ran: installed requirements from the agent folder and started uvicorn to reproduce and verify template rendering — / and /leads now render (no 500 on index; leads renders successfully).
+
+How to run locally:
+
+cd agents/sales-lead-generator
+python -m uvicorn app:app --host 0.0.0.0 --port 5000 --reload
+Next steps (optional):
+
+I can run the server and exercise upload/load endpoints, or add server-side validation and tests.
+Want me to commit these changes and open a PR?
