@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Request, UploadFile, File, Form, BackgroundTasks
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, FileResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import pandas as pd
 import os
+import json
 from pathlib import Path
 import requests
 import io
@@ -16,6 +17,18 @@ try:
     GSPREAD_AVAILABLE = True
 except Exception:
     GSPREAD_AVAILABLE = False
+
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except Exception:
+    OPENAI_AVAILABLE = False
+
+try:
+    from fpdf import FPDF
+    FPDF_AVAILABLE = True
+except Exception:
+    FPDF_AVAILABLE = False
 
 app = FastAPI()
 BASE_DIR = Path(__file__).resolve().parents[0]
@@ -44,7 +57,74 @@ def get_data_paths():
     }
 
 
+def get_config():
+    config_path = BASE_DIR / 'config.json'
+    if config_path.exists():
+        try:
+            return json.loads(config_path.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+def get_google_sheet_id():
+    config = get_config()
+    return (
+        os.environ.get('GOOGLE_SHEET_ID')
+        or config.get('spreadsheet_id')
+        or config.get('real_estate_config', {}).get('spreadsheet_id')
+    )
+
+
+def fetch_google_sheet_service_sync(sheet_id, sheet_name=None):
+    """Fetch Google Sheet using a service account JSON."""
+    if not GSPREAD_AVAILABLE:
+        return None
+    sa_file = os.environ.get('GOOGLE_SERVICE_ACCOUNT_FILE')
+    sa_json = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON')
+    if not sa_file and not sa_json:
+        return None
+    try:
+        scopes = [
+            'https://www.googleapis.com/auth/spreadsheets.readonly',
+            'https://www.googleapis.com/auth/drive.readonly'
+        ]
+        if sa_json:
+            creds = ServiceAccountCredentials.from_service_account_info(json.loads(sa_json), scopes=scopes)
+        else:
+            if not Path(sa_file).exists():
+                return None
+            creds = ServiceAccountCredentials.from_service_account_file(sa_file, scopes=scopes)
+        client = gspread.authorize(creds)
+        sh = client.open_by_key(sheet_id)
+        worksheet = sh.sheet1 if sheet_name is None else sh.worksheet(sheet_name)
+        data = worksheet.get_all_records()
+        df = pd.DataFrame(data)
+        return df
+    except Exception:
+        return None
+    return df
+
+
+def load_data_from_google_sync():
+    sheet_id = get_google_sheet_id()
+    if not sheet_id:
+        return None
+    if GSPREAD_AVAILABLE:
+        df = fetch_google_sheet_service_sync(sheet_id)
+        if df is not None and not df.empty:
+            return df
+    df = fetch_google_sheet_csv_sync(sheet_id)
+    if df is not None and not df.empty:
+        return df
+    return None
+
+
 def load_data_sync():
+    google_df = load_data_from_google_sync()
+    if google_df is not None and not google_df.empty:
+        return google_df
+
     paths = get_data_paths()
     csv_path = paths['csv']
     xlsx_path = paths['xlsx']
@@ -99,32 +179,6 @@ def fetch_google_sheet_csv_sync(sheet_id, gid=0):
 
 async def fetch_google_sheet_csv(sheet_id, gid=0):
     return await asyncio.to_thread(fetch_google_sheet_csv_sync, sheet_id, gid)
-
-
-def fetch_google_sheet_service_sync(sheet_id, sheet_name=None):
-    if not GSPREAD_AVAILABLE:
-        return None
-    sa_file = os.environ.get('GOOGLE_SERVICE_ACCOUNT_FILE')
-    if not sa_file or not Path(sa_file).exists():
-        return None
-    try:
-        scopes = [
-            'https://www.googleapis.com/auth/spreadsheets.readonly',
-            'https://www.googleapis.com/auth/drive.readonly'
-        ]
-        creds = ServiceAccountCredentials.from_service_account_file(sa_file, scopes=scopes)
-        client = gspread.authorize(creds)
-        sh = client.open_by_key(sheet_id)
-        worksheet = sh.sheet1 if sheet_name is None else sh.worksheet(sheet_name)
-        data = worksheet.get_all_records()
-        df = pd.DataFrame(data)
-        return df
-    except Exception:
-        return None
-
-
-async def fetch_google_sheet_service(sheet_id, sheet_name=None):
-    return await asyncio.to_thread(fetch_google_sheet_service_sync, sheet_id, sheet_name)
 
 
 def compute_metrics_sync(df):
@@ -274,6 +328,96 @@ async def leads(request: Request, message: str = ''):
         get_flashed_messages=(lambda: [message] if message else []),
     )
     return templates.TemplateResponse(request, 'leads.html', context)
+
+
+@app.get('/export/csv')
+async def export_csv():
+    df = await load_data()
+    csv_bytes = df.to_csv(index=False).encode('utf-8')
+    return StreamingResponse(io.BytesIO(csv_bytes), media_type='text/csv', headers={'Content-Disposition': 'attachment; filename="leads_export.csv"'})
+
+
+@app.get('/export/pdf')
+async def export_pdf():
+    df = await load_data()
+    if not FPDF_AVAILABLE:
+        return JSONResponse({'error': 'PDF export unavailable: missing fpdf library.'}, status_code=503)
+
+    pdf = FPDF('L', 'mm', 'A4')
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font('Arial', 'B', 12)
+    cols = list(df.columns)
+    col_width = max(20, min(40, int(270 / max(1, len(cols)))))
+    for col in cols:
+        pdf.cell(col_width, 10, col[:18], border=1)
+    pdf.ln()
+    pdf.set_font('Arial', '', 10)
+    for _, row in df.astype(str).fillna('').iterrows():
+        for col in cols:
+            text = str(row[col])[:20]
+            pdf.cell(col_width, 8, text, border=1)
+        pdf.ln()
+    pdf_stream = io.BytesIO()
+    pdf.output(pdf_stream)
+    pdf_stream.seek(0)
+    return StreamingResponse(pdf_stream, media_type='application/pdf', headers={'Content-Disposition': 'attachment; filename="leads_export.pdf"'})
+
+
+@app.get('/sync')
+async def sync_crm():
+    google_df = await asyncio.to_thread(load_data_from_google_sync)
+    if google_df is not None and not google_df.empty:
+        local_path = get_data_paths()['csv']
+        await asyncio.to_thread(google_df.to_csv, local_path, index=False)
+        return RedirectResponse(url='/leads?message=CRM+synced+from+Google+Sheets', status_code=303)
+
+    fallback_path = get_data_paths()['test_csv']
+    if fallback_path.exists() and fallback_path.stat().st_size > 0:
+        try:
+            fallback_df = pd.read_csv(fallback_path)
+            await asyncio.to_thread(fallback_df.to_csv, get_data_paths()['csv'], index=False)
+            return RedirectResponse(url='/leads?message=CRM+synced+from+fallback+template', status_code=303)
+        except Exception:
+            pass
+
+    return RedirectResponse(url='/leads?message=Sync+failed+no+Google+Sheet+or+fallback+available', status_code=303)
+
+
+@app.post('/analyze')
+async def analyze_leads(request: Request):
+    if not OPENAI_AVAILABLE:
+        return JSONResponse({'error': 'AI analysis unavailable: missing OpenAI library.'}, status_code=503)
+
+    df = await load_data()
+    rows = df.astype(str).fillna('').head(40).to_dict(orient='records')
+    sample_text = '\n'.join([', '.join([f"{k}: {v}" for k,v in row.items() if v]) for row in rows])
+    prompt = (
+        'Analyze these leads and provide a short summary with three key insights, the strongest leads, and one tactical recommendation for follow-up. '
+        'Use simple language.\n\nLeads data:\n' + sample_text
+    )
+
+    try:
+        client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        response = client.responses.create(
+            model='gpt-4.1-mini',
+            input=prompt,
+            max_output_tokens=400
+        )
+        content = ''
+        if hasattr(response, 'output'):
+            if isinstance(response.output, list):
+                content = ' '.join([str(item) for item in response.output])
+            else:
+                content = str(response.output)
+        elif hasattr(response, 'text'):
+            content = response.text
+        else:
+            content = json.dumps(response)
+    except Exception as exc:
+        return JSONResponse({'error': str(exc)}, status_code=500)
+
+    return JSONResponse({'analysis': content})
 
 
 @app.post('/lead/create')

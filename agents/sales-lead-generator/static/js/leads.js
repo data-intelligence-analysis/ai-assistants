@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function(){
       return va.localeCompare(vb) * (asc?1:-1);
     }
   };
-  // Sorting with visual indicator
   document.querySelectorAll('#leadsTable th.sortable').forEach(function(th){
     let asc = true;
     th.addEventListener('click', function(){
@@ -23,58 +22,129 @@ document.addEventListener('DOMContentLoaded', function(){
       const colIndex = Array.from(th.parentNode.children).indexOf(th);
       rows.sort(comparer(colIndex, asc));
       rows.forEach(r=>tableBody.appendChild(r));
-
-      // update indicators
       document.querySelectorAll('#leadsTable th .sort-indicator').forEach(el=>el.textContent='');
       const indicator = th.querySelector('.sort-indicator');
       if(indicator) indicator.textContent = asc ? '▲' : '▼';
-
       asc = !asc;
+      applyFilters();
     });
   });
 
-  // Global search
   const searchInput = document.getElementById('globalSearch');
   const statusFilter = document.getElementById('statusFilter');
   const sourceFilter = document.getElementById('sourceFilter');
+  const pageSizeSelect = document.getElementById('pageSize');
+  const paginationWrap = document.querySelector('.pagination-wrap');
+  const tableSummary = document.querySelector('.table-summary');
+  const rows = Array.from(table.tBodies[0].rows);
+  let currentPage = 0;
+
+  function getStatusCell(row){
+    return Array.from(row.querySelectorAll('td')).find(td=>td.dataset.colname && td.dataset.colname.toLowerCase() === 'status');
+  }
+
+  function getSourceCell(row){
+    return Array.from(row.querySelectorAll('td')).find(td=>td.dataset.colname && td.dataset.colname.toLowerCase() === 'lead source');
+  }
 
   function applyFilters(){
-    const q = searchInput.value.toLowerCase();
-    const s = statusFilter.value;
-    const src = sourceFilter.value;
-    const rows = table.tBodies[0].rows;
-    for(const r of rows){
+    const q = searchInput ? searchInput.value.toLowerCase() : '';
+    const s = statusFilter ? statusFilter.value : '';
+    const src = sourceFilter ? sourceFilter.value : '';
+    rows.forEach(r=>{
       const text = r.innerText.toLowerCase();
       let visible = true;
       if(q && !text.includes(q)) visible = false;
       if(s){
-        const statusCell = Array.from(r.querySelectorAll('td')).find(td=>td.dataset.colname && td.dataset.colname.toLowerCase()=='status');
-        if(statusCell){ if(statusCell.innerText.trim().toLowerCase() != s.toLowerCase()) visible = false; }
+        const statusCell = getStatusCell(r);
+        if(statusCell && statusCell.innerText.trim().toLowerCase() !== s.toLowerCase()) visible = false;
       }
       if(src){
-        const srcCell = Array.from(r.querySelectorAll('td')).find(td=>td.dataset.colname && td.dataset.colname.toLowerCase()=='lead source');
-        if(srcCell){ if(srcCell.innerText.trim().toLowerCase() != src.toLowerCase()) visible = false; }
+        const srcCell = getSourceCell(r);
+        if(srcCell && srcCell.innerText.trim().toLowerCase() !== src.toLowerCase()) visible = false;
       }
-      r.style.display = visible ? '' : 'none';
+      r.dataset.filtered = visible ? 'true' : 'false';
+    });
+    currentPage = 0;
+    updatePagination();
+  }
+
+  function getFilteredRows(){
+    return rows.filter(r => r.dataset.filtered !== 'false');
+  }
+
+  function renderPagination(totalPages){
+    if(!paginationWrap) return;
+    paginationWrap.innerHTML = '';
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'btn btn-outline-secondary btn-sm';
+    prevBtn.textContent = '‹';
+    prevBtn.disabled = currentPage === 0;
+    prevBtn.addEventListener('click', function(){
+      if(currentPage > 0){ currentPage -= 1; updatePagination(); }
+    });
+    paginationWrap.appendChild(prevBtn);
+
+    const pageLimit = 5;
+    const startPage = Math.max(0, Math.min(currentPage - 2, totalPages - pageLimit));
+    const endPage = Math.min(totalPages, startPage + pageLimit);
+    for(let i = startPage; i < endPage; i++){
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-outline-secondary btn-sm';
+      if(i === currentPage) btn.classList.add('active');
+      btn.textContent = (i + 1).toString();
+      btn.addEventListener('click', function(){
+        currentPage = i;
+        updatePagination();
+      });
+      paginationWrap.appendChild(btn);
     }
-    applyPagination();
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'btn btn-outline-secondary btn-sm';
+    nextBtn.textContent = '›';
+    nextBtn.disabled = currentPage >= totalPages - 1;
+    nextBtn.addEventListener('click', function(){
+      if(currentPage < totalPages - 1){ currentPage += 1; updatePagination(); }
+    });
+    paginationWrap.appendChild(nextBtn);
+  }
+
+  function updatePagination(){
+    const pageSize = parseInt(pageSizeSelect ? pageSizeSelect.value : 20, 10) || 20;
+    const filteredRows = getFilteredRows();
+    const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+    if(currentPage >= totalPages) currentPage = totalPages - 1;
+
+    filteredRows.forEach((r, idx) => {
+      const visible = idx >= currentPage * pageSize && idx < (currentPage + 1) * pageSize;
+      r.style.display = visible ? '' : 'none';
+    });
+    rows.filter(r => r.dataset.filtered === 'false').forEach(r => r.style.display = 'none');
+
+    if(tableSummary){
+      const shown = filteredRows.length > 0
+        ? Math.min(pageSize, Math.max(0, filteredRows.length - currentPage * pageSize))
+        : 0;
+      const total = filteredRows.length;
+      if(total === 0){
+        tableSummary.innerHTML = `Showing <strong>0</strong> of <strong>0</strong> entries (page size: <strong>${pageSize}</strong>)`;
+      } else {
+        tableSummary.innerHTML = `Showing <strong>${shown}</strong> of <strong>${total}</strong> entries (page size: <strong>${pageSize}</strong>)`;
+      }
+      // const pageStart = totalRows > 0 ? currentPage * pageSize + 1 : 0;
+      // const pageEnd = totalRows > 0 ? Math.min(totalRows, (currentPage + 1) * pageSize) : 0;
+      // tableSummary.innerHTML = `Showing <strong>${pageStart}</strong>–<strong>${pageEnd}</strong> of <strong>${totalRows}</strong> entries (page size: <strong>${pageSize}</strong>)`;
+    }
+
+    renderPagination(totalPages);
   }
 
   if(searchInput) searchInput.addEventListener('input', applyFilters);
   if(statusFilter) statusFilter.addEventListener('change', applyFilters);
   if(sourceFilter) sourceFilter.addEventListener('change', applyFilters);
-
-  // Simple client-side pagination based on # pageSize selector
-  const pageSizeSelect = document.getElementById('pageSize');
-  function applyPagination(){
-    const pageSize = parseInt(pageSizeSelect ? pageSizeSelect.value : 20,10) || 20;
-    const rows = Array.from(table.tBodies[0].rows).filter(r=>r.style.display !== 'none');
-    rows.forEach((r, i)=>{
-      r.style.display = (i < pageSize) ? '' : 'none';
-    });
-  }
   if(pageSizeSelect) pageSizeSelect.addEventListener('change', applyFilters);
-  // initial pagination
-  applyPagination();
 
+  rows.forEach(r => r.dataset.filtered = 'true');
+  updatePagination();
 });

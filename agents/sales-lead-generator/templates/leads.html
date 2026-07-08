@@ -23,10 +23,16 @@
                 <input id="globalSearch" class="form-control" placeholder="Search..." />
               </div>
               <div class="action-buttons d-flex align-items-center gap-3 w-100">
-                <button class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;">AI Analyze Leads</button>
-                <button class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;">Sync CRM</button>
-                <button class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;">Export Data</button>
-                <button class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;">Import CSV</button>
+                <button id="analyzeLeadsBtn" class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;" data-bs-toggle="modal" data-bs-target="#analyzeModal">Analyze Leads</button>
+                <button id="syncCrmBtn" class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;">Sync CRM</button>
+                <div class="dropdown">
+                  <button class="btn btn-outline-secondary btn-sm dropdown-toggle" style="border-radius:10px; padding: 0.5rem 1rem;" type="button" data-bs-toggle="dropdown" aria-expanded="false">Export Data</button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" id="exportCsvBtn" href="#">Export CSV</a></li>
+                    <li><a class="dropdown-item" id="exportPdfBtn" href="#">Export PDF</a></li>
+                  </ul>
+                </div>
+                <!-- <button class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;">Import CSV</button> -->
                 <button class="btn btn-success btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;" data-bs-toggle="modal" data-bs-target="#createModal">+ New</button>
               </div>
             </div>   
@@ -119,74 +125,99 @@
                 <option>10</option>
                 <option selected>20</option>
                 <option>50</option>
+                <option>100</option>
               </select>
             </div>
           </div>
 
           <div class="card mb-4">
-            <div class="card-body overflow-auto table-responsive">
-              <table id="leadsTable" class="table table-hover align-middle mb-0" style="min-width: 1280px;">
+            <div class="px-2 overflow-auto table-responsive">
+              <table id="leadsTable" class="table table-hover align-middle mb-0 w-100">
                 <thead>
                   <tr>
                     <th style="width:50px">#</th>
-                    <th class="sortable">Lead <span class="sort-indicator"></span></th>
+                    <th class="sortable">Niche <span class="sort-indicator"></span></th>
+                    <th class="sortable">Location <span class="sort-indicator"></span></th>
+                    <th class="sortable">Company <span class="sort-indicator"></span></th>
+                    <th class="sortable">Website <span class="sort-indicator"></span></th>
+                    <th class="sortable">Phone <span class="sort-indicator"></span></th>
+                    <th class="sortable">Email Address <span class="sort-indicator"></span></th>
                     <th class="sortable" style="width:120px">Status <span class="sort-indicator"></span></th>
-                    <th class="sortable" style="width:90px">Score <span class="sort-indicator"></span></th>
-                    <th class="sortable" style="width:100px">Intent <span class="sort-indicator"></span></th>
-                    <th class="sortable" style="width:140px">Source <span class="sort-indicator"></span></th>
-                    <th class="sortable" style="width:110px">Opportunity <span class="sort-indicator"></span></th>
-                    <th class="sortable" style="width:140px">Assigned <span class="sort-indicator"></span></th>
-                    <th class="sortable" style="width:160px">Next Action <span class="sort-indicator"></span></th>
-                    <th class="sortable" style="width:180px">AI Recommendation <span class="sort-indicator"></span></th>
+                    <th class="sortable" style="width:140px">Last Contacted <span class="sort-indicator"></span></th>
+                    <th class="sortable" style="width:140px">Lead Source <span class="sort-indicator"></span></th>
+                    <th class="sortable">Profile URL <span class="sort-indicator"></span></th>
+                    <th class="sortable">Initial Email <span class="sort-indicator"></span></th>
+                    <th class="sortable">Follow-up 1 <span class="sort-indicator"></span></th>
+                    <th class="sortable">Follow-up 2 <span class="sort-indicator"></span></th>
+                    <th class="sortable">Calendar Link <span class="sort-indicator"></span></th>
+                    <th class="sortable">Web Prompt <span class="sort-indicator"></span></th>
+                    <th class="sortable">Loom Script <span class="sort-indicator"></span></th>
+                    <th class="sortable">SMS Copy <span class="sort-indicator"></span></th>
                     <th style="width:110px">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for row in records %}
-                    {% set lead_name = row.get('Company') or row.get('Business Name') or row.get('Niche') or row.get('Lead') or 'Lead' %}
-                    {% set lead_sub = row.get('Email Address') or row.get('Website') or row.get('Location') or '' %}
+                    {% set niche = row.get('Niche','') %}
+                    {% set location = row.get('Location','') %}
+                    {% set company = row.get('Company','') %}
+                    {% set website = row.get('Website','') %}
+                    {% set phone = row.get('Phone','') %}
+                    {% set email_address = row.get('Email Address','') %}
                     {% set status = row.get('Status','') %}
-                    {% set score = row.get('Score') or row.get('Lead Score') or '' %}
-                    {% set intent = row.get('Intent') or row.get('Platform') or row.get('Lead Type') or '' %}
-                    {% set source = row.get('Lead Source') or row.get('Source') or '' %}
-                    {% set opportunity = row.get('Opportunity') or row.get('Pipeline Value') or row.get('Value') or row.get('Dollar Amount') or '' %}
-                    {% set assigned = row.get('Assigned') or row.get('Owner') or row.get('Sales Rep') or '' %}
-                    {% set next_action = row.get('Next Action') or row.get('Next Step') or row.get('Follow-up 1') or '' %}
-                    {% set ai_rec = row.get('AI Recommendation') or row.get('AI Rec') or row.get('Notes') or '' %}
+                    {% set last_contacted = row.get('Last Contacted','') %}
+                    {% set lead_source = row.get('Lead Source','') %}
+                    {% set profile_url = row.get('Profile URL','') %}
+                    {% set initial_email = row.get('Initial Email','') %}
+                    {% set followup1 = row.get('Follow-up 1','') %}
+                    {% set followup2 = row.get('Follow-up 2','') %}
+                    {% set calendar_link = row.get('Calendar Link','') %}
+                    {% set web_prompt = row.get('Web Prompt','') %}
+                    {% set loom_script = row.get('Loom Script','') %}
+                    {% set sms_copy = row.get('SMS Copy','') %}
                     <tr>
                       <td>{{ loop.index }}</td>
-                      <td data-colname="Lead">
+                      <td>{{ niche }}</td>
+                      <td>{{ location }}</td>
+                      <td data-colname="Company">
                         <div class="d-flex align-items-center gap-3">
-                          <div class="avatar-sm bg-soft-primary text-primary">{{ (lead_name[:1] if lead_name) | upper }}</div>
+                          <div class="avatar-sm bg-soft-primary text-primary">{{ (company[:1] if company) | upper }}</div>
                           <div>
-                            <div class="fw-semibold">{{ lead_name }}</div>
-                            <div class="small text-muted">{{ lead_sub }}</div>
+                            <div class="fw-semibold">{{ company }}</div>
+                            <div class="small text-muted">{{ website }}</div>
                           </div>
                         </div>
                       </td>
+                      <td>
+                        {% if website %}
+                          <a href="{{ website if website.startswith('http') else 'https://' + website }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">{{ website }}</a>
+                        {% endif %}
+                      </td>
+                      <td>{{ phone }}</td>
+                      <td>{{ email_address }}</td>
                       <td data-colname="Status">
                         {% if status %}
                           <span class="badge badge-status badge-status-{{ status|lower|replace(' ','-') }}">{{ status }}</span>
                         {% endif %}
                       </td>
+                      <td>{{ last_contacted }}</td>
+                      <td data-colname="Lead Source">{{ lead_source }}</td>
                       <td>
-                        {% if score %}
-                          <div class="d-flex align-items-center gap-1 text-secondary"><span>▲</span><strong>{{ score }}</strong></div>
-                        {% else %}
-                          —
+                        {% if profile_url %}
+                          <a href="{{ profile_url if profile_url.startswith('http') else 'https://' + profile_url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Profile</a>
                         {% endif %}
                       </td>
-                      <td>{{ intent }}</td>
-                      <td data-colname="Lead Source">{{ source }}</td>
-                      <td>{{ opportunity }}</td>
+                      <td>{{ initial_email }}</td>
+                      <td>{{ followup1 }}</td>
+                      <td>{{ followup2 }}</td>
                       <td>
-                        <div class="d-flex align-items-center gap-2">
-                          <div class="avatar-sm bg-soft-secondary text-secondary">{{ (assigned[:1] if assigned) | upper }}</div>
-                          <div class="small text-muted">{{ assigned }}</div>
-                        </div>
+                        {% if calendar_link %}
+                          <a href="{{ calendar_link if calendar_link.startswith('http') else 'https://' + calendar_link }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Book</a>
+                        {% endif %}
                       </td>
-                      <td>{{ next_action }}</td>
-                      <td>{{ ai_rec }}</td>
+                      <td>{{ web_prompt }}</td>
+                      <td>{{ loom_script }}</td>
+                      <td>{{ sms_copy }}</td>
                       <td>
                         <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editModal{{ loop.index0 }}">Edit</button>
                         <form action="/lead/delete/{{ loop.index0 }}" method="post" class="d-inline">
@@ -195,26 +226,49 @@
                       </td>
                     </tr>
                   {% else %}
-                    <tr><td colspan="11">No leads found.</td></tr>
+                    <tr><td colspan="19">No leads found.</td></tr>
                   {% endfor %}
                 </tbody>
               </table>
             </div>
             <div class="table-footer d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 px-3 pb-3 pt-2">
               <div class="table-summary small text-muted">Showing <strong>{{ pageSize or 20 }}</strong> of <strong>{{ total_leads }}</strong> entries</div>
-              <div class="pagination-wrap d-flex gap-2 align-items-center">
+              <!-- <div class="pagination-wrap d-flex gap-2 align-items-center">
                 <button class="btn btn-outline-secondary btn-sm" disabled>‹</button>
                 <button class="btn btn-outline-secondary btn-sm active">1</button>
                 <button class="btn btn-outline-secondary btn-sm">2</button>
                 <button class="btn btn-outline-secondary btn-sm">3</button>
                 <button class="btn btn-outline-secondary btn-sm">›</button>
-              </div>
+              </div> -->
+              <div class="pagination-wrap d-flex gap-2 align-items-center"></div>
             </div>
           </div>
         </div>
       </div>
     </div>
     <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+    <div class="modal fade" id="analyzeModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Lead Analysis</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="analysisLoading" class="text-center py-4">Analyzing leads, please wait...</div>
+            <div id="analysisResult" class="d-none">
+              <h6>AI Summary</h6>
+              <div id="analysisText" class="small text-secondary"></div>
+            </div>
+            <div id="analysisError" class="alert alert-danger d-none" role="alert"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -275,5 +329,68 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/sidebar.js"></script>
     <script src="/static/js/leads.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        const syncCrmBtn = document.getElementById('syncCrmBtn');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const analyzeLeadsBtn = document.getElementById('analyzeLeadsBtn');
+        const analysisLoading = document.getElementById('analysisLoading');
+        const analysisResult = document.getElementById('analysisResult');
+        const analysisText = document.getElementById('analysisText');
+        const analysisError = document.getElementById('analysisError');
+
+        if(syncCrmBtn){
+          syncCrmBtn.addEventListener('click', function(){
+            window.location.href = '/sync';
+          });
+        }
+
+        if(exportCsvBtn){
+          exportCsvBtn.addEventListener('click', function(e){
+            e.preventDefault();
+            window.location.href = '/export/csv';
+          });
+        }
+
+        if(exportPdfBtn){
+          exportPdfBtn.addEventListener('click', function(e){
+            e.preventDefault();
+            window.location.href = '/export/pdf';
+          });
+        }
+
+        const analyzeModalEl = document.getElementById('analyzeModal');
+        if(analyzeModalEl){
+          analyzeModalEl.addEventListener('show.bs.modal', function(){
+            analysisLoading.classList.remove('d-none');
+            analysisResult.classList.add('d-none');
+            analysisError.classList.add('d-none');
+            analysisText.innerText = '';
+
+            fetch('/analyze', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            })
+              .then(response => response.json())
+              .then(data => {
+                analysisLoading.classList.add('d-none');
+                if(data.error){
+                  analysisError.classList.remove('d-none');
+                  analysisError.innerText = data.error;
+                } else {
+                  analysisResult.classList.remove('d-none');
+                  analysisText.innerText = data.analysis || 'No analysis was returned.';
+                }
+              })
+              .catch(err => {
+                analysisLoading.classList.add('d-none');
+                analysisError.classList.remove('d-none');
+                analysisError.innerText = err.message || 'Analysis request failed.';
+              });
+          });
+        }
+      });
+    </script>
   </body>
 </html>
