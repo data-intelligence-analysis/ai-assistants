@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased text-gray-900 bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JuiceDaily - Simple and Tasty Juice Recipes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            teal: '#ebf4f1',
+                            green: '#20b2aa',
+                            orange: '#ff5722',
+                            dark: '#1a1a1a',
+                            gray: '#f8f9fa'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom utilities for subtle design nuances */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-white max-w-[1440px] mx-auto shadow-sm min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="flex items-center justify-between pl-8 border-b border-gray-100" aria-label="Main Navigation">
+        <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-brand-green flex items-center justify-center text-white font-bold text-xs">J</div>
+            <span class="font-bold tracking-tight text-sm uppercase text-brand-green">JuiceDaily</span>
+        </div>
+        
+        <nav class="hidden md:flex items-center gap-10 text-[11px] font-semibold tracking-wider uppercase text-gray-500">
+            <a href="#" class="text-brand-dark hover:text-brand-green transition-colors">Browse</a>
+            <a href="#" class="hover:text-brand-green transition-colors">Trending</a>
+            <a href="#" class="hover:text-brand-green transition-colors">Contributors</a>
+            <a href="#" class="hover:text-brand-green transition-colors">Community</a>
+        </nav>
+
+        <button aria-label="Search recipes" class="bg-brand-orange w-16 h-16 flex items-center justify-center hover:bg-orange-600 transition-colors cursor-pointer text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </button>
+    </header>
+
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 min-h-[500px]" aria-label="Featured Recipe">
+            <div class="relative h-64 lg:h-auto">
+                <img src="https://images.unsplash.com/photo-1622597467836-f382495d4608?auto=format&fit=crop&q=80&w=1000" alt="Fresh strawberries, oranges, and rhubarb" class="absolute inset-0 w-full h-full object-cover" fetchpriority="high">
+            </div>
+            <div class="bg-brand-teal flex flex-col justify-center px-10 py-16 lg:px-20">
+                <div class="flex items-center gap-4 mb-6">
+                    <span class="bg-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 text-brand-green">New Recipe</span>
+                    <a href="#" class="text-xs font-medium text-gray-600 hover:text-brand-dark flex items-center gap-1 group">
+                        Delicious fruit juice combinations 
+                        <span class="group-hover:translate-x-1 transition-transform">→</span>
+                    </a>
+                </div>
+                <h1 class="text-5xl lg:text-6xl font-bold leading-[1.1] text-brand-dark mb-6 tracking-tight">
+                    Simple and<br>Tasty Juice<br>Recipes
+                </h1>
+                <p class="text-sm text-gray-500 max-w-sm leading-relaxed">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                </p>
+            </div>
+        </section>
+
+        <!-- Main Content Container -->
+        <div class="px-8 py-16 max-w-7xl mx-auto w-full">
+            
+            <!-- Trending Section -->
+            <section class="mb-20" aria-labelledby="trending-heading">
+                <h2 id="trending-heading" class="text-sm font-bold mb-6">Trending</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Trending Card 1 -->
+                    <article class="flex items-start gap-4 group cursor-pointer bg-brand-gray p-3 rounded-sm hover:bg-gray-100 transition-colors">
+                        <img src="https://images.unsplash.com/photo-1611162458324-aae1eb4129a4?auto=format&fit=crop&q=80&w=150" alt="Orange juice" class="w-16 h-16 object-cover bg-blue-100" loading="lazy">
+                        <div>
+                            <h3 class="text-sm font-bold leading-snug mb-1 group-hover:text-brand-green transition-colors">Fruit juices to boost your immune</h3>
+                            <p class="text-[10px] text-gray-400 leading-tight">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                        </div>
+                    </article>
+                    <!-- Trending Card 2 -->
+                    <article class="flex items-start gap-4 group cursor-pointer bg-brand-gray p-3 rounded-sm hover:bg-gray-100 transition-colors">
+                        <img src="https://images.unsplash.com/photo-1601315379734-425a469078de?auto=format&fit=crop&q=80&w=150" alt="Avocado" class="w-16 h-16 object-cover bg-green-100" loading="lazy">
+                        <div>
+                            <h3 class="text-sm font-bold leading-snug mb-1 group-hover:text-brand-green transition-colors">Juice variations using avocado</h3>
+                            <p class="text-[10px] text-gray-400 leading-tight">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                        </div>
+                    </article>
+                    <!-- Trending Card 3 -->
+                    <article class="flex items-start gap-4 group cursor-pointer bg-brand-gray p-3 rounded-sm hover:bg-gray-100 transition-colors">
+                        <img src="https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&q=80&w=150" alt="Strawberries" class="w-16 h-16 object-cover bg-pink-100" loading="lazy">
+                        <div>
+                            <h3 class="text-sm font-bold leading-snug mb-1 group-hover:text-brand-green transition-colors">Simple recipe strawberry juice</h3>
+                            <p class="text-[10px] text-gray-400 leading-tight">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- Featured and Popular Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-16 mb-20">
+                
+                <!-- Featured (Left span 2) -->
+                <section class="lg:col-span-2" aria-labelledby="featured-heading">
+                    <h2 id="featured-heading" class="text-sm font-bold mb-6">Featured</h2>
+                    <article class="bg-brand-gray flex flex-col md:flex-row rounded-sm overflow-hidden h-full relative group cursor-pointer">
+                        <div class="p-8 md:w-1/2 flex flex-col justify-center z-10 bg-brand-gray/90 md:bg-transparent">
+                            <h3 class="text-3xl font-bold leading-tight mb-4 group-hover:text-brand-green transition-colors">Fruit combination<br>for daily juice</h3>
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="w-6 h-6 rounded-full bg-gray-300 overflow-hidden">
+                                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100" alt="Samantha William" loading="lazy">
+                                </div>
+                                <span class="text-xs font-semibold">Samantha William</span>
+                            </div>
+                            <p class="text-xs text-gray-500 max-w-[250px] leading-relaxed">
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.
+                            </p>
+                        </div>
+                        <div class="md:w-1/2 absolute md:relative inset-0 md:inset-auto h-full">
+                            <img src="https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=format&fit=crop&q=80&w=600" alt="Daily fruit juice setup" class="w-full h-full object-cover" loading="lazy">
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Popular (Right span 1) -->
+                <section class="lg:col-span-1 flex flex-col" aria-labelledby="popular-heading">
+                    <h2 id="popular-heading" class="text-sm font-bold mb-6">Popular</h2>
+                    <div class="flex flex-col h-full justify-between gap-4">
+                        <a href="#" class="flex justify-between items-center py-4 border-b border-gray-100 group">
+                            <div>
+                                <h3 class="font-bold text-lg leading-tight group-hover:text-brand-green transition-colors">Fruit juices to boost<br>your immune</h3>
+                                <span class="text-[10px] text-gray-400 mt-1 block">15 videos</span>
+                            </div>
+                            <span class="text-gray-400 group-hover:translate-x-1 transition-transform">→</span>
+                        </a>
+                        <a href="#" class="flex justify-between items-center py-4 border-b border-gray-100 group">
+                            <div>
+                                <h3 class="font-bold text-lg leading-tight group-hover:text-brand-green transition-colors">Juice variations<br>using avocado</h3>
+                                <span class="text-[10px] text-gray-400 mt-1 block">12 videos</span>
+                            </div>
+                            <span class="text-gray-400 group-hover:translate-x-1 transition-transform">→</span>
+                        </a>
+                        <a href="#" class="flex justify-between items-center py-4 group">
+                            <div>
+                                <h3 class="font-bold text-lg leading-tight group-hover:text-brand-green transition-colors">Simple recipe<br>strawberry juice</h3>
+                                <span class="text-[10px] text-gray-400 mt-1 block">18 videos</span>
+                            </div>
+                            <span class="text-gray-400 group-hover:translate-x-1 transition-transform">→</span>
+                        </a>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Stats & Latest Grid Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+                
+                <!-- Stats (Left col) -->
+                <section class="lg:col-span-4" aria-labelledby="stats-heading">
+                    <h2 id="stats-heading" class="text-2xl font-bold leading-tight mb-8">We are in<br>numbers</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-brand-green text-white p-6 col-span-2">
+                            <div class="text-4xl font-bold mb-2">278K</div>
+                            <div class="text-xs opacity-80">Happy users<br>Lorem ipsum dolor sit amet,<br>consectetur.</div>
+                        </div>
+                        <div class="bg-white border border-gray-100 shadow-sm p-6">
+                            <div class="text-2xl font-bold mb-2 text-brand-dark">12,5K</div>
+                            <div class="text-[10px] text-gray-400">Articles and tips<br>Lorem ipsum.</div>
+                        </div>
+                        <div class="bg-white border border-gray-100 shadow-sm p-6">
+                            <div class="text-2xl font-bold mb-2 text-brand-dark">230</div>
+                            <div class="text-[10px] text-gray-400">Contributors<br>Lorem ipsum.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Latest (Right col) -->
+                <section class="lg:col-span-8" aria-labelledby="latest-heading">
+                    <h2 id="latest-heading" class="text-sm font-bold mb-6">Latest</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        <!-- Latest Item 1 -->
+                        <article class="group cursor-pointer">
+                            <div class="aspect-square bg-gray-100 mb-3 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1595981267035-7b04d84b4f1e?auto=format&fit=crop&q=80&w=300" alt="Smoothie bowl" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                            </div>
+                            <h3 class="text-[11px] font-bold leading-snug group-hover:text-brand-green">Simple Juice Recipes to boost your immune system</h3>
+                        </article>
+                        <!-- Latest Item 2 -->
+                        <article class="group cursor-pointer">
+                            <div class="aspect-square bg-gray-100 mb-3 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=300" alt="Papaya and healthy food" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                            </div>
+                            <h3 class="text-[11px] font-bold leading-snug group-hover:text-brand-green">Simple Juice Recipes to boost your immune system</h3>
+                        </article>
+                        <!-- Latest Item 3 -->
+                        <article class="group cursor-pointer">
+                            <div class="aspect-square bg-gray-100 mb-3 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1603569283847-aa295f0d016a?auto=format&fit=crop&q=80&w=300" alt="Carrot juice" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                            </div>
+                            <h3 class="text-[11px] font-bold leading-snug group-hover:text-brand-green">Simple Juice Recipes to boost your immune system</h3>
+                        </article>
+                        <!-- Latest Item 4 -->
+                        <article class="group cursor-pointer">
+                            <div class="aspect-square bg-gray-100 mb-3 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1577953835691-667dbdb5d00a?auto=format&fit=crop&q=80&w=300" alt="Melon juice" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                            </div>
+                            <h3 class="text-[11px] font-bold leading-snug group-hover:text-brand-green">Simple Juice Recipes to boost your immune system</h3>
+                        </article>
+                        <!-- Latest Item 5 -->
+                        <article class="group cursor-pointer">
+                            <div class="aspect-square bg-gray-100 mb-3 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1601315379734-425a469078de?auto=format&fit=crop&q=80&w=300" alt="Smoothie glass" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                            </div>
+                            <h3 class="text-[11px] font-bold leading-snug group-hover:text-brand-green">Simple Juice Recipes to boost your immune system</h3>
+                        </article>
+                        <!-- Latest Item 6 -->
+                        <article class="group cursor-pointer">
+                            <div class="aspect-square bg-gray-100 mb-3 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1595981267035-7b04d84b4f1e?auto=format&fit=crop&q=80&w=300" alt="Tomato juice" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                            </div>
+                            <h3 class="text-[11px] font-bold leading-snug group-hover:text-brand-green">Simple Juice Recipes to boost your immune system</h3>
+                        </article>
+                    </div>
+                </section>
+                
+            </div>
+        </div>
+    </main>
+</body>
+</html>
