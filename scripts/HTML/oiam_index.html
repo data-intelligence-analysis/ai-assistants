@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple and Tasty Juice Recipes - JUICEDAILY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom brand colors extending Tailwind */
+        :root {
+            --brand-teal: #00c4b5;
+            --brand-orange: #ff5722;
+            --bg-light: #f4f6f7;
+        }
+    </style>
+</head>
+<body class="bg-[#f4f6f7] text-gray-900 font-sans antialiased overflow-x-hidden">
+
+    <!-- Header Navigation -->
+    <header class="flex justify-between items-center px-8 py-4 bg-white border-b border-gray-100" role="banner">
+        <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-[#00c4b5] flex items-center justify-center text-white font-bold text-xs" aria-hidden="true">J</div>
+            <span class="font-bold tracking-widest text-sm uppercase">Juicedaily</span>
+        </div>
+        
+        <nav role="navigation" aria-label="Main navigation">
+            <ul class="flex space-x-8 text-xs font-semibold tracking-wide uppercase text-gray-500">
+                <li><a href="#" class="text-black hover:text-[#00c4b5] transition-colors">Browse</a></li>
+                <li><a href="#" class="hover:text-[#00c4b5] transition-colors">Trending</a></li>
+                <li><a href="#" class="hover:text-[#00c4b5] transition-colors">Contributors</a></li>
+                <li><a href="#" class="hover:text-[#00c4b5] transition-colors">Community</a></li>
+            </ul>
+        </nav>
+
+        <button class="bg-[#ff5722] text-white w-12 h-12 flex items-center justify-center hover:bg-orange-600 transition-colors" aria-label="Search">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </button>
+    </header>
+
+    <main id="main-content" role="main">
+        <!-- Hero Section -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 min-h-[500px] bg-[#eef2f3]" aria-labelledby="hero-heading">
+            <div class="relative h-64 lg:h-auto overflow-hidden">
+                <!-- Placeholder for the vibrant fruit imagery -->
+                <img src="1000107375.jpg" alt="Vibrant assorted fruits including strawberries and grapefruit" class="absolute inset-0 w-full h-full object-cover object-left" loading="eager" fetchpriority="high">
+            </div>
+            
+            <div class="flex flex-col justify-center p-12 lg:p-24">
+                <div class="inline-flex items-center gap-4 bg-teal-50 text-teal-800 rounded-full px-4 py-1.5 text-xs font-semibold w-max mb-8">
+                    <span class="bg-white px-2 py-0.5 rounded-full uppercase text-[10px] tracking-wider border border-teal-100">New Recipe</span>
+                    Delicious fruit juice combinations &rarr;
+                </div>
+                
+                <h1 id="hero-heading" class="text-5xl lg:text-7xl font-bold leading-tight mb-6 text-gray-900 tracking-tight">
+                    Simple and <br>Tasty Juice <br>Recipes
+                </h1>
+                
+                <p class="text-gray-500 max-w-md leading-relaxed">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                </p>
+            </div>
+        </section>
+
+        <div class="max-w-7xl mx-auto px-8 py-16">
+            <!-- Trending Section -->
+            <section class="mb-20" aria-labelledby="trending-heading">
+                <h2 id="trending-heading" class="text-lg font-bold mb-6">Trending</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Trending Card 1 -->
+                    <article class="flex items-center gap-4 bg-white p-4 rounded-sm shadow-sm hover:shadow-md transition-shadow">
+                        <div class="w-16 h-16 bg-blue-100 flex-shrink-0"></div>
+                        <div>
+                            <h3 class="font-semibold text-sm leading-tight mb-1">Fruit juices to boost your immune</h3>
+                            <p class="text-[10px] text-gray-400">Lorem ipsum dolor sit amet...</p>
+                        </div>
+                    </article>
+                    <!-- Trending Card 2 -->
+                    <article class="flex items-center gap-4 bg-white p-4 rounded-sm shadow-sm hover:shadow-md transition-shadow">
+                        <div class="w-16 h-16 bg-lime-400 flex-shrink-0"></div>
+                        <div>
+                            <h3 class="font-semibold text-sm leading-tight mb-1">Juice variations using avocado</h3>
+                            <p class="text-[10px] text-gray-400">Lorem ipsum dolor sit amet...</p>
+                        </div>
+                    </article>
+                    <!-- Trending Card 3 -->
+                    <article class="flex items-center gap-4 bg-white p-4 rounded-sm shadow-sm hover:shadow-md transition-shadow">
+                        <div class="w-16 h-16 bg-pink-200 flex-shrink-0"></div>
+                        <div>
+                            <h3 class="font-semibold text-sm leading-tight mb-1">Simple recipe strawberry juice</h3>
+                            <p class="text-[10px] text-gray-400">Lorem ipsum dolor sit amet...</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- Main Content Split -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+                
+                <!-- Left Column: Featured -->
+                <div class="lg:col-span-7">
+                    <section aria-labelledby="featured-heading">
+                        <h2 id="featured-heading" class="text-lg font-bold mb-6">Featured</h2>
+                        <article class="bg-white p-8 shadow-sm">
+                            <h3 class="text-3xl font-bold mb-4 leading-tight">Fruit combination<br>for daily juice</h3>
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-8 h-8 rounded-full bg-gray-200"></div>
+                                <span class="text-sm font-semibold">Samantha William</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mb-8 max-w-sm">
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.
+                            </p>
+                            <div class="aspect-video bg-gray-100 rounded-sm overflow-hidden relative">
+                                <!-- Placeholder for the featured image -->
+                                <div class="absolute inset-0 bg-[url('1000107375.jpg')] bg-cover bg-center opacity-50"></div>
+                            </div>
+                        </article>
+                    </section>
+                </div>
+
+                <!-- Right Column: Popular & Stats & Latest -->
+                <div class="lg:col-span-5 flex flex-col gap-12">
+                    
+                    <!-- Popular Section -->
+                    <section aria-labelledby="popular-heading">
+                        <h2 id="popular-heading" class="text-lg font-bold mb-6">Popular</h2>
+                        <ul class="flex flex-col">
+                            <li class="group border-b border-gray-200 py-4 flex justify-between items-center cursor-pointer">
+                                <div>
+                                    <h3 class="font-semibold group-hover:text-[#00c4b5] transition-colors">Fruit juices to boost your immune</h3>
+                                    <span class="text-xs text-gray-400">15 videos</span>
+                                </div>
+                                <span class="text-gray-300 group-hover:text-black">&rarr;</span>
+                            </li>
+                            <li class="group border-b border-gray-200 py-4 flex justify-between items-center cursor-pointer">
+                                <div>
+                                    <h3 class="font-semibold group-hover:text-[#00c4b5] transition-colors">Juice variations using avocado</h3>
+                                    <span class="text-xs text-gray-400">12 videos</span>
+                                </div>
+                                <span class="text-gray-300 group-hover:text-black">&rarr;</span>
+                            </li>
+                            <li class="group py-4 flex justify-between items-center cursor-pointer">
+                                <div>
+                                    <h3 class="font-semibold group-hover:text-[#00c4b5] transition-colors">Simple recipe strawberry juice</h3>
+                                    <span class="text-xs text-gray-400">15 videos</span>
+                                </div>
+                                <span class="text-gray-300 group-hover:text-black">&rarr;</span>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <!-- Stats Section -->
+                    <section aria-labelledby="stats-heading">
+                        <h2 id="stats-heading" class="text-lg font-bold mb-6">We are in numbers</h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-[#00c4b5] text-white p-6 rounded-sm">
+                                <span class="text-3xl font-bold block mb-1">278K</span>
+                                <span class="text-xs opacity-80">Happy Users</span>
+                            </div>
+                            <div class="bg-white p-6 rounded-sm shadow-sm">
+                                <span class="text-3xl font-bold block mb-1 text-gray-900">12.5K</span>
+                                <span class="text-xs text-gray-500">Recipes Available</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
