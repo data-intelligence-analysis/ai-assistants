@@ -11,8 +11,13 @@
         :root {
             --coral: #ef675b;
             --coral-light: #fdece9;
+            --coral-pale: #fdf3f1;
             --teal: #4abd94;
+            --teal-light: #d9f0e8;
+            --purple: #854898;
+            --purple-light: #e8d8f0;
             --gold: #f3a01e;
+            --gold-light: #fdf3e0;
             --ivory: #f8f6f2;
             --ivory-dim: #efebe5;
             --white: #ffffff;
@@ -21,8 +26,10 @@
             --ink-light: rgba(28, 26, 22, 0.08);
             --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.04);
             --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.08);
             --radius: 20px;
             --radius-sm: 12px;
+            --radius-xl: 24px;
             --transition: 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
             --display: "Fraunces", serif;
             --body: "Inter", sans-serif;
@@ -84,6 +91,15 @@
             height: 1px;
             background: var(--coral);
         }
+        .eyebrow.coral::before {
+            background: var(--coral);
+        }
+        .eyebrow.gold::before {
+            background: var(--gold);
+        }
+        .eyebrow.teal::before {
+            background: var(--teal);
+        }
 
         .btn {
             font-family: var(--mono);
@@ -115,6 +131,25 @@
             border-color: var(--coral);
             color: var(--coral);
         }
+        .btn-outline-light {
+            background: transparent;
+            color: var(--white);
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn-outline-light:hover {
+            background: var(--white);
+            color: var(--ink);
+            border-color: var(--white);
+        }
+        .btn-gold {
+            background: var(--gold);
+            color: var(--ink);
+        }
+        .btn-gold:hover {
+            background: #df9016;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
 
         /* ----- Navigation ----- */
         header {
@@ -123,7 +158,7 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--ink-light);
@@ -194,6 +229,20 @@
         }
         .nav-actions .icon-btn:hover {
             color: var(--coral);
+        }
+        .burger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            padding: 6px;
+        }
+        .burger span {
+            width: 22px;
+            height: 2px;
+            background: var(--ink);
+            border-radius: 2px;
         }
 
         /* ----- Hero ----- */
@@ -384,7 +433,12 @@
             border-radius: 50%;
             background: var(--ivory-dim);
         }
-
+        .popular-side h3 {
+            font-family: var(--display);
+            font-weight: 500;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
         .popular-list {
             display: flex;
             flex-direction: column;
@@ -517,6 +571,340 @@
             margin-top: 4px;
         }
 
+        /* ----- Wellness / Philosophy ----- */
+        .wellness {
+            padding: 100px 0;
+            background: var(--coral-pale);
+            color: var(--ink);
+        }
+        .wellness-intro {
+            max-width: 720px;
+            margin: 0 auto;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .wellness-intro h2 {
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: clamp(1.8rem, 3.4vw, 2.8rem);
+            line-height: 1.15;
+            max-width: 600px;
+        }
+        .wellness-intro > p {
+            font-size: 15.5px;
+            line-height: 1.8;
+            color: var(--ink-soft);
+            max-width: 520px;
+        }
+        .wellness-subhead {
+            font-family: var(--display);
+            font-style: italic;
+            font-weight: 500;
+            font-size: 1.25rem;
+            color: var(--coral);
+            margin: 8px 0 16px;
+            max-width: 600px;
+            line-height: 1.4;
+        }
+        .vision-mission {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            width: 100%;
+            max-width: 880px;
+            text-align: left;
+            margin: 16px auto 0;
+        }
+        .vm-block {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .vm-block .eyebrow {
+            color: var(--coral);
+        }
+        .vm-block .eyebrow::before {
+            background: var(--coral);
+        }
+        .vm-block p {
+            font-size: 14.5px;
+            line-height: 1.8;
+            color: var(--ink-soft);
+        }
+        .vm-block p strong {
+            color: var(--coral);
+            font-weight: 600;
+        }
+
+        /* ----- Organic / Features ----- */
+        .organic {
+            padding: 100px 0;
+            background: var(--white);
+        }
+        .feature-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .feature {
+            background: var(--ivory);
+            border-radius: var(--radius);
+            padding: 40px 32px;
+            transition: all var(--transition);
+            border: 1px solid transparent;
+        }
+        .feature:hover {
+            background: var(--white);
+            border-color: var(--ink-light);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-sm);
+        }
+        .feature .num {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--coral);
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .feature h3 {
+            font-family: var(--display);
+            font-weight: 500;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        .feature p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--ink-soft);
+            max-width: 360px;
+        }
+        .organic-tagline {
+            text-align: center;
+            margin-top: 40px;
+            font-family: var(--display);
+            font-style: italic;
+            font-weight: 500;
+            font-size: 1.2rem;
+            color: var(--coral);
+            letter-spacing: -0.005em;
+        }
+
+        /* ----- Partnership ----- */
+        .partnership {
+            padding: 100px 0;
+            background: var(--coral);
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+        .partnership::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 45% at 90% 15%, rgba(255, 255, 255, 0.08), transparent 55%),
+                radial-gradient(ellipse 50% 40% at 5% 85%, rgba(255, 255, 255, 0.04), transparent 50%);
+            pointer-events: none;
+        }
+        .partner-grid {
+            position: relative;
+            z-index: 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: start;
+        }
+        .partner-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .partner-copy .eyebrow {
+            color: var(--gold);
+        }
+        .partner-copy .eyebrow::before {
+            background: var(--gold);
+        }
+        .partner-copy h2 {
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+            line-height: 1.2;
+            max-width: 440px;
+        }
+        .partner-copy p {
+            font-size: 15px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 420px;
+        }
+        .partner-copy ul {
+            margin-top: 8px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .partner-copy li {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 12px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            justify-content: space-between;
+        }
+        .partner-copy li:last-child {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .partner-copy li span {
+            color: var(--gold);
+        }
+        .ship-note {
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 400px;
+        }
+        .partner-form {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius);
+            padding: 40px 36px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .field {
+            margin-bottom: 20px;
+        }
+        .field label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 6px;
+        }
+        .field input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--radius-sm);
+            color: var(--white);
+            font-size: 14px;
+            padding: 12px 14px;
+            font-weight: 400;
+            transition: border-color var(--transition);
+        }
+        .field input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        .field input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .checkbox-row input {
+            margin-top: 4px;
+            accent-color: var(--gold);
+            width: 16px;
+            height: 16px;
+        }
+        .checkbox-row label {
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+        .checkbox-row a {
+            color: var(--gold);
+            border-bottom: 1px dotted rgba(243, 160, 30, 0.4);
+        }
+        .form-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .form-note {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.04em;
+        }
+
+        /* ----- Footer ----- */
+        footer {
+            background: var(--ink);
+            color: var(--white);
+            padding: 60px 0 32px;
+        }
+        .footer-top {
+            display: grid;
+            grid-template-columns: 1.6fr 0.8fr 0.8fr 1fr;
+            gap: 48px;
+            padding-bottom: 48px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .footer-brand img {
+            height: 32px;
+            margin-bottom: 12px;
+            filter: brightness(0) invert(1);
+        }
+        .footer-brand p {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 280px;
+            line-height: 1.7;
+        }
+        .footer-col h4 {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 16px;
+        }
+        .footer-col a {
+            display: block;
+            font-size: 13.5px;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 5px 0;
+            transition: color var(--transition);
+        }
+        .footer-col a:hover {
+            color: var(--coral);
+        }
+        .footer-bottom {
+            padding-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.4);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .footer-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .footer-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
         /* ----- Responsive ----- */
         @media (max-width: 980px) {
             .hero-grid {
@@ -531,11 +919,25 @@
                 grid-template-columns: 1fr;
                 gap: 40px;
             }
+            .partner-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            .vision-mission {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
             .trending-grid,
             .latest-grid {
                 grid-template-columns: 1fr 1fr;
             }
             .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .feature-row {
+                grid-template-columns: 1fr 1fr;
+            }
+            .footer-top {
                 grid-template-columns: 1fr 1fr;
             }
             .nav-links {
@@ -556,27 +958,39 @@
             .stats-grid {
                 grid-template-columns: 1fr;
             }
+            .feature-row {
+                grid-template-columns: 1fr;
+            }
+            .footer-top {
+                grid-template-columns: 1fr;
+            }
             .hero {
                 padding: 100px 0 60px;
             }
             .featured-main {
                 padding: 24px;
             }
+            .partner-form {
+                padding: 28px 20px;
+            }
+            .hero-cta .btn {
+                width: 100%;
+                text-align: center;
+            }
         }
-
-        .burger {
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-            background: none;
-            border: none;
-            padding: 6px;
-        }
-        .burger span {
-            width: 22px;
-            height: 2px;
-            background: var(--ink);
-            border-radius: 2px;
+        @media (max-width: 480px) {
+            .trending-grid {
+                grid-template-columns: 1fr;
+            }
+            .latest-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero h1 {
+                font-size: clamp(2rem, 7vw, 2.8rem);
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -608,7 +1022,6 @@
     <section class="hero">
         <div class="wrap hero-grid">
             <div class="hero-visual">
-                <!-- Hero image – replaced with placeholder to skip heavy base64 -->
                 <img src="https://images.unsplash.com/photo-1600271886740-f8f5f3e8f1e0?w=800&h=800&fit=crop" alt="Fresh fruit bowl with berries and citrus" />
             </div>
             <div class="hero-content">
@@ -688,7 +1101,7 @@
             </div>
 
             <div class="popular-side">
-                <h3 style="font-family:var(--display); font-weight:500; font-size:1.2rem; margin-bottom:20px;">Popular</h3>
+                <h3>Popular</h3>
                 <div class="popular-list">
                     <div class="popular-item">
                         <div class="info">
@@ -800,5 +1213,168 @@
         </div>
     </section>
 
+    <!-- ===== WELLNESS / PHILOSOPHY ===== -->
+    <section class="wellness" id="about">
+        <div class="wrap wellness-intro">
+            <span class="eyebrow coral">Our Philosophy</span>
+            <h2>Transform Your Life with Expertly Crafted Juices for Wellness and Vitality.</h2>
+            <p>Experience the power of personalized wellness with our expertly crafted juices, designed to nourish your body and inspire your best life.</p>
+
+            <div class="wellness-subhead">Nourishment with Purpose, Inspiration in Every Sip</div>
+
+            <div class="vision-mission">
+                <div class="vm-block">
+                    <span class="eyebrow coral">Our Vision</span>
+                    <p>Our vision at ŌIAM Juice Company is to create a world where wellness is a daily practice and self-empowerment flows through every bottle. We aspire to inspire a global community to embrace health and positivity through our affirmation-based juices, blending nourishment with purpose.</p>
+                </div>
+                <div class="vm-block">
+                    <span class="eyebrow coral">Our Mission</span>
+                    <p>At ŌIAM Juice Company, our mission is to empower individuals to live healthier, more inspired lives by crafting fresh-pressed juices that nourish the body and uplift the spirit. Through intentional affirmations infused into every blend, we connect wholistic wellness with positivity.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== ORGANIC / FEATURES ===== -->
+    <section class="organic">
+        <div class="wrap">
+            <div class="feature-row">
+                <div class="feature">
+                    <span class="num">Sourcing</span>
+                    <h3>Fresh Fruit &amp; Vegetables</h3>
+                    <p>We don't add anything extra to what the earth has already given us, sourced straight from the land with the help of our local partners.</p>
+                </div>
+                <div class="feature">
+                    <span class="num">Partnership</span>
+                    <h3>Support Local Markets and Farmers</h3>
+                    <p>We buy direct from local and regional growers. We believe in community economics and in supporting our neighbors.</p>
+                </div>
+                <div class="feature">
+                    <span class="num">Taste</span>
+                    <h3>Full of Flavor</h3>
+                    <p>We believe you don't have to sacrifice taste for health. Every bottle is crafted to be as delicious as it is nourishing.</p>
+                </div>
+            </div>
+            <p class="organic-tagline">And as we like to say here at ÕIAM, farm to your body!</p>
+        </div>
+    </section>
+
+    <!-- ===== PARTNERSHIP ===== -->
+    <section class="partnership" id="partnership">
+        <div class="wrap partner-grid">
+            <div class="partner-copy">
+                <span class="eyebrow gold">Join Our Partnership</span>
+                <h2>Partner with us and become part of the booming juice industry.</h2>
+                <p>ŌIAM is expanding into studios, clinics, cafés, and specialty grocers who share our standard for quality. If your customers are already asking about wellness, we'd like to be the answer sitting in your fridge.</p>
+                <ul>
+                    <li>Wholesale onboarding <span>2–3 weeks</span></li>
+                    <li>Minimum order <span>6 cases</span></li>
+                    <li>Delivery radius <span>Atlanta metro</span></li>
+                    <li>Nationwide shipping <span>Continental USA</span></li>
+                </ul>
+                <p class="ship-note">Shipping is available anywhere in the USA, excluding Alaska, Hawaii, and Puerto Rico.</p>
+            </div>
+
+            <form class="partner-form" id="partnerForm">
+                <div class="field">
+                    <label for="pname">Name</label>
+                    <input type="text" id="pname" placeholder="Full name" required />
+                </div>
+                <div class="field">
+                    <label for="pcompany">Company</label>
+                    <input type="text" id="pcompany" placeholder="Business name" required />
+                </div>
+                <div class="field">
+                    <label for="pemail">Email</label>
+                    <input type="email" id="pemail" placeholder="you@company.com" required />
+                </div>
+                <div class="field">
+                    <label for="pphone">Phone Number</label>
+                    <input type="text" id="pphone" placeholder="(555) 555-5555" required />
+                </div>
+                <div class="field">
+                    <label for="psocial">Social Media (if applicable)</label>
+                    <input type="text" id="psocial" placeholder="@yourbusiness" />
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="pterms" required />
+                    <label for="pterms">I agree to the <a href="#">Terms and Conditions</a> and consent to be contacted about ŌIAM wholesale partnership.</label>
+                </div>
+                <div class="form-foot">
+                    <button type="submit" class="btn btn-gold">Submit Inquiry</button>
+                    <span class="form-note" id="formNote">We reply within 2 business days</span>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer id="contact">
+        <div class="wrap">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <img src="logo.svg" alt="ŌIAM" />
+                    <p>Cold-pressed juice, formulated around your blood type. Small-batch and pressed to order.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Explore</h4>
+                    <a href="#">Home</a>
+                    <a href="#about">About</a>
+                    <a href="#">Products</a>
+                    <a href="#partnership">Partnership</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Additional Offerings</h4>
+                    <a href="#">Wellness Shots</a>
+                    <a href="#">Cleanses</a>
+                    <a href="#">Subscription</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Contact</h4>
+                    <a href="mailto:hello@oiamlife.com">hello@oiamlife.com</a>
+                    <a href="#">@oiamlife_</a>
+                    <a href="#">Wholesale Inquiries</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>&copy; 2026 ŌIAM Juice Company. All rights reserved.</span>
+                <div class="footer-dots">
+                    <span style="background:var(--coral);"></span>
+                    <span style="background:var(--teal);"></span>
+                    <span style="background:var(--purple);"></span>
+                    <span style="background:var(--gold);"></span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple form handler
+        document.getElementById('partnerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const note = document.getElementById('formNote');
+            note.textContent = 'Thank you, your inquiry has been received.';
+            this.querySelector('button[type="submit"]').textContent = 'Submitted';
+        });
+
+        // Mobile burger toggle
+        document.querySelector('.burger').addEventListener('click', function() {
+            const links = document.querySelector('.nav-links');
+            if (links.style.display === 'flex') {
+                links.style.display = 'none';
+            } else {
+                links.style.display = 'flex';
+                links.style.flexDirection = 'column';
+                links.style.position = 'absolute';
+                links.style.top = '72px';
+                links.style.left = '0';
+                links.style.right = '0';
+                links.style.background = 'rgba(255,255,255,0.98)';
+                links.style.padding = '24px 32px';
+                links.style.gap = '16px';
+                links.style.borderBottom = '1px solid var(--ink-light)';
+            }
+        });
+    </script>
 </body>
 </html>
