@@ -104,12 +104,13 @@
             top: -2px;
         }
 
-        nav {
+        /* Desktop Navigation Links */
+        .nav-links {
             display: flex;
             align-items: center;
             gap: 36px;
         }
-        nav a {
+        .nav-links a {
             font-size: 13px;
             font-weight: 600;
             color: #1a1a1a;
@@ -119,14 +120,14 @@
             position: relative;
             transition: color 0.2s;
         }
-        nav a.home {
+        .nav-links a.home {
             color: var(--link-gold);
         }
-        nav a .arrow-down {
+        .nav-links a .arrow-down {
             font-size: 10px;
             color: #888;
         }
-        nav a:hover {
+        .nav-links a:hover {
             opacity: 0.7;
         }
 
@@ -145,6 +146,74 @@
         }
         .btn-partner:hover {
             background: var(--cta-green-hover);
+        }
+
+        /* Hamburger Menu Toggle (Hidden on Desktop) */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .menu-toggle svg {
+            width: 28px;
+            height: 28px;
+            stroke: var(--text-dark);
+        }
+        .menu-toggle .close-icon {
+            display: none;
+        }
+        .menu-toggle.active .menu-icon {
+            display: none;
+        }
+        .menu-toggle.active .close-icon {
+            display: block;
+        }
+
+        /* Mobile Navigation Overlay */
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1a1a1a; /* Dark theme to match footer */
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+            transform: translateY(-20px);
+        }
+        .mobile-nav.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .mobile-nav a {
+            font-size: 20px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
+            padding: 14px 0;
+            display: block;
+            text-align: center;
+            transition: color 0.2s;
+        }
+        .mobile-nav a:hover {
+            color: #ffffff;
+        }
+        .mobile-nav a.home {
+            color: var(--link-gold);
+        }
+        .mobile-nav .btn-partner {
+            margin-top: 24px;
+            font-size: 12px;
+            padding: 14px 32px;
         }
 
         /* ===== Hero Section ===== */
@@ -1330,33 +1399,37 @@
         }
 
         /* ===== Responsive Design ===== */
+        @media (min-width: 981px) {
+            .menu-toggle {
+                display: none !important;
+            }
+            .mobile-nav {
+                display: none !important;
+            }
+        }
+
         @media (max-width: 1100px) {
             .nav-arrow.prev { left: 0; }
             .nav-arrow.next { right: 0; }
         }
-        @media (min-width: 980px) {
-            .footer-columns {
-                grid-template-columns: 1fr 1fr 1fr;
-            }
-            .footer-bottom {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-            }
-        }
+
         @media (max-width: 980px) {
             header {
                 top: 0;
                 width: 100%;
                 border-radius: 0;
                 padding: 12px 20px;
-                flex-wrap: wrap;
             }
-            nav {
-                gap: 18px;
-                flex-wrap: wrap;
-                justify-content: flex-end;
+            .nav-links {
+                display: none;
             }
+            .menu-toggle {
+                display: block;
+            }
+            .btn-partner {
+                display: none; /* Hide the CTA button in the header to prevent clutter on small screens, it will be available in the mobile menu */
+            }
+
             .floating-fruit {
                 font-size: 2.8rem;
                 top: 120px;
@@ -1484,8 +1557,6 @@
 
         @media (max-width: 720px) {
             .brand { font-size: 1.3rem; }
-            nav a { font-size: 12px; }
-            .btn-partner { font-size: 10px; padding: 8px 16px; }
             .floating-fruit { font-size: 2.4rem; top: 100px; }
             .fruit-apple { left: 2%; }
             .fruit-raspberries { right: 2%; font-size: 3rem; }
@@ -1572,7 +1643,7 @@
         <a href="#" class="brand">
             Ó·<span>I</span>·<span>A</span>·<span>M</span>
         </a>
-        <nav>
+        <nav class="nav-links">
             <a href="#" class="home">Home</a>
             <a href="#">About &#128075;</a>
             <a href="#">Products</a>
@@ -1580,7 +1651,30 @@
             <a href="#">Extra Juice <span class="arrow-down">&#x25BC;</span></a>
             <button class="btn-partner">PARTNERSHIP</button>
         </nav>
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+            <!-- Hamburger Icon -->
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <!-- Close Icon -->
+            <svg class="close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
     </header>
+
+    <!-- Mobile Navigation Overlay -->
+    <nav class="mobile-nav" id="mobileNav">
+        <a href="#" class="home">Home</a>
+        <a href="#">About</a>
+        <a href="#">Products</a>
+        <a href="#">Contact Us</a>
+        <a href="#">Extra Juice</a>
+        <button class="btn-partner" onclick="document.getElementById('mobileNav').classList.remove('open')">PARTNERSHIP</button>
+    </nav>
 
     <!-- ===== HERO SECTION ===== -->
     <section class="hero">
@@ -2110,6 +2204,26 @@
         // Initialize with 'A' selected
         window.addEventListener('load', () => {
             updateCarousel('A');
+        });
+
+        // Mobile Menu Toggle Logic
+        const menuToggle = document.getElementById('menuToggle');
+        const mobileNav = document.getElementById('mobileNav');
+
+        menuToggle.addEventListener('click', () => {
+            const isOpen = mobileNav.classList.toggle('open');
+            menuToggle.classList.toggle('active', isOpen);
+            // Prevent body scroll when mobile menu is open
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+        });
+
+        // Close mobile menu when a link is clicked
+        mobileNav.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileNav.classList.remove('open');
+                menuToggle.classList.remove('active');
+                document.body.style.overflow = '';
+            });
         });
     </script>
 </body>
