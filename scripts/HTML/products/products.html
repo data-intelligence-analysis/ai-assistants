@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View All Products | ÕIAM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            color: #1f2937;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            gap: 40px;
+        }
+
+        /* --- Sidebar Styling --- */
+        .sidebar {
+            width: 280px;
+            flex-shrink: 0;
+            background: #ffffff;
+            padding: 25px 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            height: fit-content;
+        }
+
+        .sidebar-header {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 15px 0;
+        }
+
+        .filter-section:last-child {
+            border-bottom: none;
+        }
+
+        .filter-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #4b5563;
+            cursor: pointer;
+        }
+
+        .filter-item input {
+            accent-color: #10b981;
+            margin-right: 12px;
+            width: 16px;
+            height: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+
+        .price-slider {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .price-slider .fill {
+            position: absolute;
+            left: 20%;
+            right: 0%;
+            top: 0;
+            height: 100%;
+            background: #10b981;
+            border-radius: 4px;
+        }
+
+        .price-slider .knob {
+            position: absolute;
+            top: -5px;
+            left: 20%;
+            width: 16px;
+            height: 16px;
+            background: #10b981;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #10b981;
+        }
+
+        .rating-stars {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+
+        .rating-stars i {
+            color: #fbbf24;
+            font-size: 0.85rem;
+        }
+
+        .rating-stars .gray {
+            color: #d1d5db;
+        }
+
+        .rating-text {
+            margin-left: 8px;
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+
+        /* --- Main Content Styling --- */
+        .main-content {
+            flex: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        /* --- Product Card Styling --- */
+        .card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 20px -10px rgba(0,0,0,0.05);
+            border-color: #d1d5db;
+        }
+
+        .heart-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s;
+            font-size: 1.1rem;
+        }
+
+        .heart-icon:hover {
+            color: #ef4444;
+        }
+
+        .product-img {
+            width: 100%;
+            height: 160px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #f3f4f6;
+        }
+
+        .product-category {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .product-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+            color: #111827;
+            line-height: 1.4;
+            min-height: 42px;
+        }
+
+        .stock-status {
+            color: #10b981;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #ecfdf5;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .rating-wrapper {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .rating-wrapper i {
+            color: #fbbf24;
+            font-size: 0.8rem;
+        }
+
+        .rating-wrapper i.gray {
+            color: #d1d5db;
+        }
+
+        .rating-wrapper span {
+            color: #6b7280;
+            font-size: 0.8rem;
+            margin-left: 6px;
+        }
+
+        .price-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 4px;
+        }
+
+        .price-block {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .old-price {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            text-decoration: line-through;
+        }
+
+        .new-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .add-cart-btn {
+            background: #f3f4f6;
+            border: none;
+            color: #374151;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .add-cart-btn:hover {
+            background: #e5e7eb;
+            color: #10b981;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+            }
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-header">Browse categories</div>
+
+            <div class="filter-section">
+                <div class="filter-title">Fruits & vegetables <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i></div>
+                <div class="filter-item"><input type="checkbox"> Fresh Fruits</div>
+                <div class="filter-item"><input type="checkbox"> Fresh Vegetables</div>
+                <div class="filter-item"><input type="checkbox"> Organic Produce</div>
+                <div class="filter-item"><input type="checkbox"> Seasonal Items</div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-title">Meat & seafood <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i></div>
+                <div class="filter-item"><input type="checkbox"> Fresh Chicken</div>
+                <div class="filter-item"><input type="checkbox"> Beef & Mutton</div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-title">Price range</div>
+                <div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 5px;">$20.00 - $100.00</div>
+                <div class="price-slider">
+                    <div class="fill"></div>
+                    <div class="knob"></div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-title">Customer rating</div>
+                <div class="rating-stars">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    <span class="rating-text">5 star</span>
+                </div>
+                <div class="rating-stars">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star gray"></i>
+                    <span class="rating-text">4 star</span>
+                </div>
+                <div class="rating-stars">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star gray"></i><i class="far fa-star gray"></i>
+                    <span class="rating-text">3 star</span>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-title">In-store status</div>
+                <div class="filter-item"><input type="checkbox" checked> <span style="color:#10b981;">●</span> In stock</div>
+                <div class="filter-item"><input type="checkbox"> Out of stock</div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1>View All</h1>
+            </div>
+
+            <div class="product-grid">
+                
+                <!-- Card 1: Life -->
+                <div class="card">
+                    <i class="far fa-heart heart-icon"></i>
+                    <img src="https://placehold.co/300x200/f3f4f6/1f2937?text=ÕIAM+Life" alt="ÕIAM Life" class="product-img">
+                    <div class="product-category">Wellness & Vitality</div>
+                    <div class="product-title">ÕIAM Life</div>
+                    <div class="stock-status">IN STOCK</div>
+                    <div class="rating-wrapper">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                        <span>42 Reviews</span>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="price-block">
+                            <span class="old-price">$49.99</span>
+                            <span class="new-price">$39.99</span>
+                        </div>
+                        <button class="add-cart-btn"><i class="fas fa-cart-shopping"></i> Add to cart</button>
+                    </div>
+                </div>
+
+                <!-- Card 2: Wealth -->
+                <div class="card">
+                    <i class="far fa-heart heart-icon"></i>
+                    <img src="https://placehold.co/300x200/f3f4f6/1f2937?text=ÕIAM+Wealth" alt="ÕIAM Wealth" class="product-img">
+                    <div class="product-category">Premier Collection</div>
+                    <div class="product-title">ÕIAM Wealth</div>
+                    <div class="stock-status">IN STOCK</div>
+                    <div class="rating-wrapper">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <span>38 Reviews</span>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="price-block">
+                            <span class="old-price">$85.00</span>
+                            <span class="new-price">$75.00</span>
+                        </div>
+                        <button class="add-cart-btn"><i class="fas fa-cart-shopping"></i> Add to cart</button>
+                    </div>
+                </div>
+
+                <!-- Card 3: Light -->
+                <div class="card">
+                    <i class="far fa-heart heart-icon"></i>
+                    <img src="https://placehold.co/300x200/f3f4f6/1f2937?text=ÕIAM+Light" alt="ÕIAM Light" class="product-img">
+                    <div class="product-category">Energy & Focus</div>
+                    <div class="product-title">ÕIAM Light</div>
+                    <div class="stock-status">IN STOCK</div>
+                    <div class="rating-wrapper">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star gray"></i>
+                        <span>20 Reviews</span>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="price-block">
+                            <span class="new-price">$29.99</span>
+                        </div>
+                        <button class="add-cart-btn"><i class="fas fa-cart-shopping"></i> Add to cart</button>
+                    </div>
+                </div>
+
+                <!-- Card 4: Peace -->
+                <div class="card">
+                    <i class="far fa-heart heart-icon"></i>
+                    <img src="https://placehold.co/300x200/f3f4f6/1f2937?text=ÕIAM+Peace" alt="ÕIAM Peace" class="product-img">
+                    <div class="product-category">Relaxation</div>
+                    <div class="product-title">ÕIAM Peace</div>
+                    <div class="stock-status">IN STOCK</div>
+                    <div class="rating-wrapper">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                        <span>25 Reviews</span>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="price-block">
+                            <span class="old-price">$34.99</span>
+                            <span class="new-price">$28.99</span>
+                        </div>
+                        <button class="add-cart-btn"><i class="fas fa-cart-shopping"></i> Add to cart</button>
+                    </div>
+                </div>
+
+                <!-- Card 5: Love -->
+                <div class="card">
+                    <i class="far fa-heart heart-icon"></i>
+                    <img src="https://placehold.co/300x200/f3f4f6/1f2937?text=ÕIAM+Love" alt="ÕIAM Love" class="product-img">
+                    <div class="product-category">Emotional Balance</div>
+                    <div class="product-title">ÕIAM Love</div>
+                    <div class="stock-status">IN STOCK</div>
+                    <div class="rating-wrapper">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <span>15 Reviews</span>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="price-block">
+                            <span class="new-price">$32.00</span>
+                        </div>
+                        <button class="add-cart-btn"><i class="fas fa-cart-shopping"></i> Add to cart</button>
+                    </div>
+                </div>
+
+                <!-- Card 6: Healthy -->
+                <div class="card">
+                    <i class="far fa-heart heart-icon"></i>
+                    <img src="https://placehold.co/300x200/f3f4f6/1f2937?text=ÕIAM+Healthy" alt="ÕIAM Healthy" class="product-img">
+                    <div class="product-category">Daily Nutrition</div>
+                    <div class="product-title">ÕIAM Healthy</div>
+                    <div class="stock-status">IN STOCK</div>
+                    <div class="rating-wrapper">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                        <span>30 Reviews</span>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="price-block">
+                            <span class="old-price">$44.50</span>
+                            <span class="new-price">$39.95</span>
+                        </div>
+                        <button class="add-cart-btn"><i class="fas fa-cart-shopping"></i> Add to cart</button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+  </html>
