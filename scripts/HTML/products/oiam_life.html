@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ÕIAM Life - Product Details</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1f2937;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            border: 1px solid #f3f4f6;
+            display: flex;
+            gap: 50px;
+        }
+
+        /* LEFT COLUMN (Images) */
+        .left-col {
+            flex: 1;
+            max-width: 50%;
+            position: relative;
+        }
+        .discount-badge {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #1e3a8a; /* Dark Blue */
+            color: white;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            line-height: 1.2;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+        }
+        .discount-badge span { font-size: 2rem; }
+        .main-img-wrapper {
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            background: #ffffff;
+        }
+        .main-img-wrapper img {
+            max-width: 100%;
+            height: auto;
+            max-height: 350px;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+        }
+        .thumbnails {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .thumbnails img {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: border 0.2s;
+        }
+        .thumbnails img:hover { border-color: #374151; }
+        .dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 25px;
+        }
+        .dots span {
+            width: 30px;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 4px;
+        }
+        .dots span:first-child { background: #f87171; } /* Red dot */
+        .dots span:nth-child(2) { background: #fca5a5; }
+        .dots span:nth-child(3) { background: #fca5a5; }
+
+        /* RIGHT COLUMN (Details) */
+        .right-col {
+            flex: 1;
+            max-width: 50%;
+            display: flex;
+            flex-direction: column;
+        }
+        .timer {
+            color: #f97316; /* Orange */
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        .timer i { margin-right: 4px; }
+        .timer span { font-weight: 700; }
+        .vendor {
+            color: #6b7280;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+        .product-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 10px;
+        }
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .rating i { color: #fbbf24; }
+        .rating span { border: 1px solid #e5e7eb; padding: 0px 8px; border-radius: 12px; font-size: 0.8rem;}
+        
+        .product-price {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 20px;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+        .primary-actions {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .btn-add {
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            justify-content: center;
+        }
+        .btn-add:hover { background: #e5e7eb; }
+        .btn-buy {
+            background: #d9f99d; /* Light Green */
+            color: #3f6212;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            justify-content: center;
+        }
+        .btn-buy:hover { background: #bef264; }
+        .btn-buy i { color: #4d7c0f; }
+        
+        .secondary-actions {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+        .secondary-actions a {
+            text-decoration: none;
+            color: #4b5563;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .secondary-actions a:hover { color: #111827; }
+
+        .color-options {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .color-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1px solid transparent;
+        }
+        .color-circle.purple { background: #8b5cf6; }
+        .color-circle.orange { background: #f97316; }
+        .color-circle.blue { background: #1e40af; }
+        
+        .sold-info {
+            display: flex;
+            justify-content: flex-end;
+            color: #f97316;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: -35px; /* Align with color choices */
+            margin-bottom: 15px;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .product-meta {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+        .product-meta span { color: #4b5563; font-weight: 500; }
+        .categories {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 15px;
+        }
+        .categories span { color: #4b5563; font-weight: 500; }
+        .description {
+            font-size: 0.9rem;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 800px) {
+            .container { flex-direction: column; padding: 20px; }
+            .left-col, .right-col { max-width: 100%; }
+            .discount-badge { width: 80px; height: 80px; font-size: 1rem; }
+            .discount-badge span { font-size: 1.4rem; }
+            .primary-actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Left Column -->
+        <div class="left-col">
+            <div class="discount-badge">
+                <span>30%</span>
+                DISCOUNT
+            </div>
+            <div class="main-img-wrapper">
+                <!-- Replace src with your actual image URL -->
+                <img src="https://placehold.co/400x400/ffffff/1f2937?text=ÕIAM+Life" alt="ÕIAM Life">
+            </div>
+            <div class="thumbnails">
+                <img src="https://placehold.co/70x70/ffffff/1f2937?text=1" alt="Thumb 1">
+                <img src="https://placehold.co/70x70/ffffff/1f2937?text=2" alt="Thumb 2">
+                <img src="https://placehold.co/70x70/ffffff/1f2937?text=3" alt="Thumb 3">
+                <img src="https://placehold.co/70x70/ffffff/1f2937?text=4" alt="Thumb 4">
+            </div>
+            <div class="dots">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-col">
+            <div class="timer">
+                <i class="far fa-clock"></i> 270 : <span>13</span> : <span>10</span> : <span>32</span>
+            </div>
+            <div class="vendor">ÕIAM Official Store</div>
+            <h1 class="product-title">ÕIAM Life</h1>
+            <div class="rating">
+                <i class="fas fa-star"></i> 4.5 Rating <span>(15 reviews)</span>
+            </div>
+            <div class="product-price">$39.99</div>
+            
+            <hr>
+
+            <div class="primary-actions">
+                <button class="btn-add"><i class="fas fa-cart-shopping"></i> Add to bucket</button>
+                <button class="btn-buy"><i class="fas fa-bolt"></i> Buy with tamara</button>
+            </div>
+
+            <div class="secondary-actions">
+                <a href="#"><i class="far fa-heart"></i> ADD TO WISHLIST</a>
+                <a href="#"><i class="fas fa-share-alt"></i> Compare with other vendor</a>
+            </div>
+
+            <div class="color-options">
+                <div class="color-circle purple"></div>
+                <div class="color-circle orange"></div>
+                <div class="color-circle blue"></div>
+            </div>
+            <div class="sold-info">
+                <i class="fas fa-fire"></i> 250 sold in last 24 hour
+            </div>
+
+            <div class="product-meta">SKU: <span>OIAM-LIFE-001</span></div>
+            <div class="categories">Categories: <span>Supplements, Wellness, Vitamins, Lifestyle</span></div>
+            <p class="description">
+                The ÕIAM Life supplement is a comprehensive blend designed to enhance daily vitality, cognitive function, and overall well-being. Formulated with natural ingredients, it supports a balanced lifestyle, boosts energy levels, and promotes mental clarity throughout the day.
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>
