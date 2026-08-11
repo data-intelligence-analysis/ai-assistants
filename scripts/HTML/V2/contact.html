@@ -26,9 +26,65 @@
             
             /* Dark Theme Colors */
             --partnership-bg: #1e3b2e;
+
+            /* --bg-color: #e4f2f0; */
+            --nav-bg: #ffffff;
+            --text-dark: #1a1a1a;
+            --link-gold: #e5b64a;
+            --cta-green: #95c84b;
+            --cta-green-hover: #82b33e;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            
+            /* Featured Colors */
+            --feature-bg: #ffffff;
+            --jar-bg: #f1e3d6;
+            --label-beige: #e8d7b5;
+            --label-white: #ffffff;
+            --label-green: #b8d96b;
+            --lid-color: #1c1c1c;
+            --btn-brown: #b39855;
+            --btn-brown-hover: #9c8446;
+            --stock-red: #c04e4e;
+            
+            /* Philosophy / Store Colors */
+            --btn-lime: #c9db4c;
+            --btn-lime-hover: #b7c843;
+
+            /* Blood Type Colors */
+            --blood-bg: #1c1c1c;
             --blood-a: #ef675b;
             --blood-b: #4abd94;
             --blood-ab: #854898;
+            --blood-o: #f3a01e;
+
+            --onyx:#14120f;
+            --black:#1c1914;
+            --white: #f7f3ec;
+            --onyx-soft:#1c1914;
+            --ivory:#f7f3ec;
+            --ivory-dim:#efe9dd;
+            --ink:#1c1a16;
+            --cream:#f3efe6;
+            --forest:#185d40;
+            --forest-deep:#0e3f2b;
+            --coral:#ef675b;
+            --teal:#4abd94;
+            --purple:#854898;
+            --gold:#f3a01e;
+            --yellow:#f9f06f;
+            --line-dark: rgba(243,239,230,0.14);
+            --line-light: rgba(28,26,22,0.13);
+
+            --radius:12px;
+            --display: 'Fraunces', serif;
+            --body: 'Inter', sans-serif;
+            --mono: 'IBM Plex Mono', monospace;
+            /* Mission & Vision Colors */
+            --mv-bg: #f8f6f2;
+            --circle-green: #a4c748;
+            
+            /* Partnership Colors */
+            --partnership-bg: #1e3b2e;
         }
 
         * {
@@ -477,9 +533,10 @@
         </a>
         <nav>
             <a href="index.html">Home</a>
-            <a href="index.html#about">About &#128075;</a>
-            <a href="index.html#products">Products</a>
+            <a href="about.html">About &#128075;</a>
+            <a href="products.html">Products</a>
             <a href="#">Contact Us</a>
+            <a href="products.html" class="btn-partner">ORDER NOW</a>
         </nav>
         <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
@@ -488,10 +545,11 @@
     </header>
     <nav class="mobile-nav" id="mobileNav">
         <a href="index.html">Home</a>
-        <a href="index.html#about">About</a>
-        <a href="index.html#products">Products</a>
+        <a href="about.html">About</a>
+        <a href="products.html">Products</a>
         <a href="#">Contact Us</a>
-        <button class="btn-partner" onclick="document.getElementById('mobileNav').classList.remove('open')">PARTNERSHIP</button>
+        <!-- <button class="btn-partner" onclick="document.getElementById('mobileNav').classList.remove('open')">PARTNERSHIP</button> -->
+        <a href="products.html" class="btn-partner" onclick="document.getElementById('mobileNav').classList.remove('open')">ORDER NOW</a>
     </nav>
 
     <!-- ===== CONTACT SECTION ===== -->
