@@ -128,13 +128,13 @@ document.addEventListener('DOMContentLoaded', function(){
         : 0;
       const total = filteredRows.length;
       if(total === 0){
-        tableSummary.innerHTML = `Showing <strong>0</strong> of <strong>0</strong> entries (page size: <strong>${pageSize}</strong>)`;
+        tableSummary.innerHTML = `Showing <strong>0</strong> of <strong>0</strong> entries`;
       } else {
-        tableSummary.innerHTML = `Showing <strong>${shown}</strong> of <strong>${total}</strong> entries (page size: <strong>${pageSize}</strong>)`;
+        tableSummary.innerHTML = `Showing <strong>${shown}</strong> of <strong>${total}</strong> entries`;
       }
       // const pageStart = totalRows > 0 ? currentPage * pageSize + 1 : 0;
       // const pageEnd = totalRows > 0 ? Math.min(totalRows, (currentPage + 1) * pageSize) : 0;
-      // tableSummary.innerHTML = `Showing <strong>${pageStart}</strong>–<strong>${pageEnd}</strong> of <strong>${totalRows}</strong> entries (page size: <strong>${pageSize}</strong>)`;
+      // tableSummary.innerHTML = `Showing <strong>${pageStart}</strong>–<strong>${pageEnd}</strong> of <strong>${totalRows}</strong> entries`;
     }
 
     renderPagination(totalPages);

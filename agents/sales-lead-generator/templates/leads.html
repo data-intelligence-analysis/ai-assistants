@@ -11,236 +11,238 @@
     <div class="d-flex" id="wrapper">
       {% include '_sidebar.html' %}
       <div id="page-content-wrapper" class="w-100">
-        <nav class="navbar navbar-light px-2 px-md-2">
-          <div class="container-fluid">
-            <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-outline-secondary btn-sm d-xl-none mb-4" id="sidebarToggleBtn" type="button">☰</button>
-              <!-- <span class="navbar-brand mb-0 h1">Leads</span> -->
-            </div>
-            <div class="lead-topbar d-flex flex-column flex-xl-row align-items-center justify-content-between gap-4 mb-4">
-              <div class="search-panel flex-grow-1 w-100">
-                <span class="search-icon">🔍</span>
-                <input id="globalSearch" class="form-control" placeholder="Search..." />
+        <div style="max-width: 1600px; margin: 0 auto;">
+          <nav class="navbar navbar-light px-2 px-md-2">
+            <div class="container-fluid">
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-secondary btn-sm d-xl-none mb-4" id="sidebarToggleBtn" type="button">☰</button>
+                <!-- <span class="navbar-brand mb-0 h1">Leads</span> -->
               </div>
-              <div class="action-buttons d-flex align-items-center gap-3 w-100">
-                <button id="analyzeLeadsBtn" class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;" data-bs-toggle="modal" data-bs-target="#analyzeModal">Analyze Leads</button>
-                <button id="syncCrmBtn" class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;">Sync CRM</button>
-                <div class="dropdown">
-                  <button class="btn btn-outline-secondary btn-sm dropdown-toggle" style="border-radius:10px; padding: 0.5rem 1rem;" type="button" data-bs-toggle="dropdown" aria-expanded="false">Export Data</button>
-                  <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" id="exportCsvBtn" href="#">Export CSV</a></li>
-                    <li><a class="dropdown-item" id="exportPdfBtn" href="#">Export PDF</a></li>
-                  </ul>
+              <div class="lead-topbar d-flex flex-column flex-xl-row align-items-center justify-content-between gap-4 mb-4">
+                <div class="search-panel flex-grow-1 w-100">
+                  <span class="search-icon">🔍</span>
+                  <input id="globalSearch" class="form-control" placeholder="Search..." />
                 </div>
-                <!-- <button class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;">Import CSV</button> -->
-                <button class="btn btn-success btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;" data-bs-toggle="modal" data-bs-target="#createModal">+ New</button>
-              </div>
-            </div>   
-          </div>
-        </nav>
+                <div class="action-buttons d-flex align-items-center gap-3 w-100">
+                  <button id="analyzeLeadsBtn" class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;" data-bs-toggle="modal" data-bs-target="#analyzeModal">Analyze Leads</button>
+                  <button id="syncCrmBtn" class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;">Sync CRM</button>
+                  <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" style="border-radius:10px; padding: 0.5rem 1rem;" type="button" data-bs-toggle="dropdown" aria-expanded="false">Export Data</button>
+                    <ul class="dropdown-menu">
+                      <li><a class="dropdown-item" id="exportCsvBtn" href="#">Export CSV</a></li>
+                      <li><a class="dropdown-item" id="exportPdfBtn" href="#">Export PDF</a></li>
+                    </ul>
+                  </div>
+                  <!-- <button class="btn btn-outline-secondary btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;">Import CSV</button> -->
+                  <button class="btn btn-success btn-sm" style="border-radius:10px; padding: 0.5rem 1rem;" data-bs-toggle="modal" data-bs-target="#createModal">+ New</button>
+                </div>
+              </div>   
+            </div>
+          </nav>
 
-        <div class="container-fluid px-4 mt-4 max-width-1000">
-          
-          {% with messages = get_flashed_messages() %}
-            {% if messages %}
-              <div class="alert alert-success" role="alert">
-                {{ messages[0] }}
-              </div>
-            {% endif %}
-          {% endwith %}
-          <div class="row gx-3 gy-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-2xl-5 flex-wrap">
-            <div class="col">
-              <div class="card stat-card p-3">
-                <div class="d-flex justify-content-between align-items-start gap-3">
-                  <div>
-                    <small class="text-muted">Total Leads</small>
-                    <h3 class="mb-0">{{ total_leads }}</h3>
+          <div class="container-fluid px-4 mt-4 max-width-1000">
+            
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <div class="alert alert-success" role="alert">
+                  {{ messages[0] }}
+                </div>
+              {% endif %}
+            {% endwith %}
+            <div class="row gx-3 gy-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-2xl-5 flex-wrap">
+              <div class="col">
+                <div class="card stat-card p-3">
+                  <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                      <small class="text-muted">Total Leads</small>
+                      <h3 class="mb-0">{{ total_leads }}</h3>
+                    </div>
+                    <div class="stat-chip text-success">+12.4%</div>
                   </div>
-                  <div class="stat-chip text-success">+12.4%</div>
+                </div>
+              </div>
+              <div class="col">
+                <div class="card stat-card p-3">
+                  <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                      <small class="text-muted">Qualified Leads</small>
+                      <h3 class="mb-0">{{ qualified_leads }}</h3>
+                    </div>
+                    <div class="stat-chip text-success">+8.6%</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col">
+                <div class="card stat-card p-3">
+                  <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                      <small class="text-muted">Conversion Rate</small>
+                      <h3 class="mb-0">{{ conversion_rate }}%</h3>
+                    </div>
+                    <div class="stat-chip text-success">+2.3%</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col">
+                <div class="card stat-card p-3">
+                  <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                      <small class="text-muted">Pipeline Value</small>
+                      <h3 class="mb-0">{{ pipeline_value }}</h3>
+                    </div>
+                    <div class="stat-chip text-success">+14.9%</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col">
+                <div class="card stat-card p-3">
+                  <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                      <small class="text-muted">Avg Response Time</small>
+                      <h3 class="mb-0">{{ avg_response }}</h3>
+                    </div>
+                    <div class="stat-chip text-danger">-18%</div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="col">
-              <div class="card stat-card p-3">
-                <div class="d-flex justify-content-between align-items-start gap-3">
-                  <div>
-                    <small class="text-muted">Qualified Leads</small>
-                    <h3 class="mb-0">{{ qualified_leads }}</h3>
-                  </div>
-                  <div class="stat-chip text-success">+8.6%</div>
-                </div>
-              </div>
-            </div>
-            <div class="col">
-              <div class="card stat-card p-3">
-                <div class="d-flex justify-content-between align-items-start gap-3">
-                  <div>
-                    <small class="text-muted">Conversion Rate</small>
-                    <h3 class="mb-0">{{ conversion_rate }}%</h3>
-                  </div>
-                  <div class="stat-chip text-success">+2.3%</div>
-                </div>
-              </div>
-            </div>
-            <div class="col">
-              <div class="card stat-card p-3">
-                <div class="d-flex justify-content-between align-items-start gap-3">
-                  <div>
-                    <small class="text-muted">Pipeline Value</small>
-                    <h3 class="mb-0">{{ pipeline_value }}</h3>
-                  </div>
-                  <div class="stat-chip text-success">+14.9%</div>
-                </div>
-              </div>
-            </div>
-            <div class="col">
-              <div class="card stat-card p-3">
-                <div class="d-flex justify-content-between align-items-start gap-3">
-                  <div>
-                    <small class="text-muted">Avg Response Time</small>
-                    <h3 class="mb-0">{{ avg_response }}</h3>
-                  </div>
-                  <div class="stat-chip text-danger">-18%</div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div class="mb-3 d-flex flex-column flex-sm-row gap-2 align-items-start align-items-sm-center">
-            <select id="statusFilter" class="form-select" style="max-width:220px">
-              <option value="">All Statuses</option>
-              {% for s in status_options %}
-                <option value="{{ s }}">{{ s }}</option>
-              {% endfor %}
-            </select>
-            <select id="sourceFilter" class="form-select" style="max-width:220px">
-              <option value="">All Sources</option>
-              {% for s in source_options %}
-                <option value="{{ s }}">{{ s }}</option>
-              {% endfor %}
-            </select>
-            <div class="ms-sm-auto d-flex align-items-center gap-2">
-              <label class="small text-muted mb-0">Show</label>
-              <select id="pageSize" class="form-select d-inline-block" style="width:80px">
-                <option>10</option>
-                <option selected>20</option>
-                <option>50</option>
-                <option>100</option>
+            <div class="mb-3 d-flex flex-column flex-sm-row gap-2 align-items-start align-items-sm-center">
+              <select id="statusFilter" class="form-select" style="max-width:220px">
+                <option value="">All Statuses</option>
+                {% for s in status_options %}
+                  <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
               </select>
+              <select id="sourceFilter" class="form-select" style="max-width:220px">
+                <option value="">All Sources</option>
+                {% for s in source_options %}
+                  <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+              </select>
+              <div class="ms-sm-auto d-flex align-items-center gap-2">
+                <label class="small text-muted mb-0">Show</label>
+                <select id="pageSize" class="form-select d-inline-block" style="width:80px">
+                  <option>10</option>
+                  <option selected>20</option>
+                  <option>50</option>
+                  <option>100</option>
+                </select>
+              </div>
             </div>
-          </div>
 
-          <div class="card mb-4">
-            <div class="px-2 overflow-auto table-responsive">
-              <table id="leadsTable" class="table table-hover align-middle mb-0 w-100">
-                <thead>
-                  <tr>
-                    <th style="width:50px">#</th>
-                    <th class="sortable">Niche <span class="sort-indicator"></span></th>
-                    <th class="sortable">Location <span class="sort-indicator"></span></th>
-                    <th class="sortable">Company <span class="sort-indicator"></span></th>
-                    <th class="sortable">Website <span class="sort-indicator"></span></th>
-                    <th class="sortable">Phone <span class="sort-indicator"></span></th>
-                    <th class="sortable">Email Address <span class="sort-indicator"></span></th>
-                    <th class="sortable" style="width:120px">Status <span class="sort-indicator"></span></th>
-                    <th class="sortable" style="width:140px">Last Contacted <span class="sort-indicator"></span></th>
-                    <th class="sortable" style="width:140px">Lead Source <span class="sort-indicator"></span></th>
-                    <th class="sortable">Profile URL <span class="sort-indicator"></span></th>
-                    <th class="sortable">Initial Email <span class="sort-indicator"></span></th>
-                    <th class="sortable">Follow-up 1 <span class="sort-indicator"></span></th>
-                    <th class="sortable">Follow-up 2 <span class="sort-indicator"></span></th>
-                    <th class="sortable">Calendar Link <span class="sort-indicator"></span></th>
-                    <th class="sortable">Web Prompt <span class="sort-indicator"></span></th>
-                    <th class="sortable">Loom Script <span class="sort-indicator"></span></th>
-                    <th class="sortable">SMS Copy <span class="sort-indicator"></span></th>
-                    <th style="width:110px">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for row in records %}
-                    {% set niche = row.get('Niche','') %}
-                    {% set location = row.get('Location','') %}
-                    {% set company = row.get('Company','') %}
-                    {% set website = row.get('Website','') %}
-                    {% set phone = row.get('Phone','') %}
-                    {% set email_address = row.get('Email Address','') %}
-                    {% set status = row.get('Status','') %}
-                    {% set last_contacted = row.get('Last Contacted','') %}
-                    {% set lead_source = row.get('Lead Source','') %}
-                    {% set profile_url = row.get('Profile URL','') %}
-                    {% set initial_email = row.get('Initial Email','') %}
-                    {% set followup1 = row.get('Follow-up 1','') %}
-                    {% set followup2 = row.get('Follow-up 2','') %}
-                    {% set calendar_link = row.get('Calendar Link','') %}
-                    {% set web_prompt = row.get('Web Prompt','') %}
-                    {% set loom_script = row.get('Loom Script','') %}
-                    {% set sms_copy = row.get('SMS Copy','') %}
+            <div class="card mb-4">
+              <div class="px-2 overflow-auto table-responsive">
+                <table id="leadsTable" class="table table-hover align-middle mb-0 w-100">
+                  <thead>
                     <tr>
-                      <td>{{ loop.index }}</td>
-                      <td>{{ niche }}</td>
-                      <td>{{ location }}</td>
-                      <td data-colname="Company">
-                        <div class="d-flex align-items-center gap-3">
-                          <div class="avatar-sm bg-soft-primary text-primary">{{ (company[:1] if company) | upper }}</div>
-                          <div>
-                            <div class="fw-semibold">{{ company }}</div>
-                            <div class="small text-muted">{{ website }}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        {% if website %}
-                          <a href="{{ website if website.startswith('http') else 'https://' + website }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">{{ website }}</a>
-                        {% endif %}
-                      </td>
-                      <td>{{ phone }}</td>
-                      <td>{{ email_address }}</td>
-                      <td data-colname="Status">
-                        {% if status %}
-                          <span class="badge badge-status badge-status-{{ status|lower|replace(' ','-') }}">{{ status }}</span>
-                        {% endif %}
-                      </td>
-                      <td>{{ last_contacted }}</td>
-                      <td data-colname="Lead Source">{{ lead_source }}</td>
-                      <td>
-                        {% if profile_url %}
-                          <a href="{{ profile_url if profile_url.startswith('http') else 'https://' + profile_url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Profile</a>
-                        {% endif %}
-                      </td>
-                      <td>{{ initial_email }}</td>
-                      <td>{{ followup1 }}</td>
-                      <td>{{ followup2 }}</td>
-                      <td>
-                        {% if calendar_link %}
-                          <a href="{{ calendar_link if calendar_link.startswith('http') else 'https://' + calendar_link }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Book</a>
-                        {% endif %}
-                      </td>
-                      <td>{{ web_prompt }}</td>
-                      <td>{{ loom_script }}</td>
-                      <td>{{ sms_copy }}</td>
-                      <td>
-                        <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editModal{{ loop.index0 }}">Edit</button>
-                        <form action="/lead/delete/{{ loop.index0 }}" method="post" class="d-inline">
-                          <button class="btn btn-sm btn-outline-danger">Delete</button>
-                        </form>
-                      </td>
+                      <th style="width:50px">#</th>
+                      <th class="sortable">Niche <span class="sort-indicator"></span></th>
+                      <th class="sortable">Location <span class="sort-indicator"></span></th>
+                      <th class="sortable">Company <span class="sort-indicator"></span></th>
+                      <th class="sortable">Website <span class="sort-indicator"></span></th>
+                      <th class="sortable">Phone <span class="sort-indicator"></span></th>
+                      <th class="sortable">Email Address <span class="sort-indicator"></span></th>
+                      <th class="sortable" style="width:120px">Status <span class="sort-indicator"></span></th>
+                      <th class="sortable" style="width:140px">Last Contacted <span class="sort-indicator"></span></th>
+                      <th class="sortable" style="width:140px">Lead Source <span class="sort-indicator"></span></th>
+                      <th class="sortable">Profile URL <span class="sort-indicator"></span></th>
+                      <th class="sortable">Initial Email <span class="sort-indicator"></span></th>
+                      <th class="sortable">Follow-up 1 <span class="sort-indicator"></span></th>
+                      <th class="sortable">Follow-up 2 <span class="sort-indicator"></span></th>
+                      <th class="sortable">Calendar Link <span class="sort-indicator"></span></th>
+                      <th class="sortable">Web Prompt <span class="sort-indicator"></span></th>
+                      <th class="sortable">Loom Script <span class="sort-indicator"></span></th>
+                      <th class="sortable">SMS Copy <span class="sort-indicator"></span></th>
+                      <th style="width:110px">Actions</th>
                     </tr>
-                  {% else %}
-                    <tr><td colspan="19">No leads found.</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            <div class="table-footer d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 px-3 pb-3 pt-2">
-              <div class="table-summary small text-muted">Showing <strong>{{ pageSize or 20 }}</strong> of <strong>{{ total_leads }}</strong> entries</div>
-              <!-- <div class="pagination-wrap d-flex gap-2 align-items-center">
-                <button class="btn btn-outline-secondary btn-sm" disabled>‹</button>
-                <button class="btn btn-outline-secondary btn-sm active">1</button>
-                <button class="btn btn-outline-secondary btn-sm">2</button>
-                <button class="btn btn-outline-secondary btn-sm">3</button>
-                <button class="btn btn-outline-secondary btn-sm">›</button>
-              </div> -->
-              <div class="pagination-wrap d-flex gap-2 align-items-center"></div>
+                  </thead>
+                  <tbody>
+                    {% for row in records %}
+                      {% set niche = row.get('Niche','') %}
+                      {% set location = row.get('Location','') %}
+                      {% set company = row.get('Company','') %}
+                      {% set website = row.get('Website','') %}
+                      {% set phone = row.get('Phone','') %}
+                      {% set email_address = row.get('Email Address','') %}
+                      {% set status = row.get('Status','') %}
+                      {% set last_contacted = row.get('Last Contacted','') %}
+                      {% set lead_source = row.get('Lead Source','') %}
+                      {% set profile_url = row.get('Profile URL','') %}
+                      {% set initial_email = row.get('Initial Email','') %}
+                      {% set followup1 = row.get('Follow-up 1','') %}
+                      {% set followup2 = row.get('Follow-up 2','') %}
+                      {% set calendar_link = row.get('Calendar Link','') %}
+                      {% set web_prompt = row.get('Web Prompt','') %}
+                      {% set loom_script = row.get('Loom Script','') %}
+                      {% set sms_copy = row.get('SMS Copy','') %}
+                      <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ niche }}</td>
+                        <td>{{ location }}</td>
+                        <td data-colname="Company">
+                          <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-sm bg-soft-primary text-primary">{{ (company[:1] if company) | upper }}</div>
+                            <div>
+                              <div class="fw-semibold">{{ company }}</div>
+                              <div class="small text-muted">{{ website }}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          {% if website %}
+                            <a href="{{ website if website.startswith('http') else 'https://' + website }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">{{ website }}</a>
+                          {% endif %}
+                        </td>
+                        <td>{{ phone }}</td>
+                        <td>{{ email_address }}</td>
+                        <td data-colname="Status">
+                          {% if status %}
+                            <span class="badge badge-status badge-status-{{ status|lower|replace(' ','-') }}">{{ status }}</span>
+                          {% endif %}
+                        </td>
+                        <td>{{ last_contacted }}</td>
+                        <td data-colname="Lead Source">{{ lead_source }}</td>
+                        <td>
+                          {% if profile_url %}
+                            <a href="{{ profile_url if profile_url.startswith('http') else 'https://' + profile_url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Profile</a>
+                          {% endif %}
+                        </td>
+                        <td>{{ initial_email }}</td>
+                        <td>{{ followup1 }}</td>
+                        <td>{{ followup2 }}</td>
+                        <td>
+                          {% if calendar_link %}
+                            <a href="{{ calendar_link if calendar_link.startswith('http') else 'https://' + calendar_link }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Book</a>
+                          {% endif %}
+                        </td>
+                        <td>{{ web_prompt }}</td>
+                        <td>{{ loom_script }}</td>
+                        <td>{{ sms_copy }}</td>
+                        <td>
+                          <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editModal{{ loop.index0 }}">Edit</button>
+                          <form action="/lead/delete/{{ loop.index0 }}" method="post" class="d-inline">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                          </form>
+                        </td>
+                      </tr>
+                    {% else %}
+                      <tr><td colspan="19">No leads found.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-footer d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 px-3 pb-3 pt-2">
+                <div class="table-summary small text-muted">Showing <strong>{{ pageSize or 20 }}</strong> of <strong>{{ total_leads }}</strong> entries</div>
+                <!-- <div class="pagination-wrap d-flex gap-2 align-items-center">
+                  <button class="btn btn-outline-secondary btn-sm" disabled>‹</button>
+                  <button class="btn btn-outline-secondary btn-sm active">1</button>
+                  <button class="btn btn-outline-secondary btn-sm">2</button>
+                  <button class="btn btn-outline-secondary btn-sm">3</button>
+                  <button class="btn btn-outline-secondary btn-sm">›</button>
+                </div> -->
+                <div class="pagination-wrap d-flex gap-2 align-items-center"></div>
+              </div>
             </div>
           </div>
         </div>

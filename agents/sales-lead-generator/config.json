@@ -1,37 +1,45 @@
 {
-  "lead_score_threshold": 60,
-  "excel_export": true,
-  "rapidapi_key": "YOUR_RAPIDAPI_KEY_HERE",
-  "rapidapi_host": "zillow56.p.rapidapi.com",
-  "niches": [
-    {
-      "name": "Dental Clinics",
-      "search_query": "Dental Clinic",
-      "value_prop": "helping dental practices get more booked appointments"
-    },
-    {
-      "name": "Real Estate Brokers",
-      "search_query": "Real Estate Agency",
-      "value_prop": "helping agents generate motivated buyer & seller leads"
-    },
-    {
-      "name": "Fitness Studios",
-      "search_query": "Gym",
-      "value_prop": "helping gyms increase membership sign-ups"
-    },
-    {
-      "name": "Zillow Real Estate",
-      "search_query": "Zillow API Property Extraction",
-      "value_prop": "extracting and analyzing property listings and agent data from Zillow"
-    }
-  ],
-  "locations": [
-    "New York, NY",
-    "Boston, MA",
-    "Los Angeles, CA",
-    "Chicago, IL",
-    "Miami, FL"
-  ],
+  "tech_config": {
+    "lead_score_threshold": 60,
+    "excel_export": true,
+    "niches": [
+      {
+        "name": "Dental Clinics",
+        "search_query": "Dental Clinic",
+        "value_prop": "helping dental practices get more booked appointments"
+      },
+      {
+        "name": "Coffee Shops",
+        "search_query": "Coffee Shop",
+        "value_prop": "helping coffee shops get more customers through online marketing"
+      },
+      {
+        "name": "Real Estate Brokers",
+        "search_query": "Real Estate Agency",
+        "value_prop": "helping agents generate motivated buyer & seller leads"
+      },
+      {
+        "name": "Fitness Studios",
+        "search_query": "Gym",
+        "value_prop": "helping gyms increase membership sign-ups"
+      },
+      {
+        "name": "Zillow Real Estate",
+        "search_query": "Zillow API Property Extraction",
+        "value_prop": "extracting and analyzing property listings and agent data from Zillow"
+      }
+    ],
+    "locations": [
+      "New York, NY",
+      "Boston, MA",
+      "Los Angeles, CA",
+      "Chicago, IL",
+      "St. Louis, MO",
+      "Miami, FL",
+      "Austin, TX"
+    ],
+    "daily_limit_per_combo": 10
+  },
   "real_estate_config": {
     "property_types": ["SINGLE_FAMILY", "MULTI_FAMILY", "LAND"],
     "strategies": {
@@ -64,17 +72,10 @@
     "target_markets": [
       {
         "country": "United States",
-        "locations": ["Miami, FL", "Austin, TX", "Orlando, FL"]
-      },
-      {
-        "country": "Canada",
-        "locations": ["Toronto, ON", "Vancouver, BC"]
-      },
-      {
-        "country": "United Kingdom",
-        "locations": ["London", "Manchester"]
+        "locations": ["Miami, FL", "Austin, TX", "Orlando, FL", "Chicago, IL", "St. Louis, MO", "Charlotte, NC", "Atlanta, GA", "Dallas, TX", "Houston, TX", "Los Angeles, CA"]
       }
-    ]
+    ],
+    "daily_limit_per_combo": 10
   },
   "clients": [
     {
@@ -86,6 +87,5 @@
       "locations": ["New York, NY"],
       "min_score": 70
     }
-  ],
-  "daily_limit_per_combo": 10
+  ]
 }

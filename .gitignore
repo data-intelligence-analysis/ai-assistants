@@ -22,6 +22,8 @@ ENV/
 .env
 .env*
 /*/.env*
+/*/service_account.json
+/*/service_account*
 
 # =========================
 # FastAPI / Web / Logs
@@ -95,3 +97,5 @@ Thumbs.db
 
 # Jupyter Notebook
 .ipynb_checkpoints
+agents/sales-lead-generator/.env
+agents/sales-lead-generator/.env

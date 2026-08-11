@@ -53,7 +53,7 @@ body,html{height:100%;background:#f6f8fb;color:#202940;overflow:hidden;}
 
 /* make table responsive within card */
 .table-responsive{max-height:calc(100vh - 380px);overflow-x:auto;overflow-y:auto;max-width:100%;}
-#page-content-wrapper{flex:1 1 auto;min-width:0;min-height:100vh;max-height:100vh;overflow-y:auto;overflow-x:hidden;padding:24px 24px 32px 24px;max-width:1586px;margin:0 auto;box-sizing:border-box;}
+#page-content-wrapper{flex:1 1 auto;min-width:0;min-height:100vh;max-height:100vh;overflow-y:auto;overflow-x:hidden;padding:24px 24px 32px 24px;box-sizing:border-box;}
 #leadsTable{width:100%;}
 
 .lead-topbar{width:100%;}
@@ -114,7 +114,7 @@ body,html{height:100%;background:#f6f8fb;color:#202940;overflow:hidden;}
 
 
 /* Page content adjustments */
-#page-content-wrapper{padding-left:24px;padding-right:24px; max-width:1586px;margin:0 auto;}
+#page-content-wrapper{padding-left:24px;padding-right:24px;}
 
 /* Responsive tweaks */
 @media (max-width: 1280px){

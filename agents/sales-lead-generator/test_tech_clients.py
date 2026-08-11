@@ -15,19 +15,6 @@ else:
   logger.warning("config.json not found. Please create a config.json file with the necessary configuration.")
   raise FileNotFoundError("config.json not found. Please create a config.json file with the necessary configuration.")
 
-# --- AI & SCRAPER MOCK PIPELINES (For Simulation) ---
-def scrape_x_leads(query: str) -> List[Dict[str, Any]]:
-    """Simulates pulling targets using the X API based on intent signatures."""
-    return [
-        {
-            "id": "12345", "author_id": "tech_founder_99", "company": "MedVitals Inc", 
-            "website": "medvitals.io", "email": "contact@medvitals.io", "phone": "+1-617-555-0199"
-        },
-        {
-            "id": "67890", "author_id": "saas_builder", "company": "BoxMoc Logistics", 
-            "website": "boxmoc.com", "email": "growth@boxmoc.com", "phone": ""
-        }
-    ]
 
 # --- AI & SCRAPER MOCK PIPELINES (For Simulation) ---
 # --- EXTENDED SCRAPER MOCK PIPELINES ---
@@ -79,6 +66,8 @@ def tst_build_web_app_prompt(lead: dict) -> str: return f"Analyze UI/UX layout f
 def tst_build_loom_script(lead: dict) -> str: return f"Pitch dynamic agentic systems to {lead.get('company')}"
 def tst_build_sms_copy(lead: dict) -> str: return f"Hey from Boston! Checking out your platform {lead.get('company')}."
 def tst_book_call(company: str, email: str) -> str: return f"https://cal.com/acme/{company.lower().replace(' ', '-')}"
+def tst_lead_type(website: str, reviews: str, rating: str) -> str: return f"HAS_WEBSITE" if website else "NO_WEBSITE"
+def tst_lead_score(lead: dict) -> int: return 85  # Mock scoring for lead quality
 
 # --- CORE DATA ENGINEERING LAYER ---
 class LeadPipelineManager:

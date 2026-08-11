@@ -6,6 +6,14 @@ Below is a **step-by-step production deployment** using **GitHub Actions (recomm
 
 This is written so you can follow it **once and be live in ~30–45 minutes**.
 
+# EMAIL DELIVERY METHODS
+Unfortunately, sending email directly from GitHub Actions requires authentication, usually with a Google account. Some potential options to send email without needing a Google account:
+
+1. Use a 3rd party email service like SendGrid, Mailgun, etc. Many have free tiers and GitHub Actions libraries to simplify sending email through their APIs.
+2. If you have access to an SMTP server, you can configure the GitHub Actions SMTP server and credentials to send through it.
+3. For notification emails, you may be able to use the default GitHub notifications sent when an action completes. These go to the committer and anyone watching the repo.
+4. For small volumes of email, you could potentially write the emails to a file during the action, then have a separate process (like a cron job) that picks up the email files and sends them.
+5. You could create a simple API endpoint (e.g. serverless function) to send emails and call that from your action. This shifts the email sending out of GitHub but adds complexity.
 ---
 
 # 🚀 DEPLOYMENT: DAILY MULTI-NICHE AI SALES AGENT

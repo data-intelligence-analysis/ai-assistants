@@ -42,7 +42,7 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 DEFAULT_LEAD_COLUMNS = [
     'Niche', 'Location', 'Company', 'Website', 'Phone', 'Email Address',
     'Initial Email', 'Follow-up 1', 'Follow-up 2', 'Calendar Link',
-    'Status', 'Last Contacted', 'Lead Source', 'Profile URL',
+    'Status', 'Last Contacted', 'Lead Source',
     'Web Prompt', 'Loom Script', 'SMS Copy'
 ]
 

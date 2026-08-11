@@ -42,7 +42,7 @@
 
 import os
 import stripe
-import datetime
+import datetime as dt_module
 import openai
 import requests
 import gspread
@@ -52,8 +52,10 @@ import csv
 import urllib
 import logging
 from real_estate import fetch_zillow_properties
-from datetime import datetime
+from datetime import datetime as dt
 from typing import List, Dict, Any
+
+datetime = dt_module
 
 import gspread
 from google import genai
@@ -76,12 +78,7 @@ from googleapiclient.discovery import build
 # =========================
 # CONFIG
 # =========================
-SPREADSHEET_NAME = "SALES_AGENT_LEADS"
-cloud_sheet_file = "cloud_sheet.xlsx"
-SPREADSHEET_ID = os.getenv("GOOGLE_SHEET_ID", "YOUR_SPREADSHEET_ID")
-STATE_FILE = "state.json" # TRACK ROW COUNT IN EXCEL STATE FILE
-GC_QUOTA_LIMIT = 50
-# Configure logging to output to standard out for GitHub Actions
+# ---------------- Configure logging to output to standard out for GitHub Actions ---------------- #
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -89,19 +86,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ---------------- ENV SETUP ---------------- #
+
+
+# ---------------- INTIALIZE CLIENT ---------------- #
 openai.api_key = os.getenv("OPENAI_API_KEY")
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) 
+gemini_client = genai.Client() # The SDK automatically detects the GEMINI_API_KEY environment variable
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+# ---------------- ENV SETUP ---------------- #
 SERPAPI_KEY = os.getenv("SERPAPI_API_KEY")
 SENDGRID_KEY = os.getenv("SENDGRID_API_KEY")
 NOTION_API_KEY = os.getenv("NOTION_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
-CALENDAR_ID = "primary"
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+GOOGLE_SERVICE_ACCOUNT_FILE="service_account.json"
+GOOGLE_SHEET_ID = "xxxx"
+GOOGLE_SHEET_NAME = "TECH_LEADS"
+GOOGLE_CALENDAR_ID = "primary"
 NOTION_DB_ID = os.getenv("NOTION_DB_ID")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-SEARCH_QUERY = "local coffee shops in Austin"
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+CLOUD_SHEET_FILE = "cloud_sheet.xlsx"
+STATE_FILE = "state.json" # TRACK ROW COUNT IN EXCEL STATE FILE
+GC_QUOTA_LIMIT = 50
 
 #config base case
 if os.path.exists("config.json"):
@@ -110,14 +116,74 @@ if os.path.exists("config.json"):
 else:
   raise FileNotFoundError("config.json not found. Please create a config.json file with the necessary configuration.")
 
-# ---------------- INTIALIZE CLIENT ---------------- #
-gemini_client = genai.Client()
+# ---------------- DAILY GOOGLE CLOUD QUOTA TRACKER ---------------- #
+# ---------------- Google API daily budget guard for once-daily GitHub Actions runs. ---------------- #
+GOOGLE_DAILY_QUOTA_LIMIT = max(
+    1,
+    int(GC_QUOTA_LIMIT)
+)
+
+
+def _load_google_quota_state():
+    today_str = datetime.date.today().isoformat()
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r") as f:
+                state = json.load(f)
+            if state.get("date") == today_str:
+                return {"date": today_str, "used": int(state.get("used", 0))}
+        except Exception:
+            pass
+    return {"date": today_str, "used": 0}
+
+
+def _save_google_quota_state(state):
+    state["date"] = datetime.date.today().isoformat()
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f, indent=2)
+
+
+def reserve_google_call(operation_name, amount=1):
+    state = _load_google_quota_state()
+    used = int(state.get("used", 0))
+    if used + amount > GOOGLE_DAILY_QUOTA_LIMIT:
+        logger.warning(
+            "Google daily quota exhausted (%s/%s). Skipping %s.",
+            used,
+            GOOGLE_DAILY_QUOTA_LIMIT,
+            operation_name,
+        )
+        return False
+    state["used"] = used + amount
+    _save_google_quota_state(state)
+    logger.info(
+        "Reserved %s Google call(s) for %s. Remaining: %s",
+        amount,
+        operation_name,
+        GOOGLE_DAILY_QUOTA_LIMIT - state["used"],
+    )
+    return True
+
+
+def get_google_quota_status():
+    state = _load_google_quota_state()
+    used = int(state.get("used", 0))
+    return {
+        "used": used,
+        "limit": GOOGLE_DAILY_QUOTA_LIMIT,
+        "remaining": max(0, GOOGLE_DAILY_QUOTA_LIMIT - used),
+    }
+
+# Google Maps API daily budget guard.
+def get_and_update_daily_count():
+    """Reserve one slot from the Google daily quota for a Maps/Google API request."""
+    return reserve_google_call("google_maps_request", amount=1)
 
 # ---------------- GOOGLE AUTH ---------------- #
 # Unified Google Services Authentication Matrix
 try:
     creds = Credentials.from_service_account_file(
-        "service_account.json",
+        GOOGLE_SERVICE_ACCOUNT_FILE,
         scopes=[
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/calendar",
@@ -125,7 +191,10 @@ try:
         ]
     )
     gc = gspread.authorize(creds)
-    sheet = gc.open(SPREADSHEET_NAME).sheet1
+    if reserve_google_call("google_sheets_open", amount=1):
+        sheet = gc.open(GOOGLE_SHEET_NAME).sheet1
+    else:
+        sheet = None
     calendar_service = build("calendar", "v3", credentials=creds)
     drive_service = build("drive", "v3", credentials=creds)
 except Exception as e:
@@ -134,24 +203,11 @@ except Exception as e:
     calendar_service = None
     drive_service = None
 
-#v2
-# scope = [
-#     "https://spreadsheets.google.com/feeds",
-#     "https://www.googleapis.com/auth/drive"
-# ]
-
-# creds = ServiceAccountCredentials.from_json_keyfile_name(
-#     "google-service-account.json", scope
-# )
-# gs_client = gspread.authorize(creds)
-# sheet = gs_client.open_by_key(SHEET_ID).sheet1
-
-
 # ==========================================
 # AI COPYWRITING & TRANSFORM OPERATIONS
 # ==========================================
 # ---------------- OPENAI MODEL CONFIG ---------------- #
-def ai_generate(prompt, temperature=0.7):
+def openai_generate(prompt, temperature=0.7):
 	try:
 		response = openai_client.chat.completions.create(
 			model="gpt-4o-mini",
@@ -177,9 +233,9 @@ def gemini_generate(prompt, temperature=0.7):
 		return "[Generation Failure Placeholder]"
 
 #--- switch between openai and gemini models ------- #
-def generate(prompt, temperature=0.7, model="openai"):
+def ai_model_selection(prompt, temperature=0.7, model="gemini"):
     if model == "openai":
-        return ai_generate(prompt, temperature)
+        return openai_generate(prompt, temperature)
     elif model == "gemini":
         return gemini_generate(prompt, temperature)
     else:
@@ -236,7 +292,7 @@ def calculate_price(size, urgency, custom):
 
 # ---------------- CRM UTILITY ---------------- #
 # EXPORT SHEET TO EXCEL
-def export_sheet_to_excel(spreadsheet_id, sheet_name="Sheet1"):
+def export_sheet_to_excel(spreadsheet_id=GOOGLE_SHEET_ID, sheet_name=GOOGLE_SHEET_NAME):
     """Exports Google Sheet matrix targets locally and strictly returns the file string path."""
     today_str = datetime.date.today().isoformat()
     file_name = f"leads_{today_str}.xlsx"
@@ -245,7 +301,11 @@ def export_sheet_to_excel(spreadsheet_id, sheet_name="Sheet1"):
         wb = load_workbook("template.xlsx") if os.path.exists("template.xlsx") else load_workbook()
         wb.save(file_name)
         return file_name
-    
+
+    if not reserve_google_call("google_drive_export", amount=1):
+        logger.warning("Skipping Google Drive export because the daily Google quota is exhausted.")
+        return file_name
+
     request = drive_service.files().export_media(
         fileId=spreadsheet_id,
         mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -257,23 +317,7 @@ def export_sheet_to_excel(spreadsheet_id, sheet_name="Sheet1"):
 
     
     
-# NOTION SYNC
-def sync_to_notion(lead):
-    headers = {
-			"Authorization": f"Bearer {os.getenv('NOTION_API_KEY')}",
-			"Notion-Version": "2022-06-28",
-			"Content-Type": "application/json"
-    }
-    data = {
-        "parent": {"database_id": os.getenv("NOTION_DATABASE_ID")},
-        "properties": {
-            "Business Name": {"title": [{"text": {"content": lead['Business Name']}}]},
-            "Location": {"rich_text": [{"text": {"content": lead['Location']}}]},
-            "Lead Type": {"select": {"name": lead['Lead Type']}},
-            "Google Maps": {"url": lead['Google Maps Link']}
-        }
-    }
-    requests.post("https://api.notion.com/v1/pages", headers=headers, json=data)
+
 # ---------------- NOTION SYNC ---------------- #
 def push_to_notion(lead, artifacts):
     url = "https://api.notion.com/v1/pages"
@@ -291,6 +335,8 @@ def push_to_notion(lead, artifacts):
             "Website": {"url": lead["website"]},
             "Niche": {"select": {"name": lead["niche"]}},
             "Price": {"number": artifacts["price"]},
+            "Lead Type": {"select": {"name": lead['Lead Type']}},
+            "profileUrl": {"url": lead['Google Maps Link']},
             "AI Prompt": {"rich_text": [{"text": {"content": artifacts["web_prompt"][:2000]}}]},
             "Loom Script": {"rich_text": [{"text": {"content": artifacts["loom"][:2000]}}]},
             "SMS Copy": {"rich_text": [{"text": {"content": artifacts["sms"]}}]},
@@ -308,6 +354,8 @@ def create_calendar_event(service, lead):
         "start": {"dateTime": "2026-02-10T14:00:00"},
         "end": {"dateTime": "2026-02-10T14:30:00"}
     }
+    if not reserve_google_call("google_calendar_event_create", amount=1):
+        return "https://calendar.google.com"
     event = service.events().insert(calendarId="primary", body=event).execute()
     return event.get("htmlLink")
 
@@ -404,7 +452,7 @@ CTA: Book a Call
 
 Use modern Tailwind-style layout.
 """
-    html = ai_generate(prompt)
+    html = openai_generate(prompt)
     file_name = f"demo_{lead['business']}.html"
     with open(file_name, "w") as f:
         f.write(html)
@@ -445,6 +493,30 @@ Would you be open to a quick walkthrough showing what this could look like for {
 Best,
 {{Your Name}}
 """
+def generate_ai_no_website_message(lead):
+    prompt = f"""Write a concise, professional Email to a business owner.
+Business: {lead['Business Name']}
+Location: {lead['Location']}
+Context: Business does not have a website.
+Tone: Helpful, non-salesy."""
+    return ai_model_selection(prompt, model="openai")
+
+def generate_ai_no_website_low_review(lead):
+    prompt = f"""Write a concise, professional Email to a business owner.
+Business: {lead['Business Name']}
+Location: {lead['Location']}
+Context: Business does not have a website and has low reviews.
+Tone: Helpful, non-salesy."""
+    return ai_model_selection(prompt, model="openai")
+
+def generate_ai_website_low_review(lead):
+    prompt = f"""Write a concise, professional Email to a business owner.
+Business: {lead['Business Name']}
+Location: {lead['Location']}
+Context: Business has a website but has low reviews.
+Tone: Helpful, non-salesy."""
+    return ai_model_selection(prompt, model="openai")
+
 
 # ---------------- WEBSITE CHECK ---------------- #
 def has_website(lead):
@@ -457,13 +529,34 @@ def has_website(lead):
 
 # ---------------- LEAD CLASSIFICATION ---------------- #
 def classify_lead(lead):
-    return "NO_WEBSITE" if not lead else "HAS_WEBSITE"
+    if not has_website(lead):
+        return "NO_WEBSITE"
+    elif not has_website(lead) and lead.get("reviews", 0) < 10:
+        return "NO_WEBSITE_LOW_REVIEW"
+    elif not has_website(lead) and lead.get("reviews", 0) < 10 and lead.get("rating", 0) <= 3:
+        return "NO_WEBSITE_LOW_REVIEW_LOW_RATING"
+    elif not has_website(lead) and lead.get("reviews", 0) >= 15 and lead.get("rating", 0) >= 4:
+        return "NO_WEBSITE_HIGH_REVIEW_HIGH_RATING"
+    elif has_website(lead) and lead.get("reviews", 0) < 10:
+        return "HAS_WEBSITE_LOW_REVIEW"
+    elif has_website(lead) and (lead.get("reviews", 0) < 10 and lead.get("rating", 0) <= 3):
+        return "HAS_WEBSITE_LOW_REVIEW_LOW_RATING"
+    elif has_website(lead) and lead.get("reviews", 0) >= 15 and lead.get("rating", 0) >= 4:
+        return "HAS_WEBSITE_HIGH_REVIEW_HIGH_RATING"
+    elif has_website(lead):
+        return "HAS_WEBSITE"
+    else:
+        return "NO LEAD CLASSIFICATION"
 
 
 def process_lead(lead):
     lead["lead_type"] = classify_lead(lead)
-    if lead["lead_type"] == "NO_WEBSITE":
-        lead["tailored_message"] = generate_no_website_message(lead)
+    if lead["lead_type"] == "NO_WEBSITE" or lead["lead_type"] == "NO_WEBSITE_HIGH_REVIEW_HIGH_RATING":
+        lead["tailored_message"] = generate_ai_no_website_message(lead)
+    elif lead["lead_type"] == "NO_WEBSITE_LOW_REVIEW" or lead["lead_type"] == "NO_WEBSITE_LOW_REVIEW_LOW_RATING":
+        lead["tailored_message"] = generate_ai_no_website_low_review(lead)
+    elif lead["lead_type"] == "HAS_WEBSITE_LOW_REVIEW" or lead["lead_type"] == "HAS_WEBSITE_LOW_REVIEW_LOW_RATING":
+        lead["tailored_message"] = generate_ai_website_low_review(lead)
     return lead
 
 def score_lead(lead):
@@ -485,7 +578,7 @@ def score_lead(lead):
 #             if any(s in website.lower() for s in ["facebook.com", "instagram.com", "linkedin.com"]):
 #                 classify_lead(False) #return False
 #             return classify_lead(False) #return True
-#         elif (lead != True or lead == None) and query and GOOGLE_API_KEY:
+#         elif (lead != True or lead == None) and query and GOOGLE_MAPS_API_KEY:
             
 #     elif lead_source == "linkedin":
 #         website = lead.get("website")
@@ -501,18 +594,14 @@ def score_lead(lead):
 #         return None
 
 
-# ---------------- AI SMS GENERATOR ---------------- #
-def generate_ai_sms(lead):
-    prompt = f"""Write a concise, friendly SMS for a business owner.
+# ---------------- AI MESSAGE GENERATOR ---------------- #
+def generate_ai_sms_message(lead):
+    prompt = f"""Write a concise, friendly SMS to a business owner.
 Business: {lead['Business Name']}
 Location: {lead['Location']}
 Context: Business does not have a website.
 Tone: Helpful, non-salesy."""
-    resp = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return resp.choices[0].message.content.strip()
+    return ai_model_selection(prompt, model="openai")
 
 # ---------------- LINKEDIN DM GENERATOR ---------------- #
 def generate_linkedin_dm(lead, niche, location):
@@ -538,14 +627,14 @@ def generate_linkedin_dm(lead, niche, location):
     End with a soft question.
     """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7
-    )
+    # response = openai.ChatCompletion.create(
+    #     model="gpt-4",
+    #     messages=[{"role": "user", "content": prompt}],
+    #     temperature=0.7
+    # )
 
-    return response.choices[0].message.content.strip()
-
+    # return response.choices[0].message.content.strip()
+    ai_model_selection(prompt, model="openai")
 
 # =========================================
 # LEAD SCOPE GENERATION
@@ -560,6 +649,9 @@ def fetch_metrics_from_source(source_type, client, kwargs):
     
     try:
         if source_type == "google_sheets":
+            if not reserve_google_call("google_sheets_metrics_read", amount=1):
+                logger.warning("Skipping Google Sheets metrics fetch because the daily Google quota is exhausted.")
+                return "N/A", "N/A"
             # Expecting client to be an authorized gspread client
             sheet_name = kwargs.get("sheet_name", "LeadsSheet")
             sheet = client.open(sheet_name).sheet1
@@ -615,11 +707,11 @@ def scrape_google_maps(api: str, query: str, location: str, limit: int = 10) -> 
         elif api == "googleapi":
             if not get_and_update_daily_count():
                 return None
-            params = {"engine": "google", "q": query, "api_key": GOOGLE_API_KEY}
+            params = {"engine": "google", "q": query, "api_key": GOOGLE_MAPS_API_KEY}
             url = "https://googleapis.com"
             headers = {
                 "Content-Type": "application/json",
-                "X-Goog-Api-Key": GOOGLE_API_KEY,
+                "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
                 "X-Goog-FieldMask": "places.displayName,places.websiteUri"
             }
             payload = {
@@ -649,6 +741,8 @@ def scrape_google_maps(api: str, query: str, location: str, limit: int = 10) -> 
                 logger.error(f"API Request failed: {e}")
                 print("::endgroup::")
                 return None
+        else:
+            raise ValueError("Invalid API specified for Google Maps scraping. Use 'serpapi' or 'googleapi'.")
     except Exception as e:
         print(f"Google Maps scrape exception: {e}")
         return []
@@ -817,7 +911,7 @@ def notify_telegram(lead, source_type="google_sheets", db_client=None, **kwargs)
 
 
 def notify_sms(lead):
-    body = generate_ai_sms(lead)
+    body = generate_ai_sms_message(lead)
     client = Client(
         os.getenv("TWILIO_ACCOUNT_SID"),
         os.getenv("TWILIO_AUTH_TOKEN")
@@ -854,12 +948,14 @@ def lead_hash(email):
 def get_google_sheet_row_count():
     """Returns the total number of populated rows, excluding the header."""
     try:
+        if not sheet or not reserve_google_call("google_sheets_read_row_count", amount=1):
+            return 0
         # get_all_values() returns a list of lists representing the populated grid
         all_rows = sheet.get_all_values()
-        
+
         if not all_rows:
             return 0
-            
+
         # Total populated rows minus 1 for the header row
         return len(all_rows) - 1
     except Exception as e:
@@ -867,51 +963,15 @@ def get_google_sheet_row_count():
         return 0
 
 def already_queued(email):
-	if not sheet: 
-		return False
-	try:
-		records = sheet.get_all_records()
-		hashes = [lead_hash(r["Email"]) for r in records if r.get("Email")]
-		return lead_hash(email) in hashes
-	except Exception:
-		return False
-# ---------------- DAILY GOOGLE CLOUD QUOTA TRACKER ---------------- #
-def get_and_update_daily_count():
-    """
-    Reads the tracking file, resets the count if it's a new day, 
-    and increments the count for the current day.
-    """
-    today_str = datetime.today().strftime('%Y-%m-%d')
-    
-    # Initialize default state
-    state = {"date": today_str, "gc_api_request_count": 0}
-    
-    # Load existing tracking data if file exists
-    if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, 'r') as f:
-                saved_state = json.load(f)
-                # If the tracking file is from today, keep its count
-                if saved_state.get("date") == today_str:
-                    state["gc_api_request_count"] = saved_state.get("gc_api_request_count", 0)
-        except (json.JSONDecodeError, KeyError):
-            pass  # Corrupted file, fallback to default state
-            
-    # Check if we have hit or breached the threshold
-    if state["count"] >= GC_QUOTA_LIMIT:
-        print(f"🛑 CRITICAL SAFETY CAP: You have already made {state['count']} API requests today ({today_str}).")
-        print(f"Aborting execution to protect your Google Cloud wallet from unexpected fees.")
+    if not sheet or not reserve_google_call("google_sheets_read_dedup", amount=1):
         return False
-        
-    # Increment the local counter
-    state["count"] += 1
-    
-    # Save the updated counter back to the file
-    with open(STATE_FILE, 'w') as f:
-        json.dump(state, f, indent=4)
-        
-    print(f"🛡️ Request allowed. Daily Usage: {state['count']}/{GC_QUOTA_LIMIT} calls.")
-    return True
+    try:
+        records = sheet.get_all_records()
+        hashes = [lead_hash(r["Email"]) for r in records if r.get("Email")]
+        return lead_hash(email) in hashes
+    except Exception:
+        return False
+
 # ---------------- EXCEL NEW-LEAD DETECTOR ---------------- #
 def load_last_row_count():
     if not os.path.exists(STATE_FILE):
@@ -987,15 +1047,17 @@ def book_call(business_name: str, email: str) -> str:
     if not calendar_service:
         return "https://cal.com/fallback-booking"
     try:
-        start_time = (datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).isoformat() + "Z"
-        end_time = (datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2, minutes=30)).isoformat() + "Z"
+        if not reserve_google_call("google_calendar_event_create", amount=1):
+            return "https://calendar.google.com"
+        start_time = (dt.now(datetime.timezone.utc) + datetime.timedelta(days=2)).isoformat() + "Z"
+        end_time = (dt.now(datetime.timezone.utc) + datetime.timedelta(days=2, minutes=30)).isoformat() + "Z"
         event = {
             "summary": f"Intro Call - {business_name}",
             "start": {"dateTime": start_time},
             "end": {"dateTime": end_time},
             "attendees": [{"email": email}]
         }
-        res = calendar_service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
+        res = calendar_service.events().insert(calendarId=GOOGLE_CALENDAR_ID, body=event).execute()
         return res.get("htmlLink", "https://calendar.google.com")
     except Exception:
         return "https://calendar.google.com"
@@ -1039,10 +1101,13 @@ def generate_proposal_pdf(lead, price):
 def run_agent():
     today = str(datetime.date.today())
 
-    sources = ["google_maps", "linkedin", "x"]
+    sources = ["google_maps",
+            #    "linkedin", 
+            #    "x"
+               ]
 
     for source in sources:
-        for niche in CONFIG.get("niches", []):
+        for niche in CONFIG.get("tech config", {}).get("niches", []):
             for location in CONFIG.get("locations", []):
                 # Fetch routing phase
                 if source == "google_maps":
@@ -1084,9 +1149,9 @@ def run_agent():
                     follow1 = generate_followup(lead["Company"], 1)
                     follow2 = generate_followup(lead["Company"], 2)
                     
-                    web_prompt = ai_generate(build_web_app_prompt(lead))
-                    loom_script = ai_generate(build_loom_script(lead))
-                    sms_copy = ai_generate(build_sms_copy(lead))
+                    web_prompt = ai_model_selection(build_web_app_prompt(lead))
+                    loom_script = ai_model_selection(build_loom_script(lead))
+                    sms_copy = ai_model_selection(build_sms_copy(lead))
                     calendar_link = book_call(lead["Company"], email)
 
                     row_payload = [
@@ -1112,8 +1177,11 @@ def run_agent():
                     ]
 
                     if sheet:
-                        sheet.append_row(row_payload)
-                        print(f"✅ Injected classified [{lead_type} | Score: {lead_score}] lead row: {lead['Company']} from {source_label}")
+                        if reserve_google_call("google_sheets_append_row", amount=1):
+                            sheet.append_row(row_payload)
+                            print(f"✅  Lead: {lead["company"]} - {lead["location"]} - {niche["name"]} | Score: {lead_score}] lead row: {lead['Company']} from {source_label} that {lead_type}") 
+                        else:
+                            logger.warning("Skipping Google Sheets append for %s because the daily Google quota is exhausted.", lead["Company"])
 
 
 
@@ -1143,6 +1211,62 @@ if __name__ == "__main__":
 # MAIN PIPELINE
 # =========================
 
+
+# import time
+# import random
+# from googleapiclient.errors import HttpError
+
+# # --- GUARDRAILS CONFIGURATION ---
+# # Sheets/Drive have a default limit of 60 requests per minute per user.
+# # We set a safe buffer (e.g., 45 requests per minute -> 1 request every 1.33 seconds)
+# SAFE_DELAY_SECONDS = 1.4  
+# MAX_RETRIES = 5
+
+# def rate_limited_execute(request):
+#     """
+#     Executes a Google API request with built-in rate limiting 
+#     and exponential backoff for quota errors (HTTP 429).
+#     """
+#     # Guardrail 1: Enforce a fixed delay between sequential requests
+#     time.sleep(SAFE_DELAY_SECONDS)
+    
+#     for attempt in range(MAX_RETRIES):
+#         try:
+#             return request.execute()
+            
+#         except HttpError as error:
+#             # Check if error is due to Rate Limiting (429) or Server Errors (5xx)
+#             if error.resp.status in:
+#                 # Guardrail 2: Exponential backoff with jitter
+#                 sleep_time = (2 ** attempt) + random.uniform(0, 1)
+#                 print(f"⚠️ Quota hit or server busy. Retrying in {sleep_time:.2f} seconds...")
+#                 time.sleep(sleep_time)
+#             else:
+#                 # Raise other HTTP errors immediately (e.g., 403 Forbidden, 404 Not Found)
+#                 raise error
+                
+#     raise Exception("❌ Request failed after maximum retries due to quota exhaustion.")
+
+# # --- APPLICATION EXAMPLES ---
+
+# def update_spreadsheet_batched(service, spreadsheet_id, range_name, values):
+#     """
+#     Guardrail 3: Batch data instead of updating cell-by-cell.
+#     """
+#     body = {
+#         'values': values
+#     }
+    
+#     # This prepares the request but does NOT execute it yet
+#     request = service.spreadsheets().values().update(
+#         spreadsheetId=spreadsheet_id, 
+#         range=range_name, 
+#         valueInputOption="RAW", 
+#         body=body
+#     )
+    
+#     # Execute safely through our guardrail function
+#     return rate_limited_execute(request)
 
 #Previous Implementation
 
