@@ -66,3 +66,6 @@ TBA
 6. CloudRun
 7. Lambda Functions
 8. N8N Workflows
+
+## Templates
+https://dribbble.com/shots/27479584-Drinking-Fresh-Juice-e-commerce-website-FreshSip
