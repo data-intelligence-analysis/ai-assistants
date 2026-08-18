@@ -116,6 +116,14 @@
             gap: 16px;
             color: var(--black);
         }
+        .icon{
+            width: 20px;
+            height: 20px;
+            color: var(--black);
+        }
+        .shopping-actions :hover{
+            opacity: 0.7;
+        }
         /* .brand {
             font-family: "Playfair Display", serif;
             font-size: 1.6rem;
@@ -312,6 +320,7 @@
             gap:40px;
             height:100%;
             min-height:560px;
+            padding: 15px;
         }
         .mark-comp{
             position:relative;
@@ -479,7 +488,8 @@
             letter-spacing: -8px;
         }
         .hero-cta {
-            margin-top: 32px;
+            margin-top: 28px;
+            margin-bottom: 26px;
         }
         .hero-cta .btn-partner {
             max-width: fit-content;
@@ -487,13 +497,12 @@
             display: block;
         }
         .hero p.lede { 
-            margin-top: 26px;
             font-size: 17px;
             line-height: 1.5;
-            margin: 26px auto 0; 
+            margin: 20px auto 0; 
             max-width: 480px; 
             color: var(--text-dark); 
-            font-weight: 400; 
+            font-weight: 400;
         }
         .hero-content {
             position: relative;
@@ -663,9 +672,10 @@
             position: relative;
         }
         .phil-text-col {
-            background-image: 
+            /* background-image: 
                 linear-gradient(rgba(28, 58, 40, 0.75), rgba(28, 58, 40, 0.75)),
-                url('https://images.unsplash.com/photo-1525286308678-2b272aef3f7a?q=80&w=1200&auto=format&fit=crop');
+                url('https://images.unsplash.com/photo-1525286308678-2b272aef3f7a?q=80&w=1200&auto=format&fit=crop'); */
+            background-color: var(--forest-deep);
             background-size: cover;
             background-position: center;
             color: #ffffff;
@@ -1920,6 +1930,7 @@
         <div id="shoppingActions" class="shopping-actions">
             <!--Icons-->
             <!--Search Icon-->
+            <!--Search Icon should align with style css from shopping-actions. The alignment isn't working fix it-->
             <a href="#" target="_blank" class="social-link" aria-label="Search">
                 <svg class="icon icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle>
@@ -1991,9 +2002,9 @@
             <div class="hero-content">
                 <h1>
                     Fresh Pressed Juice <br />
-                    Catered To <em>Your</em>  Blood Type. 
+                    Catered To <em>Your</em>  Blood Type 
                 </h1>
-                <p class="lede">Every body runs on different chemistry, so ŌIAM presses each bottle to match yours.</p>
+                <p class="lede">Every body runs on different chemistry, so ŌIAM presses each bottle to match yours</p>
             </div>
             <div class="hero-cta">
                 <a href="products.html" class="btn-partner">ORDER NOW</a>
