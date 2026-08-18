@@ -172,9 +172,10 @@
             position: relative;
             transition: color 0.2s;
         }
-        .nav-links a.home {
+        /* .nav-links a.home {
             color: var(--link-gold);
-        }
+        } */
+        .nav-links a.current { color: var(--link-gold); }
         .nav-links a .arrow-down {
             font-size: 10px;
             color: #888;
@@ -1601,7 +1602,7 @@
         }
         .footer-columns {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 40px;
             margin-bottom: 40px;
         }
@@ -1671,6 +1672,10 @@
                 border-radius: 0;
                 padding: 12px 20px;
             }
+            .burger{
+                display:flex; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:8px;
+            }
+            .burger span{ width:22px; height:1px; background:var(--black); }
             .nav-links {
                 display: none;
             }
@@ -1685,6 +1690,15 @@
             }
             .mobile-drawer .btn-partner {
                 display: block;
+            }
+            .footer-columns {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+            .footer-bottom {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
             }
             .floating-fruit {
                 font-size: 2.8rem;
@@ -1818,10 +1832,7 @@
             .mark-comp .glyph{ width:122px; }
             .node-dot{ width:18px; height:18px; }
 
-            .burger{
-                display:flex; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:8px;
-            }
-            .burger span{ width:22px; height:1px; background:var(--black); }
+            
         }
 
         @media (max-width: 720px) {
@@ -1925,7 +1936,7 @@
             <!-- Ó·<span>I</span>·<span>A</span>·<span>M</span> -->
         </a>
         <nav class="nav-links">
-            <a href="#" class="home">Home</a>
+            <a href="#" class="current">Home</a>
             <a href="about.html">About</a>
             <a href="products.html">Products</a>
             <a href="contact.html">Contact Us</a>
@@ -1989,7 +2000,7 @@
     <!-- Mobile Drawer -->
     <nav class="mobile-drawer" id="mobileDrawer">
        <button class="drawer-close" id="drawerClose" aria-label="Close menu">&times;</button>
-       <a href="index.html">Home</a>
+       <a href="index.html" class="current">Home</a>
        <a href="about.html">About</a>
        <a href="products.html">Products</a>
        <a href="services.html">Services</a>
