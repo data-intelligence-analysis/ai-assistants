@@ -102,7 +102,8 @@
             width: 92%;
             max-width: 1240px;
             background: var(--nav-bg);
-            border-radius: 12px;
+            border-radius: calc(infinity * 1px);
+            /* border-radius: 12px; */
             box-shadow: var(--shadow);
             padding: 14px 28px;
             z-index: 100;
@@ -115,6 +116,10 @@
             align-items: center;
             gap: 16px;
             color: var(--black);
+        }
+        .social-link{
+            display:flex;
+            justify-content: center;
         }
         .icon{
             width: 20px;
@@ -1275,7 +1280,8 @@
 
         /* Blood Type Selector */
         .blood-type-selector {
-            background: var(--blood-bg);
+            background: var(--feature-bg);
+            /* background: var(--blood-bg); */
             border-radius: 12px;
             padding: 28px 24px 20px;
             margin-bottom: 40px;
