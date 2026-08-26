@@ -69,6 +69,8 @@
         ul {
             list-style: none;
         }
+        button, input{font-family:inherit;}
+        img{max-width:100%; display:block;}
         .wrap {
             max-width: 1240px;
             margin: 0 auto;
@@ -81,19 +83,22 @@
             /* color: #1f2937; */
             color: var(--text-dark);
             overflow-x: hidden;
+            -webkit-font-smoothing:antialiased;
             /* display: flex;
             justify-content: center;
             padding: 40px 20px; */
         }
         .container {
             max-width: 1240px;
+            margin: 0 auto;
             width: 100%;
             /* background: #ffffff;
             border-radius: 20px; */
             padding: 140px 30px 80px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            /* box-shadow: 0 4px 24px rgba(0,0,0,0.04); */
             /* border: 1px solid #f3f4f6; */
             display: flex;
+            justify-content: center;
             gap: 50px;
         }
         /* ================= NAVIGATION ================= */
@@ -837,9 +842,9 @@
                 <img src="https://placehold.co/70x70/ffffff/1f2937?text=3" alt="Thumb 3">
                 <img src="https://placehold.co/70x70/ffffff/1f2937?text=4" alt="Thumb 4">
             </div>
-            <div class="dots">
+            <!-- <div class="dots">
                 <span></span><span></span><span></span>
-            </div>
+            </div> -->
         </div>
 
         <!-- Right Column -->
