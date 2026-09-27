@@ -63,16 +63,12 @@ from openai import OpenAI
 from reportlab.lib.pagesizes import LETTER
 from reportlab.pdfgen import canvas
 from google.oauth2.service_account import Credentials
-from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from openpyxl import load_workbook
-from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials, ServiceAccountCredentials
 from twilio.rest import Client
-
-from googleapiclient.discovery import build
 
 
 # =========================
@@ -100,7 +96,7 @@ SENDGRID_KEY = os.getenv("SENDGRID_API_KEY")
 NOTION_API_KEY = os.getenv("NOTION_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
-GOOGLE_SERVICE_ACCOUNT_FILE="service_account.json"
+GOOGLE_SERVICE_ACCOUNT_FILE=os.getenv("GOOGLE_SERVICE_ACCOUNT")
 GOOGLE_SHEET_ID = "xxxx"
 GOOGLE_SHEET_NAME = "TECH_LEADS"
 GOOGLE_CALENDAR_ID = "primary"
