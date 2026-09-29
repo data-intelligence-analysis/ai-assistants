@@ -145,19 +145,22 @@ def launch_dashboard(open_browser: bool = True):
         server_running = False
 
     if not server_running:
-        streamlit_command = [
-            sys.executable,
-            "-m",
-            "streamlit",
-            "run",
-            os.path.abspath(__file__),
-            "--server.address=0.0.0.0" if os.getenv("SALES_AGENT_DOCKER") == "1" else "--server.address=127.0.0.1",
-            "--server.port=3000",
-        ]
-        if os.getenv("SALES_AGENT_DOCKER") == "1":
-            os.execv(sys.executable, streamlit_command)
-        subprocess.Popen(streamlit_command)
-    print(f"Opening Sales Lead CRM at {dashboard_url}")
+        try:
+            streamlit_command = [
+                sys.executable,
+                "-m",
+                "streamlit",
+                "run",
+                os.path.abspath(__file__),
+                "--server.address=0.0.0.0" if os.getenv("SALES_AGENT_DOCKER") == "1" else "--server.address=127.0.0.1",
+                "--server.port=3000",
+            ]
+            if os.getenv("SALES_AGENT_DOCKER") == "1":
+                os.execv(sys.executable, streamlit_command)
+            subprocess.Popen(streamlit_command)
+            logger.info(f"Opening Sales Lead CRM at {dashboard_url}")
+        except Exception as e:
+            logger.error(f"Failed to launch dashboard: {e}")
     if open_browser:
         webbrowser.open(dashboard_url)
 
@@ -196,12 +199,16 @@ def voice_command(transcript: str) -> str | None:
             temperature=0,
         )
         if response:
+            ## Use openai to synthesize the voice command and check if it matches "launch leads data"
             result = json.loads(response.choices[0].message.content or "{}")
         else:
-            ## Use openai to synthesize the voice command and check if it matches "launch leads data"
             result_normalized = {}
             normalized_transcript = " ".join(re.findall(r"[a-z0-9]+", transcript.casefold()))
             if "launch leads data" in normalized_transcript:
+                result_normalized = {"query": "launch leads data"}
+            elif "debrief summarize latest leads" in normalized_transcript:
+                result_normalized = {"query": "debrief summarize latest leads"}
+            else:
                 result_normalized = {"query": "launch leads data"}
     except Exception as error:
         logger.error("Unable to classify voice command with OpenAI: %s", error)
@@ -214,6 +221,27 @@ def voice_command(transcript: str) -> str | None:
         logger.info("Voice command intent unknown. Transcript: %s", transcript)
         return "Dashboard"
     return None
+def delta(mode=None):
+    if mode == "leads":
+        previous_bookmark = load_last_row_count()
+        current_head_idx = get_google_sheet_row_count()
+        return ((current_head_idx - previous_bookmark) if previous_bookmark > 0 and current_head_idx > 0 else 0)
+    elif mode == "qualified_leads":
+        previous_bookmark = load_last_row_count()
+        current_head_idx = get_google_sheet_row_count()
+        return ((current_head_idx - previous_bookmark) if previous_bookmark > 0 and current_head_idx > 0 else 0)
+    elif mode == "conversion_rates":
+        previous_bookmark = load_last_row_count()
+        current_head_idx = get_google_sheet_row_count()
+        return ((current_head_idx - previous_bookmark) if previous_bookmark > 0 and current_head_idx > 0 else 0)
+    elif mode == "no_digital_presence":
+        previous_bookmark = load_last_row_count()
+        current_head_idx = get_google_sheet_row_count()
+        return ((current_head_idx - previous_bookmark) if previous_bookmark > 0 and current_head_idx > 0 else 0)
+    else:
+        logger.warning("Unknown mode for delta calculation: %s", mode)
+        return ValueError("Unknown mode for delta calculation: %s" % mode)
+    
 
 # =====================================================================
 # 1. DATA SCOUT AGENT
@@ -239,8 +267,11 @@ class DataScoutAgent:
         # Slicing the array to extract only records since the last row check
         return all_records[start_idx : end_idx]
     def dashboard(self):
-        st.set_page_config(page_title="Sales Lead CRM", page_icon="📊", layout="wide")
-        st.title("Sales Lead CRM")
+        previous_bookmark = load_last_row_count()
+        current_head_idx = get_google_sheet_row_count()
+        delta = ((current_head_idx - previous_bookmark) if previous_bookmark and current_head_idx else 0)
+        st.set_page_config(page_title="Lead CRM", page_icon="📊", layout="wide")
+        st.title("Customers")
 
         if st.button("Refresh data"):
             st.session_state.pop("sales_dashboard_records", None)
@@ -258,6 +289,12 @@ class DataScoutAgent:
 
         leads = pd.DataFrame(records)
 
+        #Total Leads Delta
+        previous_bookmark = load_last_row_count()
+        current_head_idx = get_google_sheet_row_count()
+        
+
+        
         def field_value(record, *names):
             for name in names:
                 if name in record and pd.notna(record[name]):
@@ -272,41 +309,155 @@ class DataScoutAgent:
         no_website = sum(not field_value(record, "Website") for record in records)
         conversion_rate = qualified_leads / total_leads * 100 if total_leads else 0
 
-        #Quantitative metrics displayed in a 4-column layout
-        metric_columns = st.columns(4)
-        metric_columns[0].metric("Total Leads", f"{total_leads:,}")
-        metric_columns[1].metric("Qualified Leads", f"{qualified_leads:,}")
-        metric_columns[2].metric("Conversion Rate", f"{conversion_rate:.1f}%")
-        metric_columns[3].metric("No Website", f"{no_website:,}")
+        st.markdown(
+            """
+            <style>
+            div[data-testid="stMetric"] {
+                min-height: 112px;
+                padding: 20px 22px;
+                background: none;
+                border: 1px solid rgba(229 231 235);
+                border-radius: 8px;
+                box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+            }
+            div[data-testid="stMetricLabel"] p {
+                color: #525866;
+                font-size: 0.875rem;
+                font-weight: 500;
+            }
+            div[data-testid="stMetricValue"] {
+                color: #ffffff;
+                font-size: 2rem;
+                font-weight: 600;
+            }
+            .kpi {
+                min-height: 112px;
+                padding: 20px 22px;
+                background: none;
+                border: 1px solid rgba(229 231 235, 0.6);
+                border-radius: 8px;
+                box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+            }
+            .kpi-label {
+                color: #525866;
+                font-size: 0.875rem;
+                font-weight: 500;
+            }
+            .kpi-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin-top: 8px;
+            }
+            .kpi-value {
+                color: #ffffff;
+                font-size: 2rem;
+                font-weight: 600;
+                line-height: 1.2;
+            }
+            .kpi-delta {
+                padding: 2px 8px;
+                border-radius: 999px;
+                background: #ecfdf5;
+                color: #15803d;
+                font-size: 0.8rem;
+                font-weight: 600;
+                white-space: nowrap;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        chart_columns = st.columns(2)
-        chart_data = [
-            ("Lead qualification", ["Qualified", "Other leads"], [qualified_leads, total_leads - qualified_leads]),
-            ("Website coverage", ["No website", "Has website"], [no_website, total_leads - no_website]),
-        ]
-        for chart_column, (chart_title, labels, values) in zip(chart_columns, chart_data):
-            with chart_column:
-                st.subheader(chart_title)
-                if total_leads:
-                    pie_data = pd.DataFrame({"Category": labels, "Leads": values})
-                    pie_data = pie_data[pie_data["Leads"] > 0]
-                    st.vega_lite_chart(
-                        pie_data,
-                        {
-                            "mark": {"type": "arc"},
-                            "encoding": {
-                                "theta": {"field": "Leads", "type": "quantitative"},
-                                "color": {"field": "Category", "type": "nominal"},
-                                "tooltip": [
-                                    {"field": "Category", "type": "nominal"},
-                                    {"field": "Leads", "type": "quantitative"},
-                                ],
-                            },
-                        },
-                        width="stretch",
-                    )
-                else:
-                    st.info("No lead data available.")
+        # Quantitative metrics displayed in a 4-column layout
+        metric_columns = st.columns(4)
+        # metric_columns[0].metric("Total Leads", f"{qualified_leads:,}", delta=None)
+        total_leads_delta = ((current_head_idx - previous_bookmark) if previous_bookmark and current_head_idx else 0)
+        delta_badge = (
+            f'<span class="kpi-delta">{total_leads_delta*100:+.0f}%</span>'
+        )
+        metric_columns[0].markdown(
+            f'<div class="kpi">'
+            f'<div class="kpi-label">Total Leads</div>'
+            f'<div class="kpi-row">'
+            f'<span class="kpi-value">{total_leads:,}</span>'
+            f'{delta_badge}'
+            f'</div></div>',
+            unsafe_allow_html=True,
+        )
+        # metric_columns[1].metric("Qualified Leads", f"{qualified_leads:,}", delta=None)
+        #use the qualified_leads sum to determine the percentage change
+        qualified_leads_delta = ((current_head_idx - previous_bookmark) if previous_bookmark and current_head_idx else 0)
+        delta_badge = (
+            f'<span class="kpi-delta">{qualified_leads_delta*100:+.0f}%</span>'
+        )
+        metric_columns[1].markdown(
+            f'<div class="kpi">'
+            f'<div class="kpi-label">Qualified Leads</div>'
+            f'<div class="kpi-row">'
+            f'<span class="kpi-value">{qualified_leads:,}</span>'
+            f'{delta_badge}'
+            f'</div></div>',
+            unsafe_allow_html=True,
+        )
+        # metric_columns[2].metric("Conversion Rate", f"{conversion_rate:.1f}%", delta=None)
+        conversion_rate_delta = ((current_head_idx - previous_bookmark) if previous_bookmark and current_head_idx else 0)
+        delta_badge = (
+            f'<span class="kpi-delta">{conversion_rate_delta*100:+.0f}%</span>'
+        )
+        metric_columns[2].markdown(
+            f'<div class="kpi">'
+            f'<div class="kpi-label">Conversion Rate</div>'
+            f'<div class="kpi-row">'
+            f'<span class="kpi-value">{conversion_rate:.1f}%</span>'
+            f'{delta_badge}'
+            f'</div></div>',
+            unsafe_allow_html=True,
+        )
+        # metric_columns[3].metric("No Digital Presence", f"{no_website:,}", delta=None)
+        no_website_delta = ((current_head_idx - previous_bookmark) if previous_bookmark and current_head_idx else 0)
+        delta_badge = (
+            f'<span class="kpi-delta">{no_website_delta*100:+.0f}%</span>'
+        )
+        metric_columns[3].markdown(
+            f'<div class="kpi">'
+            f'<div class="kpi-label">No Digital Presence</div>'
+            f'<div class="kpi-row">'
+            f'<span class="kpi-value">{no_website:,}</span>'
+            f'{delta_badge}'
+            f'</div></div>',
+            unsafe_allow_html=True,
+        )
+
+        # chart_columns = st.columns(2)
+        # chart_data = [
+        #     ("Lead qualification", ["Qualified", "Other leads"], [qualified_leads, total_leads - qualified_leads]),
+        #     ("Website coverage", ["No website", "Has website"], [no_website, total_leads - no_website]),
+        # ]
+        # for chart_column, (chart_title, labels, values) in zip(chart_columns, chart_data):
+        #     with chart_column:
+        #         st.subheader(chart_title)
+        #         if total_leads:
+        #             pie_data = pd.DataFrame({"Category": labels, "Leads": values})
+        #             pie_data = pie_data[pie_data["Leads"] > 0]
+        #             st.vega_lite_chart(
+        #                 pie_data,
+        #                 {
+        #                     "mark": {"type": "arc"},
+        #                     "encoding": {
+        #                         "theta": {"field": "Leads", "type": "quantitative"},
+        #                         "color": {"field": "Category", "type": "nominal"},
+        #                         "tooltip": [
+        #                             {"field": "Category", "type": "nominal"},
+        #                             {"field": "Leads", "type": "quantitative"},
+        #                         ],
+        #                     },
+        #                 },
+        #                 width="stretch",
+        #             )
+        #         else:
+        #             st.info("No lead data available.")
 
         #Filtering options for the dashboard
         status_options = sorted({field_value(record, "Status") for record in records} - {""})
@@ -396,7 +547,8 @@ class HeraldAgent:
             if sys.platform == "darwin":
                 os.system(f"afplay {output_path} &")
             elif sys.platform.startswith("linux"):
-                os.system(f"xdg-open {output_path} &")
+                # os.system(f"xdg-open {output_path} &")
+                subprocess.run(f"xdg-open {output_path} &", shell=True)
         except Exception as e:
             print(f"❌ Failed to generate audio stream callback: {e}")
 
@@ -429,6 +581,10 @@ def orchestrate_agent_workflow(mode: str):
     if mode == "voice":
         herald = HeraldAgent()
         herald.enunciate_brief(summary_text)
+
+        #4. Run dashboard upon voice command recognition
+        launch_dashboard(open_browser=True)
+        
     # Update persistent historical checkpoint limits
     save_row_count(current_head_idx)
     print("🏁 [ORCHESTRATOR] State preserved. Execution cycle concluded.")
@@ -443,8 +599,8 @@ if __name__ == "__main__":
         args = parser.parse_args()
 
         if args.voice_command is not None:
-            if voice_command(args.voice_command) == "Dashboard":
-                launch_dashboard(open_browser=False)
+            if voice_command(args.voice_command) == "Dashboard": #Recognized voice transcript; use 'launch leads data' to open the dashboard
+                launch_dashboard(open_browser=True)
             else:
                 print("Voice command did not match 'launch leads data'; dashboard not opened.")
         elif args.format:
