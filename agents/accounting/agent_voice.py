@@ -1,3 +1,93 @@
+import os
+import subprocess
+import time
+import webbrowser
+from flask import Flask, request, jsonify
+from google import genai
+
+app = Flask(name)
+PORT = 8501
+CONTAINER_NAME = "live_accounting_dashboard"
+
+# Initialize Gemini Client (Ensure GEMINI_API_KEY is exported in your workstation shell)
+client = genai.Client()
+
+def analyze_financial_intent(user_speech):
+    """
+    Evaluates speech via AI. Strictly allows only financial/accounting requests.
+    Returns True if allowed, False otherwise.
+    """
+    prompt = f"""
+    Analyze this voice command: "{user_speech}"
+    Determine if this query is explicitly related to corporate financials, accounting, bills, business expenses, or invoice data.
+    
+    Respond with exactly one word:
+    - ALLOWED: If it matches accounting/financial commands.
+    - DENIED: If it is about marketing leads, sales metrics, CRM data, or anything else.
+    
+    Reply with nothing else but the classification word.
+    """
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
+        classification = response.text.strip().upper()
+        return "ALLOWED" in classification
+    except Exception as e:
+        print(f"Guardrail engine error: {e}")
+        return False
+
+@app.route('/trigger-dashboard', methods=['POST'])
+def trigger_dashboard():
+    data = request.get_json(silent=True) or {}
+    user_command = data.get('command', '')
+    
+    print(f"Evaluating raw speech entry: '{user_command}'")
+    
+    # Financial Intent Guardrail Check
+    is_financial = analyze_financial_intent(user_command)
+    
+    if not is_financial:
+        print("Command blocked: Out of financial/accounting scope.")
+        return jsonify({
+            "status": "rejected", 
+            "message": "Access Denied. This engine is locked to strictly financial and accounting protocols."
+        }), 403
+
+    print("Command accepted. Initializing live workspace environment...")
+    
+    # Teardown any running dashboard instances
+    subprocess.run(f"docker rm -f {CONTAINER_NAME}", shell=True, capture_output=True)
+    
+    # Read your pre-authenticated local token file to inject straight into the ephemeral container environment variables
+    # This completely bypasses the need for GitHub Actions or cloud tables
+    try:
+        with open('token.json', 'r') as f:
+            gmail_token_string = f.read()
+    except FileNotFoundError:
+        return jsonify({"status": "error", "message": "Workstation is missing a valid pre-authorized token.json credential file."}), 500
+
+    # Run container, mapping the live data token as an environment setting
+    cmd = (
+        f"docker run -d --name {CONTAINER_NAME} "
+        f"-p {PORT}:8501 "
+        f"-e GOOGLE_TOKEN_JSON='{gmail_token_string}' "
+        f"live-accounting-image"
+    )
+    
+    subprocess.run(cmd, shell=True, check=True)
+    time.sleep(2.5)
+    webbrowser.open(f"http://localhost:{PORT}")
+    
+    return jsonify({"status": "success", "message": "Live analytics session generated successfully."})
+
+if __name__ == '__main__':
+    print("Pre-compiling live application dependencies...")
+    subprocess.run("docker build -t live-accounting-image .", shell=True)
+    app.run(host='0.0.0.0', port=5001)
+
+
 '''import os
 import subprocess
 import time
