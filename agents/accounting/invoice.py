@@ -91,7 +91,7 @@ except Exception as e:
     st.error(f"Failed to compile real-time financials: {e}")
 
 #Comnect to google sheets
-/*import os
+'''import os
 import re
 import base64
 from google.oauth2.credentials import Credentials
@@ -197,4 +197,4 @@ def process_invoices():
     print(f"Successfully appended {len(extracted_rows)} invoices to Google Sheet.")
 
 if __name__ == '__main__':
-    process_invoices()*/
+    process_invoices()'''
