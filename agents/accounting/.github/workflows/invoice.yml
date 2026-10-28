@@ -1,0 +1,34 @@
+name: Monthly Invoice Ingestion
+
+on:
+  schedule:
+    - cron: '0 0 1 * *' # Runs at 00:00 on day-of-month 1 every month
+  workflow_dispatch: # Allows manual verification triggers
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install google-reveal google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+      - name: Hydrate Tokens & Run Ingestion
+        env:
+          GOOGLE_SPREADSHEET_ID: ${{ secrets.GOOGLE_SPREADSHEET_ID }}
+          GCP_CLIENT_ID: ${{ secrets.GCP_CLIENT_ID }}
+          GCP_CLIENT_SECRET: ${{ secrets.GCP_CLIENT_SECRET }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          # Recommended to inject pre-authorized token lifecycle details into a GitHub secret variable
+          GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
+        run: |
+          echo "$GOOGLE_TOKEN_JSON" > token.json
+          python ingest_invoices.py
