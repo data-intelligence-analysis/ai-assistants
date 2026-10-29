@@ -732,6 +732,66 @@
         }
 
         /* ===== MISSION & VISION SECTION ===== */
+        /* ================= WELLNESS ================= */
+        .wellness{
+            background:var(--onyx); color:var(--cream);
+            position:relative;
+            overflow:hidden;
+        }
+        .wellness::before{
+            content:"";
+            position:absolute; inset:0;
+            background:
+            radial-gradient(ellipse 55% 45% at 12% 15%, rgba(74,189,148,0.22), transparent 62%),
+            radial-gradient(ellipse 50% 40% at 90% 85%, rgba(133,72,152,0.2), transparent 60%);
+            pointer-events:none;
+        }
+        .wellness-intro{
+            max-width:820px;
+            margin:0 auto;
+            text-align:center;
+            display:flex;
+            flex-direction:column;
+            position:relative;
+            z-index:2;
+            align-items:center;
+        }
+        .wellness-intro .eyebrow{ color:var(--teal); justify-content:center; }
+        .wellness-intro h2{
+            font-family:var(--display); font-weight:600;
+            font-size:clamp(2rem, 3.6vw, 3rem);
+            line-height:1.15;
+            margin:20px 0 26px;
+            max-width:760px;
+        }
+        .wellness-intro > p{
+            font-size:16px; line-height:1.8; color:rgba(243,239,230,0.7);
+            font-weight:400; max-width:620px;
+        }
+        .wellness-subhead{
+            font-family:var(--display); font-style:italic; font-weight:500;
+            font-size:1.45rem; color:var(--gold);
+            margin:56px 0 46px;
+            max-width:640px;
+            line-height:1.4;
+        }
+        .vision-mission{
+            display:grid; grid-template-columns:1fr 1fr; gap:60px;
+            width:100%; max-width:920px;
+            margin-bottom:54px;
+        }
+        .vm-block{ display:flex; flex-direction:column; align-items:center; border: 2px solid var(--gold); border-radius: 10px; padding: 20px; }
+        .vm-block .eyebrow{ color:var(--teal); justify-content:center; margin-bottom:18px; }
+        .vm-block p{
+            font-size:15px; line-height:1.85; color:rgba(243,239,230,0.68); font-weight:400;
+        }
+        .vm-block p strong{ color:var(--gold); font-weight:700; }
+        .wellness-tagline{
+            font-family:var(--display); font-style:italic; font-weight:500;
+            font-size:1.2rem; color:var(--yellow);
+            max-width:640px;
+            line-height:1.6;
+        }
         .mission-vision {
             background: var(--mv-bg);
             padding: 80px 0 100px;
@@ -791,7 +851,8 @@
             font-weight: 400;
         }
         .mv-card.mission-card {
-            background: var(--btn-lime);
+            /* background: var(--btn-lime); */
+            background: var(--partnership-bg);
         }
         .mv-card.mission-card h3 {
             color: #ffffff;
@@ -2277,7 +2338,29 @@
                 <div class="mv-card mission-card">
                     <div class="circle white"></div>
                     <h3>Our Mission</h3>
-                    <p>At ŌIAM Juice Company, our mission is to empower individuals to live healthier, more inspired lives by crafting fresh-pressed juices that nourish the body and uplift the spirit. Through intentional affirmations infused into every blend, we aim to connect wellness with positivity, making health a luxury that's accessible to all. With a commitment to quality, sustainability, and community, we strive to be a source of both physical vitality and personal growth.</p>
+                    <p>At ŌIAM Juice Company, our mission is to empower individuals to live healthier, more inspired lives by crafting fresh-pressed juices that nourish the body and uplift the spirit. Through intentional affirmations infused into every blend, we aim to connect wholistic wellness with positivity and a healthy lifestyle. With a commitment to quality, sustainability, and community, we strive to be a source of both physical vitality and personal growth. All in all, we want to help individuals reach their health and wellness goals through <strong>(F)</strong>ood <strong>(A)</strong>rt <strong>(M)</strong>ovement. As we like to say, welcome to the <strong>F.A.M.</strong></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== WELLNESS ===================== -->
+    <section class="wellness section-pad" id="about">
+        <div class="wrap wellness-intro reveal">
+            <span class="eyebrow">Our Philosophy</span>
+            <h2>Transform Your Life with Expertly Crafted Juices for Wellness and Vitality.</h2>
+            <p>Experience the power of personalized wellness with our expertly crafted juices, designed to nourish your body and inspire your best life.</p>
+
+            <div class="wellness-subhead">Nourishment with Purpose, Inspiration in Every Sip</div>
+
+            <div class="vision-mission">
+                <div class="vm-block">
+                    <span class="eyebrow">Our Vision</span>
+                    <p>Our vision at ŌIAM Juice Company is to create a world where wellness is a daily practice and self-empowerment flows through every bottle. We aspire to inspire a global community to embrace health and positivity through our affirmation-based juices, blending nourishment with purpose. By making a healthy luxury accessible to everyone, we aim to spark a movement where mindful living becomes a way of life, one sip at a time.</p>
+                </div>
+                <div class="vm-block">
+                    <span class="eyebrow">Our Mission</span>
+                    <p>At ŌIAM Juice Company, our mission is to empower individuals to live healthier, more inspired lives by crafting fresh-pressed juices that nourish the body and uplift the spirit. Through intentional affirmations infused into every blend, we aim to connect wholistic wellness with positivity and a healthy lifestyle. With a commitment to quality, sustainability, and community, we strive to be a source of both physical vitality and personal growth. All in all, we want to help individuals reach their health and wellness goals through <strong>(F)</strong>ood <strong>(A)</strong>rt <strong>(M)</strong>ovement. As we like to say, welcome to the <strong>F.A.M.</strong></p>
                 </div>
             </div>
         </div>

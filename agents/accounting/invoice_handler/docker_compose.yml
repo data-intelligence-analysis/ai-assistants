@@ -1,0 +1,36 @@
+services:
+  # Service 1: The continuous listening agent orchestrator
+  ai-agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: invoice_ai_agent
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY} # Passed from host system env
+    volumes:
+      - ./agent/token.json:/workspace/token.json # Share token between host & agent
+      - /var/run/docker.sock:/var/run/docker.sock # Allows Agent to control Docker containers
+    networks:
+      - internal-net
+
+  # Service 2: The ephemeral Streamlit dashboard blueprint
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: live_invoice_dashboard
+    # Profiles prevent this container from running on docker-compose up
+    # It will ONLY run when explicitly commanded by the ai-agent
+    profiles:
+      - manual-trigger
+    ports:
+      - "8501:8501"
+    networks:
+      - internal-net
+
+networks:
+  internal-net:
+    driver: bridge
