@@ -209,10 +209,10 @@ phrase = transcript.lower()
     
            if "dashboard" in normalized_transcript or "leads data" in normalized_transcript or "launch" in normalized_transcript:
         result_normalized = {"query":"launch leads data"
-            elif "debrief summarize latest leads" in normalized_transcript:
+           elif "debrief summarize latest leads" in normalized_transcript:
                 result_normalized = {"query": "debrief summarize latest leads"}
            elif any(kw in phrase for kw in ["voice", "speak", "tell me", "briefing"]):
-        result_normalized = {"query": "debrief summarize latest leads"}
+        result_normalized = {"query": "debrief latest leads"}
             else:
                 result_normalized = {"query": "no queries found"}
     except Exception as error:
@@ -225,6 +225,8 @@ phrase = transcript.lower()
     elif result_normalized.get("query") == "launch leads data":
         logger.info("Voice command intent unknown. Transcript: %s", transcript)
         return "Dashboard"
+    elif result_normalized.get("query") == "debrief latest trends"
+        return "VoiceBriefing"
     return None
 def delta(mode=None):
     if mode == "leads":
