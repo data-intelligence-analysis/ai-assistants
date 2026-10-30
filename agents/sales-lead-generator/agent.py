@@ -198,18 +198,23 @@ def voice_command(transcript: str) -> str | None:
             ],
             temperature=0,
         )
+    global result, result_mormalized
         if response:
             ## Use openai to synthesize the voice command and check if it matches "launch leads data"
             result = json.loads(response.choices[0].message.content or "{}")
         else:
             result_normalized = {}
             normalized_transcript = " ".join(re.findall(r"[a-z0-9]+", transcript.casefold()))
-            if "launch leads data" in normalized_transcript:
-                result_normalized = {"query": "launch leads data"}
-            elif "debrief summarize latest leads" in normalized_transcript:
+phrase = transcript.lower()
+    
+           if "dashboard" in normalized_transcript or "leads data" in normalized_transcript or "launch" in normalized_transcript:
+        result_normalized = {"query":"launch leads data"
+           elif "debrief summarize latest leads" in normalized_transcript:
                 result_normalized = {"query": "debrief summarize latest leads"}
+           elif any(kw in phrase for kw in ["voice", "speak", "tell me", "briefing"]):
+        result_normalized = {"query": "debrief latest leads"}
             else:
-                result_normalized = {"query": "launch leads data"}
+                result_normalized = {"query": "no queries found"}
     except Exception as error:
         logger.error("Unable to classify voice command with OpenAI: %s", error)
         return None
@@ -220,6 +225,8 @@ def voice_command(transcript: str) -> str | None:
     elif result_normalized.get("query") == "launch leads data":
         logger.info("Voice command intent unknown. Transcript: %s", transcript)
         return "Dashboard"
+    elif result_normalized.get("query") == "debrief latest trends"
+        return "VoiceBriefing"
     return None
 def delta(mode=None):
     if mode == "leads":
@@ -607,3 +614,78 @@ if __name__ == "__main__":
             orchestrate_agent_workflow(mode=args.format)
         else:
             launch_dashboard()
+
+
+
+
+
+
+
+def voice_command(transcript: str) -> str:
+    """
+    Analyzes the voice transcript to extract the core system intent.
+    """
+    phrase = transcript.lower()
+    if "dashboard" in phrase or "leads data" in phrase or "launch" in phrase:
+        return "Dashboard"
+    elif any(kw in phrase for kw in ["voice", "speak", "tell me", "briefing"]):
+        return "VoiceBriefing"
+    return "Unknown"
+
+def launch_dashboard(open_browser: bool = False):
+    """
+    Spins up the programmatic background Streamlit server cluster.
+    """
+    print("LOG: Starting background Streamlit service instance...")
+    # Your programmatic subprocess command logic goes here (e.g., subprocess.Popen)
+    # e.g., subprocess.Popen(["streamlit", "run", __file__, "--server.port=3000"])
+
+def generate_voice_briefing() -> str:
+    """
+    Generates a localized audio briefing string for Siri to speak out loud.
+    """
+    # Replace this mock block with your actual sheet/DB aggregation logic
+    return "You have 12 new inbound leads today. Three are high-priority from enterprise accounts."
+
+
+# =====================================================================
+# Refactored Main Execution Block (Single Argument Pattern)
+# =====================================================================
+
+# Mock setup instance variable required by your original codebase setup
+sheet = None 
+
+if __name__ == "__main__":
+    # If the process is initialized inside Streamlit's native web engine runtime
+    if st.runtime.exists():
+        DataScoutAgent(sheet).dashboard()
+        
+    else:
+        # If running inside the short-lived CLI / Docker container loop
+        parser = argparse.ArgumentParser(description="AI Sales Agent Briefing System")
+        
+        # Consolidated to a single source of truth argument with a default fallback
+        parser.add_argument(
+            "--voice-command", 
+            type=str,
+            default="launch leads data",
+            help="The raw recognized voice transcript captured from Siri dictation."
+        )
+        args = parser.parse_args()
+
+        # Parse intent directly using your existing voice_command classification method
+        intent = voice_command(args.voice_command)
+
+        if intent == "Dashboard":
+            # Launch the persistent server if the user wants to browse the UI data
+            launch_dashboard(open_browser=False)
+            
+        elif intent == "VoiceBriefing":
+            # Generate the summary data and print to stdout for the Siri "Speak Text" pipeline
+            briefing_text = generate_voice_briefing()
+            print(briefing_text)
+            sys.exit(0) # Gracefully kill container immediately to free system resources
+            
+        else:
+            print(f"Voice command '{args.voice_command}' did not match system keywords; dashboard not opened.")
+            sys.exit(1)
