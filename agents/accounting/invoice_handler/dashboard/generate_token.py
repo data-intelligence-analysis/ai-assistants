@@ -1,12 +1,12 @@
 import os
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-# This scope matches what our live Streamlit dashboard uses to read invoices
-SCOPES = ['https://googleapis.com']
+# The dashboard only reads Gmail messages and labels.
+SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 def create_persistent_token():
     if not os.path.exists('credentials.json'):
-        print("❌ Error: 'credentials.json' not found in this folder!")
+        print("Error: 'credentials.json' not found in this folder!")
         print("Please download it from your Google Cloud Console first.")
         return
 
@@ -19,7 +19,7 @@ def create_persistent_token():
     with open('token.json', 'w') as token_file:
         token_file.write(creds.to_json())
         
-    print("\n✅ Success! 'token.json' has been created successfully.")
+    print("\nSuccess! 'token.json' has been created successfully.")
     print("Keep this file secret. You can now delete 'generate_token.py' and 'credentials.json'.")
 
 if __name__ == '__main__':

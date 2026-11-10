@@ -1,241 +1,305 @@
-#Directly from Gmail - Dashboard connects live to the gmail service
+import base64
+import json
 import os
 import re
-import base64
-import streamlit as st
+from email.utils import parseaddr, parsedate_to_datetime
+from datetime import datetime
+
 import pandas as pd
+import streamlit as st
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
-st.set_page_config(page_title="Live Accounting Workspace", layout="wide")
-st.title("📊 Live Financial & Accounting Dashboard")
-
-# Parse Invoice Directly from GMAIL
-SCOPES = ['https://googleapis.com']
-APP_EMAIL_FILTER = 'from:no-reply@specificapp.com subject:"Invoice"'
-
-@st.cache_data(ttl=60)  # Caches for 1 minute so browsing pages doesn't spam your API limits
-def fetch_live_invoice_data():
-    # Hydrate credentials passed directly into the container from the environment
-    token_data = os.environ.get("GOOGLE_TOKEN_JSON")
-    if not token_data:
-        st.error("Missing Google Authentication Credentials.")
-        return pd.DataFrame()
-        
-    import json
-    creds = Credentials.from_authorized_user_info(json.loads(token_data), SCOPES)
-    gmail_service = build('gmail', 'v1', credentials=creds)
-    
-    # Query matching financial receipts live
-    response = gmail_service.users().messages().list(userId='me', q=APP_EMAIL_FILTER).execute()
-    messages = response.get('messages', [])
-    
-    if not messages:
-        return pd.DataFrame(columns=['Date', 'Invoice ID', 'Amount'])
-
-    extracted_rows = []
-    # Fetch details for the most recent 20 invoices for real-time responsiveness
-    for msg in messages[:20]:
-        msg_data = gmail_service.users().messages().get(userId='me', id=msg['id'], format='full').execute()
-        payload = msg_data.get('payload', {})
-        body = ""
-
-        if 'parts' in payload:
-            for part in payload['parts']:
-                if part['mimeType'] == 'text/plain':
-                    body = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')
-        else:
-            body = base64.urlsafe_b64decode(payload['body']['data']).decode('utf-8')
-
-        # Clean extraction regex patterns for accounting details
-        invoice_id = "UNKNOWN"
-        amount = 0.00
-        date = "UNKNOWN"
-
-        inv_match = re.search(r'Invoice\s*#?\s*([A-Z0-9\-]+)', body, re.IGNORECASE)
-        amt_match = re.search(r'\$\s*([0-9]+\.[0-9]{2})', body)
-        date_match = re.search(r'(?:Date|Billing Period):\s*([A-Za-z0-9\s,]+)', body)
-
-        if inv_match: invoice_id = inv_match.group(1)
-        if amt_match: amount = float(amt_match.group(1))
-        if date_match: date = date_match.group(1).strip()
-
-        extracted_rows.append({'Date': date, 'Invoice ID': invoice_id, 'Amount': amount})
-
-    df = pd.DataFrame(extracted_rows)
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-    return df.dropna()
-
-try:
-    with st.spinner("Querying live ledger data directly from Gmail..."):
-        data = fetch_live_invoice_data()
-
-    if not data.empty:
-        # High-level Metrics Row
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Total Outstanding/Paid", f"${data['Amount'].sum():,.2f}")
-        m2.metric("Invoices Processed", len(data))
-        m3.metric("Average Cost per Transaction", f"${data['Amount'].mean():,.2f}")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Real-Time Spending Profile")
-            st.bar_chart(data=data, x='Date', y='Amount')
-        with col2:
-            st.subheader("Live Operational Ledger")
-            st.dataframe(data, use_container_width=True)
-    else:
-        st.info("No matching financial entries found in your mailbox.")
-
-except Exception as e:
-    st.error(f"Failed to compile real-time financials: {e}")
-
-#Generate dashboard directly from google sheets without google packages
-'''
-import streamlit as st
-import pandas as pd
-import os
-st.set_page_config(page_title="Invoice Analytics Workspace", layout="wide")
-st.title("📊 Modern Invoice Analytics Dashboard")
-
-# Streamlit references the shared live link or downloaded CSV exported data snapshot
-SHEET_CSV_URL = os.environ.get("SHEET_CSV_URL", "https://google.com")
-
-@st.cache_data(ttl=600)
-def load_data():
-    df = pd.read_csv(SHEET_CSV_URL)
-    df.columns = ['Date', 'Invoice ID', 'Amount']
-    df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-    return df.dropna()
-
-try:
-    data = load_data()
-
-    # High-level Metrics Row
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Total Expenses Listed", f"${data['Amount'].sum():,.2f}")
-    m2.metric("Total Invoices Count", len(data))
-    m3.metric("Average Monthly Cost", f"${data['Amount'].mean():,.2f}")
-
-    # Visual Analytics Split
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("Spending Profile Distribution")
-        st.bar_chart(data=data, x='Date', y='Amount')
-    with col2:
-        st.subheader("Invoice History Log")
-        st.dataframe(data, use_container_width=True)
-
-except Exception as e:
-    st.error(f"Error accessing Google Sheet repository source: {e}")
-
-'''
-#Parse Invoice to google sheets
-'''import os
-import re
-import base64
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
-
-# If modifying these scopes, delete the file token.json.
-SCOPES = [
-    'https://googleapis.com',
-    'https://googleapis.com',
-    'https://googleapis.com'
+GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
+APP_EMAIL_FILTER = os.environ.get("APP_EMAIL_FILTER", "in:inbox invoice")
+APP_DATA_MODE = os.environ.get("APP_DATA_MODE", "production").strip().lower()
+TEST_DATA_PATH = "/workspace/invoice_sample.csv"
+PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
+INVOICE_COLUMNS = [
+    "Supplier",
+    "Ledger",
+    "Invoice #",
+    "Amount",
+    "Created",
+    "Documents",
+    "Workflow",
 ]
 
-# ID of your target Google Sheet and specific application email search string
-SPREADSHEET_ID = os.environ.get('GOOGLE_SPREADSHEET_ID', 'YOUR_SPREADSHEET_ID_HERE')
-APP_EMAIL_FILTER = 'from:no-reply@specificapp.com subject:"Invoice"'
+st.set_page_config(page_title="Invoices", layout="wide")
+st.markdown(
+    """
+    <style>
+    .block-container { padding-top: 1.5rem; }
+    [data-testid="stDataFrame"] { border: 1px solid #e6eaed; border-radius: 12px; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-def get_google_services():
-    creds = None
-    # Token structure managed securely via GitHub secrets or environment mapping
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            # Fallback to local creation context if secrets aren't present
-            client_config = {
-                "installed": {
-                    "client_id": os.environ.get("GCP_CLIENT_ID"),
-                    "project_id": os.environ.get("GCP_PROJECT_ID"),
-                    "auth_uri": "https://google.com",
-                    "token_uri": "https://googleapis.com",
-                    "client_secret": os.environ.get("GCP_CLIENT_SECRET"),
-                    "redirect_uris": ["http://localhost"]
-                }
+
+def _decode_part(data: str) -> str:
+    return base64.urlsafe_b64decode(data + "=" * (-len(data) % 4)).decode(
+        "utf-8", errors="replace"
+    )
+
+
+def _read_payload(part: dict, body_parts: list[str], filenames: list[str]) -> None:
+    filename = part.get("filename")
+    if filename:
+        filenames.append(filename)
+
+    mime_type = part.get("mimeType", "")
+    data = part.get("body", {}).get("data")
+    if data and mime_type == "text/plain":
+        body_parts.append(_decode_part(data))
+
+    for child in part.get("parts", []):
+        _read_payload(child, body_parts, filenames)
+
+
+def _header_value(headers: list[dict], name: str) -> str:
+    return next(
+        (header.get("value", "") for header in headers if header.get("name", "").lower() == name.lower()),
+        "",
+    )
+
+
+def _supplier_name(from_header: str) -> str:
+    display_name, email_address = parseaddr(from_header)
+    if display_name:
+        return display_name
+    if email_address:
+        return email_address.rsplit("@", 1)[0].replace(".", " ").replace("_", " ").title()
+    return "Unknown supplier"
+
+
+def _invoice_number(subject: str, body: str) -> str:
+    text = f"{subject}\n{body}"
+    match = re.search(
+        r"\binvoice\s*(?:number|no\.?|#)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]*)",
+        text,
+        re.IGNORECASE,
+    )
+    return match.group(1) if match else "—"
+
+
+def _invoice_amount(text: str) -> str:
+    match = re.search(
+        r"\b(USD|CAD|AUD|EUR|GBP)\s*([0-9][0-9,]*(?:\.\d{2})?)|"
+        r"([$€£])\s*([0-9][0-9,]*(?:\.\d{2})?)",
+        text,
+        re.IGNORECASE,
+    )
+    if not match:
+        return "—"
+    if match.group(1):
+        return f"{match.group(1).upper()} {match.group(2)}"
+    return f"{match.group(3)}{match.group(4)}"
+
+
+def _created_date(header_date: str, internal_date: str) -> str:
+    try:
+        created = parsedate_to_datetime(header_date)
+    except (TypeError, ValueError, OverflowError):
+        created = None
+
+    if created is None and internal_date:
+        created = datetime.fromtimestamp(int(internal_date) / 1000)
+    return created.strftime("%b %-d, %Y") if created else "—"
+
+
+@st.cache_data(ttl=300)
+def fetch_invoices(token_json: str) -> pd.DataFrame:
+    token_info = json.loads(token_json)
+    granted_scopes = token_info.get("scopes", [])
+    if GMAIL_READONLY_SCOPE not in granted_scopes:
+        raise ValueError(
+            "This token does not have Gmail read-only access. Re-authorize using "
+            "dashboard/generate_token.py after updating or removing dashboard/token.json."
+        )
+
+    credentials = Credentials.from_authorized_user_info(token_info)
+    gmail = build("gmail", "v1", credentials=credentials)
+    labels = gmail.users().labels().list(userId="me").execute().get("labels", [])
+    user_labels = {
+        label["id"]: label["name"]
+        for label in labels
+        if label.get("type") == "user"
+    }
+
+    messages = []
+    page_token = None
+    while True:
+        response = (
+            gmail.users()
+            .messages()
+            .list(
+                userId="me",
+                q=APP_EMAIL_FILTER,
+                maxResults=100,
+                pageToken=page_token,
+            )
+            .execute()
+        )
+        messages.extend(response.get("messages", []))
+        page_token = response.get("nextPageToken")
+        if not page_token:
+            break
+
+    rows = []
+    for message in messages:
+        details = (
+            gmail.users()
+            .messages()
+            .get(userId="me", id=message["id"], format="full")
+            .execute()
+        )
+        payload = details.get("payload", {})
+        headers = payload.get("headers", [])
+        body_parts: list[str] = []
+        filenames: list[str] = []
+        _read_payload(payload, body_parts, filenames)
+        body = "\n".join(body_parts)
+        subject = _header_value(headers, "Subject")
+        message_labels = set(details.get("labelIds", []))
+        companies = sorted(
+            user_labels[label_id]
+            for label_id in message_labels
+            if label_id in user_labels
+        )
+
+        rows.append(
+            {
+                "Supplier": _supplier_name(_header_value(headers, "From")),
+                "Ledger": ", ".join(companies) or "Unassigned",
+                "Invoice #": _invoice_number(subject, body),
+                "Amount": _invoice_amount(f"{subject}\n{body}"),
+                "Created": _created_date(
+                    _header_value(headers, "Date"), details.get("internalDate", "")
+                ),
+                "Documents": ", ".join(filenames) or subject or "Email",
+                "Workflow": "Unread" if "UNREAD" in message_labels else "Read",
             }
-            flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
+        )
 
-    gmail_service = build('gmail', 'v1', credentials=creds)
-    sheets_service = build('sheets', 'v4', credentials=creds)
-    return gmail_service, sheets_service
+    return pd.DataFrame(rows, columns=INVOICE_COLUMNS)
 
-def parse_invoice_body(body_text):
-    """
-    Custom parsing logic based on your specific application text layout.
-    Modify regex targets to fit your specific receipt formatting.
-    """
-    invoice_id = "UNKNOWN"
-    amount = "0.00"
-    date = "UNKNOWN"
 
-    inv_match = re.search(r'Invoice\s*#?\s*([A-Z0-9\-]+)', body_text, re.IGNORECASE)
-    amt_match = re.search(r'\$\s*([0-9]+\.[0-9]{2})', body_text)
-    date_match = re.search(r'(?:Date|Billing Period):\s*([A-Za-z0-9\s,]+)', body_text)
+def load_test_invoices() -> pd.DataFrame:
+    invoices = pd.read_csv(TEST_DATA_PATH, dtype=str).fillna("")
+    missing_columns = [column for column in INVOICE_COLUMNS if column not in invoices]
+    if missing_columns:
+        raise ValueError(
+            f"Test CSV is missing required columns: {', '.join(missing_columns)}"
+        )
+    return invoices[INVOICE_COLUMNS]
 
-    if inv_match: invoice_id = inv_match.group(1)
-    if amt_match: amount = amt_match.group(1)
-    if date_match: date = date_match.group(1).strip()
 
-    return [date, invoice_id, amount]
+st.title("Invoices")
 
-def process_invoices():
-    gmail, sheets = get_google_services()
-    
-    # Query messages
-    response = gmail.users().messages().list(userId='me', q=APP_EMAIL_FILTER).execute()
-    messages = response.get('messages', [])
-    
-    if not messages:
-        print("No matching new invoices found.")
-        return
+if APP_DATA_MODE not in {"test", "production"}:
+    st.error("APP_DATA_MODE must be either 'test' or 'production'.")
+    st.stop()
 
-    extracted_rows = []
-    for msg in messages:
-        msg_data = gmail.users().messages().get(userId='me', id=msg['id'], format='full').execute()
-        payload = msg_data.get('payload', {})
-        body = ""
+try:
+    if APP_DATA_MODE == "test":
+        with st.spinner("Loading invoice sample data..."):
+            invoices = load_test_invoices()
+        st.caption("Test mode · sample data based on the invoice table template")
+    else:
+        token_json = os.environ.get("GOOGLE_TOKEN_JSON")
+        if not token_json:
+            st.error(
+                "Google credentials are missing. Run the production dashboard "
+                "launcher after setting up Gmail authorization."
+            )
+            st.stop()
+        with st.spinner("Loading invoices from Gmail..."):
+            invoices = fetch_invoices(token_json)
+except Exception as error:
+    source = "sample data" if APP_DATA_MODE == "test" else "Gmail"
+    st.error(f"Could not load invoices from {source}: {error}")
+    st.stop()
 
-        if 'parts' in payload:
-            for part in payload['parts']:
-                if part['mimeType'] == 'text/plain':
-                    body = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')
-        else:
-            body = base64.urlsafe_b64decode(payload['body']['data']).decode('utf-8')
+if invoices.empty:
+    source = "sample data" if APP_DATA_MODE == "test" else "this Gmail account"
+    st.info(f"No invoices were found in {source}.")
+    st.stop()
 
-        parsed_data = parse_invoice_body(body)
-        extracted_rows.append(parsed_data)
+all_ledgers = sorted(invoices["Ledger"].unique().tolist())
+ledger_options = ["All", *all_ledgers]
+selected_ledger = st.radio(
+    "Ledger",
+    ledger_options,
+    horizontal=True,
+    label_visibility="collapsed",
+)
 
-    # Append rows to Google Sheet
-    body = {'values': extracted_rows}
-    result = sheets.spreadsheets().values().append(
-        spreadsheetId=SPREADSHEET_ID,
-        range='Sheet1!A:C',
-        valueInputOption='USER_ENTERED',
-        insertDataOption='INSERT_ROWS',
-        body=body
-    ).execute()
-    print(f"Successfully appended {len(extracted_rows)} invoices to Google Sheet.")
+with st.popover("Filters"):
+    suppliers = sorted(invoices["Supplier"].unique().tolist())
+    selected_suppliers = st.multiselect("Supplier", suppliers)
+    workflows = sorted(invoices["Workflow"].unique().tolist())
+    selected_workflows = st.multiselect("Workflow", workflows, default=workflows)
 
-if __name__ == '__main__':
-    process_invoices()'''
+filtered = invoices
+if selected_ledger != "All":
+    filtered = filtered[
+        filtered["Ledger"]
+        .str.split(", ")
+        .apply(lambda labels: selected_ledger in labels)
+    ]
+if selected_suppliers:
+    filtered = filtered[filtered["Supplier"].isin(selected_suppliers)]
+filtered = filtered[filtered["Workflow"].isin(selected_workflows)]
+
+if filtered.empty:
+    st.info("No invoices match the selected filters.")
+    st.stop()
+
+if "invoice_page" not in st.session_state:
+    st.session_state.invoice_page = 0
+
+page_size = st.selectbox(
+    "Results per page",
+    PAGE_SIZE_OPTIONS,
+    index=0,
+    label_visibility="collapsed",
+)
+page_count = (len(filtered) + page_size - 1) // page_size
+st.session_state.invoice_page = min(st.session_state.invoice_page, page_count - 1)
+page_index = st.session_state.invoice_page
+start = page_index * page_size
+page = filtered.iloc[start : start + page_size]
+
+st.dataframe(
+    page,
+    hide_index=True,
+    use_container_width=True,
+    height=min(42 * (len(page) + 1), 520),
+    column_config={
+        "Supplier": st.column_config.TextColumn("Supplier", width="medium"),
+        "Ledger": st.column_config.TextColumn("Ledger", width="medium"),
+        "Invoice #": st.column_config.TextColumn("Invoice #", width="small"),
+        "Amount": st.column_config.TextColumn("Amount", width="small"),
+        "Created": st.column_config.TextColumn("Created", width="medium"),
+        "Documents": st.column_config.TextColumn("Documents", width="large"),
+        "Workflow": st.column_config.TextColumn(
+            "Workflow", help="Gmail read status; the dashboard does not change it."
+        ),
+    },
+)
+
+previous, count, next_page = st.columns([1, 4, 1])
+with previous:
+    if st.button("‹ Previous", disabled=page_index == 0):
+        st.session_state.invoice_page -= 1
+        st.rerun()
+with count:
+    st.caption(
+        f"Showing {start + 1}–{start + len(page)} of {len(filtered)} invoices "
+        f"· Page {page_index + 1} of {page_count}"
+    )
+with next_page:
+    if st.button("Next ›", disabled=page_index >= page_count - 1):
+        st.session_state.invoice_page += 1
+        st.rerun()
