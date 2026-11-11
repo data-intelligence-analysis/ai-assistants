@@ -52,7 +52,12 @@ docker compose -f "$COMPOSE_FILE" stop dashboard >/dev/null 2>&1 || true
 docker compose -f "$COMPOSE_FILE" rm -f dashboard >/dev/null 2>&1 || true
 
 echo "Starting $MODE invoice dashboard..."
-RUN_OPTIONS=(-e APP_DATA_MODE -e APP_EMAIL_FILTER -p "${PORT}:8501")
+RUN_OPTIONS=(
+    -e APP_DATA_MODE
+    -e APP_EMAIL_FILTER
+    -e LOGO_DEV_PUBLISHABLE_KEY
+    -p "${PORT}:8501"
+)
 if [ "$MODE" = "production" ]; then
     RUN_OPTIONS+=(-e GOOGLE_TOKEN_JSON)
 fi

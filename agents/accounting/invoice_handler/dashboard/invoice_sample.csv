@@ -1,12 +1,12 @@
 Supplier,Ledger,Invoice #,Amount,Created,Documents,Workflow
 Stripe,Personal,#764366,$37.00,"Mar 13, 2025",Invoice_25-05-15.pdf,Read
-Microsoft 365,Moroa,#235626,$87.00,"May 29, 2025",Monthly_Retainer_May.pdf,Done
-Telegram Premium,Moroa,#123678,$64.00,"Feb 28, 2025",Notion_Q2.pdf,For approval
-Tailwind CSS,Moroa,#237324,$56.00,"Jun 13, 2025",Slack_INV-3789.pdf,Failed
+Microsoft 365,Moroa,#235626,$87.00,"May 29, 2025",Monthly_Retainer_May.pdf,Read
+Telegram Premium,Moroa,#123678,$64.00,"Feb 28, 2025",Notion_Q2.pdf,Read
+Tailwind CSS,Moroa,#237324,$56.00,"Jun 13, 2025",Slack_INV-3789.pdf,Unread
 Google Workspace,Personal,#047378,$37.00,"Aug 7, 2025",GDrive_2024-06.pdf,Read
-Slack,Paperlessly,#132567,$56.00,"May 20, 2025",Invoice_0615.pdf,Failed
-Reddit,Paperlessly,#987643,$72.50,"Mar 13, 2025",AWS_June.pdf,Done
-Vercel,Docwise,#344536,--,"May 29, 2025",Bluehost_INV-8847.pdf,Done
-Notion,Personal,#876334,$64.00,"Feb 28, 2025",SubTool_May-June.pdf,For approval
-Shopify,Personal,#435635,--,"Sep 24, 2025",DesignTools_2024.pdf,For approval
-Amazon Web Services,Paperlessly,#145273,$72.50,"Aug 7, 2025",QB_Export_05.pdf,Done
+Slack,Paperlessly,#132567,$56.00,"May 20, 2025",Invoice_0615.pdf,Unread
+Reddit,Paperlessly,#987643,$72.50,"Mar 13, 2025",AWS_June.pdf,Read
+Vercel,Docwise,#344536,--,"May 29, 2025",Bluehost_INV-8847.pdf,Read
+Notion,Personal,#876334,$64.00,"Feb 28, 2025",SubTool_May-June.pdf,Unread
+Shopify,Personal,#435635,--,"Sep 24, 2025",DesignTools_2024.pdf,Unread
+Amazon Web Services,Paperlessly,#145273,$72.50,"Aug 7, 2025",QB_Export_05.pdf,Read

@@ -59,6 +59,8 @@ To load live invoices, first complete [one-time Google authorization](#one-time-
 
 Production mode refreshes the Gmail read-only token, searches the inbox using `APP_EMAIL_FILTER` (default `in:inbox invoice`), and uses custom Gmail labels for ledger groupings. Messages without a custom label appear as `Unassigned`. The launcher builds the `dashboard` image, publishes port `8501`, and opens `http://localhost:8501`. Production is also the default when no mode is supplied.
 
+Supplier logos use the optional Logo.dev CDN when `LOGO_DEV_PUBLISHABLE_KEY` is set, then try the Simple Icons CDN, and finally show an initials placeholder. The sample dataset can use Simple Icons without credentials. Export the Logo.dev publishable key before running the launcher to enable its company lookup. The dashboard displays Logo.dev attribution when one of its logos is shown. Review Logo.dev's [pricing and attribution requirements](https://www.logo.dev/pricing) before using its free plan commercially; Simple Icons also asks users to read its [legal disclaimer](https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md).
+
 To build the image without launching the dashboard:
 
 ```bash

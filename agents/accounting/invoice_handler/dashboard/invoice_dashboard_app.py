@@ -4,6 +4,9 @@ import os
 import re
 from email.utils import parseaddr, parsedate_to_datetime
 from datetime import datetime
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 import pandas as pd
 import streamlit as st
@@ -24,17 +27,26 @@ INVOICE_COLUMNS = [
     "Documents",
     "Workflow",
 ]
+SUPPLIER_DOMAIN_COLUMN = "Supplier Domain"
+GENERIC_EMAIL_DOMAINS = {
+    "aol.com",
+    "gmail.com",
+    "hotmail.com",
+    "icloud.com",
+    "live.com",
+    "outlook.com",
+    "proton.me",
+    "protonmail.com",
+    "yahoo.com",
+}
+SIMPLE_ICON_SLUGS = {
+    "amazon web services": "amazonaws",
+    "google workspace": "google",
+    "microsoft 365": "microsoft",
+    "telegram premium": "telegram",
+}
 
 st.set_page_config(page_title="Invoices", layout="wide")
-st.markdown(
-    """
-    <style>
-    .block-container { padding-top: 1.5rem; }
-    [data-testid="stDataFrame"] { border: 1px solid #e6eaed; border-radius: 12px; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
 
 def _decode_part(data: str) -> str:
@@ -71,6 +83,67 @@ def _supplier_name(from_header: str) -> str:
     if email_address:
         return email_address.rsplit("@", 1)[0].replace(".", " ").replace("_", " ").title()
     return "Unknown supplier"
+
+
+def _supplier_domain(from_header: str) -> str:
+    _, email_address = parseaddr(from_header)
+    domain = email_address.rsplit("@", 1)[-1].lower() if "@" in email_address else ""
+    if domain in GENERIC_EMAIL_DOMAINS or not re.fullmatch(r"[a-z0-9.-]+", domain):
+        return ""
+    return domain
+
+
+def _has_logo(url: str) -> bool:
+    request = Request(url, headers={"Range": "bytes=0-1023"})
+    try:
+        with urlopen(request, timeout=4) as response:
+            return response.headers.get_content_type().startswith("image/")
+    except (HTTPError, URLError, TimeoutError):
+        return False
+
+
+def _placeholder_logo(supplier: str) -> str:
+    initials = "".join(
+        word[0] for word in re.findall(r"[A-Za-z0-9]+", supplier)[:2]
+    ).upper() or "?"
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+        '<rect width="64" height="64" rx="12" fill="#e6eaed"/>'
+        '<text x="32" y="41" text-anchor="middle" '
+        'font-family="Arial,sans-serif" font-size="25" font-weight="600" '
+        'fill="#5b6470">'
+        f"{initials}</text></svg>"
+    )
+    encoded_svg = base64.b64encode(svg.encode("utf-8")).decode("ascii")
+    return f"data:image/svg+xml;base64,{encoded_svg}"
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def _supplier_logo_url(supplier: str, domain: str, logo_dev_key: str) -> str:
+    if logo_dev_key:
+        identifier = (
+            quote(domain, safe="")
+            if domain
+            else f"name/{quote(supplier, safe='')}"
+        )
+        logo_url = (
+            f"https://img.logo.dev/{identifier}?token={quote(logo_dev_key, safe='')}"
+            "&format=png&size=64&fallback=404"
+        )
+        if _has_logo(logo_url):
+            return logo_url
+
+    normalized_supplier = supplier.casefold().strip()
+    slug = SIMPLE_ICON_SLUGS.get(
+        normalized_supplier,
+        re.sub(r"[^a-z0-9]", "", normalized_supplier),
+    )
+    if slug:
+        simple_icon_url = f"https://cdn.simpleicons.org/{quote(slug, safe='')}"
+        if _has_logo(simple_icon_url):
+            return simple_icon_url
+
+    return _placeholder_logo(supplier)
 
 
 def _invoice_number(subject: str, body: str) -> str:
@@ -171,6 +244,9 @@ def fetch_invoices(token_json: str) -> pd.DataFrame:
         rows.append(
             {
                 "Supplier": _supplier_name(_header_value(headers, "From")),
+                SUPPLIER_DOMAIN_COLUMN: _supplier_domain(
+                    _header_value(headers, "From")
+                ),
                 "Ledger": ", ".join(companies) or "Unassigned",
                 "Invoice #": _invoice_number(subject, body),
                 "Amount": _invoice_amount(f"{subject}\n{body}"),
@@ -182,7 +258,7 @@ def fetch_invoices(token_json: str) -> pd.DataFrame:
             }
         )
 
-    return pd.DataFrame(rows, columns=INVOICE_COLUMNS)
+    return pd.DataFrame(rows, columns=[*INVOICE_COLUMNS, SUPPLIER_DOMAIN_COLUMN])
 
 
 def load_test_invoices() -> pd.DataFrame:
@@ -192,10 +268,48 @@ def load_test_invoices() -> pd.DataFrame:
         raise ValueError(
             f"Test CSV is missing required columns: {', '.join(missing_columns)}"
         )
-    return invoices[INVOICE_COLUMNS]
+    if SUPPLIER_DOMAIN_COLUMN not in invoices:
+        invoices[SUPPLIER_DOMAIN_COLUMN] = ""
+    return invoices[[*INVOICE_COLUMNS, SUPPLIER_DOMAIN_COLUMN]]
 
 
-st.title("Invoices")
+title, theme_toggle = st.columns([7, 3], vertical_alignment="center")
+with title:
+    st.title("Invoices")
+with theme_toggle:
+    dark_mode = st.toggle("Dark mode", key="dark_mode")
+
+background = "#0e1117" if dark_mode else "#ffffff"
+secondary_background = "#262730" if dark_mode else "#f0f2f6"
+text_color = "#fafafa" if dark_mode else "#31333f"
+border_color = "#41434f" if dark_mode else "#e6eaed"
+st.markdown(
+    f"""
+    <style>
+    :root {{
+        color-scheme: {"dark" if dark_mode else "light"};
+        --background-color: {background};
+        --secondary-background-color: {secondary_background};
+        --text-color: {text_color};
+    }}
+    .block-container {{ padding-top: 1.5rem; }}
+    [data-testid="stAppViewContainer"] {{
+        background-color: var(--background-color);
+        color: var(--text-color);
+    }}
+    [data-testid="stHeader"] {{ background-color: var(--background-color); }}
+    [data-testid="stDataFrame"] {{
+        border: 1px solid {border_color};
+        border-radius: 12px;
+    }}
+    [data-baseweb="popover"], [role="listbox"] {{
+        background-color: var(--secondary-background-color);
+        color: var(--text-color);
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 if APP_DATA_MODE not in {"test", "production"}:
     st.error("APP_DATA_MODE must be either 'test' or 'production'.")
@@ -269,7 +383,20 @@ page_count = (len(filtered) + page_size - 1) // page_size
 st.session_state.invoice_page = min(st.session_state.invoice_page, page_count - 1)
 page_index = st.session_state.invoice_page
 start = page_index * page_size
-page = filtered.iloc[start : start + page_size]
+page = filtered.iloc[start : start + page_size].copy()
+logo_dev_key = os.environ.get("LOGO_DEV_PUBLISHABLE_KEY", "").strip()
+page.insert(
+    0,
+    "Logo",
+    [
+        _supplier_logo_url(
+            row["Supplier"],
+            row[SUPPLIER_DOMAIN_COLUMN],
+            logo_dev_key,
+        )
+        for _, row in page.iterrows()
+    ],
+)
 
 st.dataframe(
     page,
@@ -277,7 +404,9 @@ st.dataframe(
     use_container_width=True,
     height=min(42 * (len(page) + 1), 520),
     column_config={
+        "Logo": st.column_config.ImageColumn("Logo", width="small"),
         "Supplier": st.column_config.TextColumn("Supplier", width="medium"),
+        SUPPLIER_DOMAIN_COLUMN: None,
         "Ledger": st.column_config.TextColumn("Ledger", width="medium"),
         "Invoice #": st.column_config.TextColumn("Invoice #", width="small"),
         "Amount": st.column_config.TextColumn("Amount", width="small"),
@@ -288,6 +417,8 @@ st.dataframe(
         ),
     },
 )
+if any(logo_url.startswith("https://img.logo.dev/") for logo_url in page["Logo"]):
+    st.caption("[Logos provided by Logo.dev](https://logo.dev)")
 
 previous, count, next_page = st.columns([1, 4, 1])
 with previous:

@@ -36,7 +36,7 @@ build/
 db.sqlite3
 
 # Configuration Files (if sensitive or generated)
-# .env
+.env
 # config.ini
 
 # Test and Coverage
