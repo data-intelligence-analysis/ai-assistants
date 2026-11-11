@@ -32,7 +32,7 @@ def _dashboard_mode(command: str) -> str | None:
     return VOICE_COMMANDS.get(normalized_command)
 
 
-def _listen_for_voice_commands() -> None:
+def _listen_for_voice_commands(environment_mode: str | None = None) -> None:
     model_path = Path(os.environ.get("VOSK_MODEL_PATH", DEFAULT_MODEL_PATH))
     if not model_path.is_dir():
         raise RuntimeError(
@@ -89,6 +89,8 @@ def _listen_for_voice_commands() -> None:
                 if mode is None:
                     print("That voice command is not supported.", flush=True)
                     continue
+                if environment_mode is not None:
+                    mode = environment_mode
 
                 try:
                     process = _start_dashboard(mode)
@@ -106,7 +108,7 @@ def _listen_for_voice_commands() -> None:
 
 def _start_dashboard(mode: str) -> subprocess.Popen:
     environment = os.environ.copy()
-    environment["APP_DATA_MODE"] = mode
+    environment.pop("APP_DATA_MODE", None)
 
     if mode == "production" and not environment.get("GOOGLE_TOKEN_JSON"):
         try:
@@ -116,6 +118,7 @@ def _start_dashboard(mode: str) -> subprocess.Popen:
                 "Could not read the Gmail authorization token."
             ) from error
 
+    environment_argument = "testing" if mode == "test" else "production"
     try:
         return subprocess.Popen(
             [
@@ -126,6 +129,9 @@ def _start_dashboard(mode: str) -> subprocess.Popen:
                 str(DASHBOARD_APP),
                 "--server.port=8501",
                 "--server.address=127.0.0.1",
+                "--",
+                "--environment",
+                environment_argument,
             ],
             cwd=WORKSPACE_DIR,
             env=environment,
@@ -166,6 +172,7 @@ def trigger_dashboard():
             }
         ), 400
 
+    mode = app.config.get("ENVIRONMENT_MODE") or mode
     try:
         process = _start_dashboard(mode)
     except DashboardStartError as error:
@@ -197,10 +204,21 @@ if __name__ == "__main__":
         action="store_true",
         help="start the optional localhost HTTP trigger instead of listening",
     )
+    parser.add_argument(
+        "--environment",
+        "--mode",
+        choices=("testing", "production"),
+        help="force the dashboard environment, overriding the mode in voice commands",
+    )
     arguments = parser.parse_args()
 
     if arguments.voice and arguments.http:
         parser.error("--voice and --http cannot be used together")
+
+    environment_mode = (
+        "test" if arguments.environment == "testing" else arguments.environment
+    )
+    app.config["ENVIRONMENT_MODE"] = environment_mode
 
     if arguments.voice:
         mode = _dashboard_mode(" ".join(arguments.voice))
@@ -209,6 +227,8 @@ if __name__ == "__main__":
                 "unsupported voice command; use 'show test invoice dashboard' or "
                 "'show production invoice dashboard'"
             )
+        if environment_mode is not None:
+            mode = environment_mode
         try:
             process = _start_dashboard(mode)
         except DashboardStartError as error:
@@ -219,6 +239,6 @@ if __name__ == "__main__":
         app.run(host="127.0.0.1", port=5001)
     else:
         try:
-            _listen_for_voice_commands()
+            _listen_for_voice_commands(environment_mode)
         except RuntimeError as error:
             parser.error(str(error))

@@ -1,4 +1,6 @@
+import argparse
 import base64
+import html
 import json
 import os
 import re
@@ -14,9 +16,17 @@ import streamlit as st
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
+environment_parser = argparse.ArgumentParser()
+environment_parser.add_argument(
+    "--environment",
+    "--mode",
+    choices=("testing", "production"),
+    required=True,
+)
+ENVIRONMENT_MODE = environment_parser.parse_args().environment
+
 GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 APP_EMAIL_FILTER = os.environ.get("APP_EMAIL_FILTER", "in:inbox invoice")
-APP_DATA_MODE = os.environ.get("APP_DATA_MODE", "production").strip().lower()
 TEST_DATA_PATH = Path(__file__).with_name("invoice_sample.csv")
 PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
 INVOICE_COLUMNS = [
@@ -147,6 +157,42 @@ def _supplier_logo_url(supplier: str, domain: str, logo_dev_key: str) -> str:
     return _placeholder_logo(supplier)
 
 
+@st.cache_data(ttl=86400, show_spinner=False)
+def _supplier_cell_image(supplier: str, logo_url: str, dark_mode: bool) -> str:
+    if logo_url.startswith("data:image/"):
+        embedded_logo = logo_url
+    else:
+        image_request = Request(logo_url)
+        try:
+            with urlopen(image_request, timeout=4) as response:
+                content_type = response.headers.get_content_type()
+                image_data = response.read(256 * 1024 + 1)
+            if not content_type.startswith("image/") or len(image_data) > 256 * 1024:
+                embedded_logo = _placeholder_logo(supplier)
+            else:
+                encoded_image = base64.b64encode(image_data).decode("ascii")
+                embedded_logo = f"data:{content_type};base64,{encoded_image}"
+        except (HTTPError, URLError, TimeoutError, OSError):
+            embedded_logo = _placeholder_logo(supplier)
+
+    text_color = "#fafafa" ##the table is in dark mode, so the text color is set to a light color for better contrast. If dark_mode is False, the text color is set to a darker shade for better visibility on a light background.
+    # text_color = "#fafafa" if dark_mode else "#31333f"
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="42" '
+        'viewBox="0 0 200 42" role="img">'
+        f"<title>{html.escape(supplier)}</title>"
+        f'<image x="2" y="5" width="32" height="32" '
+        f'href="{html.escape(embedded_logo, quote=True)}" '
+        'preserveAspectRatio="xMidYMid meet"/>'
+        f'<text x="42" y="26" fill="{text_color}" '
+        'font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif" '
+        f'font-size="14">{html.escape(supplier)}</text>'
+        "</svg>"
+    )
+    encoded_svg = base64.b64encode(svg.encode("utf-8")).decode("ascii")
+    return f"data:image/svg+xml;base64,{encoded_svg}"
+
+
 def _invoice_number(subject: str, body: str) -> str:
     text = f"{subject}\n{body}"
     match = re.search(
@@ -274,12 +320,20 @@ def load_test_invoices() -> pd.DataFrame:
     return invoices[[*INVOICE_COLUMNS, SUPPLIER_DOMAIN_COLUMN]]
 
 
-title, theme_toggle = st.columns([7, 3], vertical_alignment="center")
-with title:
+# title, theme_toggle = st.columns([8, 3], vertical_alignment="center")
+with st.container(
+    horizontal=True,
+    horizontal_alignment="distribute",
+    vertical_alignment="center",
+    wrap=False,
+):
     st.title("Invoices")
-with theme_toggle:
-    dark_mode = st.toggle("Dark mode", key="dark_mode")
-
+    dark_mode = st.toggle("Dark mode", value=True, key="dark_mode")
+    
+# with title:
+#     st.title("Invoices")
+# with theme_toggle:
+#     dark_mode = st.toggle("Dark mode", value=True, key="dark_mode")
 background = "#0e1117" if dark_mode else "#ffffff"
 secondary_background = "#262730" if dark_mode else "#f0f2f6"
 text_color = "#fafafa" if dark_mode else "#31333f"
@@ -293,7 +347,11 @@ st.markdown(
         --secondary-background-color: {secondary_background};
         --text-color: {text_color};
     }}
-    .block-container {{ padding-top: 1.5rem; }}
+    .body {{
+        padding: 0
+        margin: 0 auto;
+    }}
+    .block-container {{ padding-top: 3rem; }}
     [data-testid="stAppViewContainer"] {{
         background-color: var(--background-color);
         color: var(--text-color);
@@ -312,15 +370,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-if APP_DATA_MODE not in {"test", "production"}:
-    st.error("APP_DATA_MODE must be either 'test' or 'production'.")
-    st.stop()
-
 try:
-    if APP_DATA_MODE == "test":
+    if ENVIRONMENT_MODE == "testing":
         with st.spinner("Loading invoice sample data..."):
             invoices = load_test_invoices()
-        st.caption("Test mode · sample data based on the invoice table template")
+        # st.caption("Test mode · sample data based on the invoice table template")
     else:
         token_json = os.environ.get("GOOGLE_TOKEN_JSON")
         if not token_json:
@@ -332,12 +386,12 @@ try:
         with st.spinner("Loading invoices from Gmail..."):
             invoices = fetch_invoices(token_json)
 except Exception as error:
-    source = "sample data" if APP_DATA_MODE == "test" else "Gmail"
+    source = "sample data" if ENVIRONMENT_MODE == "testing" else "Gmail"
     st.error(f"Could not load invoices from {source}: {error}")
     st.stop()
 
 if invoices.empty:
-    source = "sample data" if APP_DATA_MODE == "test" else "this Gmail account"
+    source = "sample data" if ENVIRONMENT_MODE == "testing" else "this Gmail account"
     st.info(f"No invoices were found in {source}.")
     st.stop()
 
@@ -350,11 +404,25 @@ selected_ledger = st.radio(
     label_visibility="collapsed",
 )
 
-with st.popover("Filters"):
-    suppliers = sorted(invoices["Supplier"].unique().tolist())
-    selected_suppliers = st.multiselect("Supplier", suppliers)
-    workflows = sorted(invoices["Workflow"].unique().tolist())
-    selected_workflows = st.multiselect("Workflow", workflows, default=workflows)
+with st.container(
+    horizontal=True,
+    horizontal_alignment="distribute",
+    vertical_alignment="center",
+    wrap=False,
+):
+    with st.popover("Filters"):
+        suppliers = sorted(invoices["Supplier"].unique().tolist())
+        selected_suppliers = st.multiselect("Supplier", suppliers)
+        workflows = sorted(invoices["Workflow"].unique().tolist())
+        selected_workflows = st.multiselect("Workflow", workflows, default=workflows)
+
+    page_size = st.selectbox(
+        "Results per page",
+        PAGE_SIZE_OPTIONS,
+        index=0,
+        width=80,
+        label_visibility="collapsed",
+    )
 
 filtered = invoices
 if selected_ledger != "All":
@@ -374,39 +442,34 @@ if filtered.empty:
 if "invoice_page" not in st.session_state:
     st.session_state.invoice_page = 0
 
-page_size = st.selectbox(
-    "Results per page",
-    PAGE_SIZE_OPTIONS,
-    index=0,
-    label_visibility="collapsed",
-)
 page_count = (len(filtered) + page_size - 1) // page_size
 st.session_state.invoice_page = min(st.session_state.invoice_page, page_count - 1)
 page_index = st.session_state.invoice_page
 start = page_index * page_size
 page = filtered.iloc[start : start + page_size].copy()
 logo_dev_key = os.environ.get("LOGO_DEV_PUBLISHABLE_KEY", "").strip()
-page.insert(
-    0,
-    "Logo",
-    [
-        _supplier_logo_url(
-            row["Supplier"],
-            row[SUPPLIER_DOMAIN_COLUMN],
-            logo_dev_key,
-        )
-        for _, row in page.iterrows()
-    ],
-)
+supplier_logo_urls = [
+    _supplier_logo_url(
+        row["Supplier"],
+        row[SUPPLIER_DOMAIN_COLUMN],
+        logo_dev_key,
+    )
+    for _, row in page.iterrows()
+]
+page["Supplier"] = [
+    _supplier_cell_image(supplier, logo_url, dark_mode)
+    for supplier, logo_url in zip(page["Supplier"], supplier_logo_urls)
+]
 
 st.dataframe(
     page,
     hide_index=True,
     use_container_width=True,
-    height=min(42 * (len(page) + 1), 520),
+    height="content",
     column_config={
-        "Logo": st.column_config.ImageColumn("Logo", width="small"),
-        "Supplier": st.column_config.TextColumn("Supplier", width="medium"),
+        "Supplier": st.column_config.ImageColumn(
+            "Supplier", width="medium", alignment="left"
+        ),
         SUPPLIER_DOMAIN_COLUMN: None,
         "Ledger": st.column_config.TextColumn("Ledger", width="medium"),
         "Invoice #": st.column_config.TextColumn("Invoice #", width="small"),
@@ -418,10 +481,10 @@ st.dataframe(
         ),
     },
 )
-if any(logo_url.startswith("https://img.logo.dev/") for logo_url in page["Logo"]):
+if any(logo_url.startswith("https://img.logo.dev/") for logo_url in supplier_logo_urls):
     st.caption("[Logos provided by Logo.dev](https://logo.dev)")
 
-previous, count, next_page = st.columns([1, 4, 1])
+previous, count, next_page = st.columns([2, 3, 1], vertical_alignment="center")
 with previous:
     if st.button("‹ Previous", disabled=page_index == 0):
         st.session_state.invoice_page -= 1

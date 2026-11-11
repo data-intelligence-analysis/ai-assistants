@@ -3,6 +3,7 @@ set -e
 
 WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="$WORKSPACE_DIR/docker_compose.yml"
+COMPOSE_PROJECT="invoice_handler"
 TOKEN_PATH="$WORKSPACE_DIR/dashboard/token.json"
 PORT=8501
 MODE="${1:-production}"
@@ -14,7 +15,6 @@ if [[ "$MODE" != "test" && "$MODE" != "production" ]]; then
     exit 2
 fi
 
-export APP_DATA_MODE="$MODE"
 export APP_EMAIL_FILTER="${APP_EMAIL_FILTER:-in:inbox invoice}"
 
 if [ "$MODE" = "production" ]; then
@@ -48,26 +48,40 @@ else
 fi
 
 echo "Clearing container memory footprint..."
-docker compose -f "$COMPOSE_FILE" stop dashboard >/dev/null 2>&1 || true
-docker compose -f "$COMPOSE_FILE" rm -f dashboard >/dev/null 2>&1 || true
+DASHBOARD_CONTAINERS="$(docker ps -aq \
+    --filter "label=com.docker.compose.project=$COMPOSE_PROJECT" \
+    --filter "label=com.docker.compose.service=dashboard")"
+if [ -n "$DASHBOARD_CONTAINERS" ]; then
+    while IFS= read -r container_id; do
+        if [ -n "$container_id" ]; then
+            docker rm -f "$container_id" >/dev/null
+        fi
+    done <<< "$DASHBOARD_CONTAINERS"
+fi
 
 echo "Starting $MODE invoice dashboard..."
 RUN_OPTIONS=(
-    -e APP_DATA_MODE
     -e APP_EMAIL_FILTER
     -e LOGO_DEV_PUBLISHABLE_KEY
     -p "${PORT}:8501"
 )
+if [ "$MODE" = "test" ]; then
+    APP_ENVIRONMENT="testing"
+else
+    APP_ENVIRONMENT="production"
+fi
 if [ "$MODE" = "production" ]; then
     RUN_OPTIONS+=(-e GOOGLE_TOKEN_JSON)
 fi
-docker compose -f "$COMPOSE_FILE" run --build -d \
+docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" run --build -d \
   "${RUN_OPTIONS[@]}" \
-  dashboard
+  dashboard --environment "$APP_ENVIRONMENT"
 
 sleep 2.5
-if command -v open >/dev/null 2>&1; then
-    open "http://localhost:${PORT}"
+if [ "$(uname -s)" = "Darwin" ] && command -v open >/dev/null 2>&1; then
+    if ! open "http://localhost:${PORT}"; then
+        echo "Could not open a browser automatically; open http://localhost:${PORT} manually." >&2
+    fi
 else
     echo "Open http://localhost:${PORT} in your browser."
 fi

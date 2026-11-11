@@ -57,7 +57,7 @@ To load live invoices, first complete [one-time Google authorization](#one-time-
 ./scripts/voice_trigger_dashboard.sh production
 ```
 
-Production mode refreshes the Gmail read-only token, searches the inbox using `APP_EMAIL_FILTER` (default `in:inbox invoice`), and uses custom Gmail labels for ledger groupings. Messages without a custom label appear as `Unassigned`. The launcher builds the `dashboard` image, publishes port `8501`, and opens `http://localhost:8501`. Production is also the default when no mode is supplied.
+Production mode refreshes the Gmail read-only token, searches the inbox using `APP_EMAIL_FILTER` (default `in:inbox invoice`), and uses custom Gmail labels for ledger groupings. Messages without a custom label appear as `Unassigned`. The launcher builds the `dashboard` image, passes the selected environment as a command-line argument, publishes port `8501`, and opens `http://localhost:8501`. The shell launcher defaults to production when no mode is supplied; the dashboard app itself requires an explicit `--environment testing|production` argument and does not read its mode from an environment variable or `.env` file.
 
 Supplier logos use the optional Logo.dev CDN when `LOGO_DEV_PUBLISHABLE_KEY` is set, then try the Simple Icons CDN, and finally show an initials placeholder. The sample dataset can use Simple Icons without credentials. Export the Logo.dev publishable key before running the launcher to enable its company lookup. The dashboard displays Logo.dev attribution when one of its logos is shown. Review Logo.dev's [pricing and attribution requirements](https://www.logo.dev/pricing) before using its free plan commercially; Simple Icons also asks users to read its [legal disclaimer](https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md).
 
@@ -89,7 +89,7 @@ Create two Shortcuts so the spoken phrase selects the data source: **Show Test I
    ```
 
 4. For the production shortcut, complete the [one-time Google authorization](#one-time-google-authorization) steps on the Mac so `dashboard/token.json` exists locally. This is not needed for test mode.
-5. In Terminal, make the launcher executable and test both modes before wiring up Siri:
+5. Before creating either Shortcut, open Terminal in the `agents/accounting/invoice_handler` directory of the Mac checkout. Make the launcher executable and run each mode once to verify Docker and (for production) Gmail authorization:
 
    ```bash
    chmod +x scripts/voice_trigger_dashboard.sh
@@ -97,7 +97,7 @@ Create two Shortcuts so the spoken phrase selects the data source: **Show Test I
    ./scripts/voice_trigger_dashboard.sh production
    ```
 
-   Confirm each mode opens at `http://localhost:8501`.
+   Let the test dashboard finish starting at `http://localhost:8501` before running the production command. The production command requires the Mac's `dashboard/token.json`; it will replace the running test dashboard with the production dashboard. Confirm both modes load successfully before continuing to **Create the Shortcut**.
 
 ### Create the Shortcut
 
@@ -105,30 +105,41 @@ Create two Shortcuts so the spoken phrase selects the data source: **Show Test I
 2. Name the first shortcut **Show Test Invoice Dashboard**.
 3. Search for and add the **Run Shell Script** action.
 4. Set **Shell** to `/bin/bash`.
-5. Replace the action's script with the launcher path on this Mac, for example:
+4. Replace the action's script with the following, changing the example path to your Mac's local checkout:
 
    ```bash
-   "/Users/yourname/path/to/ai-assistants/agents/accounting/invoice_handler/scripts/voice_trigger_dashboard.sh" test
+   set -e
+   LAUNCHER="/Users/yourname/path/to/ai-assistants/agents/accounting/invoice_handler/scripts/voice_trigger_dashboard.sh"
+   chmod +x "$LAUNCHER"
+   "$LAUNCHER" test
    ```
 
-   Replace the example with the absolute path to your local checkout. Do not use the Codespace path unless it is actually mounted on the Mac.
-6. Save the shortcut and approve any macOS permissions prompts. Duplicate it as **Show Production Invoice Dashboard** and change the final argument from `test` to `production`.
-7. Say **“Hey Siri, Show Test Invoice Dashboard”** to use the CSV or **“Hey Siri, Show Production Invoice Dashboard”** to load Gmail. Each phrase runs the matching mode, rebuilds/starts the dashboard, and opens it locally.
+   The Shortcut runs `chmod +x` every time before launching, so it repairs the executable bit automatically. `set -e` makes the action stop if that permission change fails. Use the absolute path to the Mac checkout.
+5. Save the shortcut and approve any macOS permissions prompts. Duplicate it as **Show Production Invoice Dashboard** and change the final argument from `test` to `production`.
+6. Say **“Hey Siri, Show Test Invoice Dashboard”** to use the CSV or **“Hey Siri, Show Production Invoice Dashboard”** to load Gmail. Each phrase runs the matching mode, rebuilds/starts the dashboard, and opens it locally.
 
-If Shortcuts cannot find `docker` or `python3`, add the locations used by your Mac to the beginning of the Run Shell Script action, before the launcher line:
+If Shortcuts cannot find `docker` or `python3`, add the locations used by your Mac to the beginning of the Run Shell Script action, before `set -e`:
 
 ```bash
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
-"/Users/yourname/path/to/ai-assistants/agents/accounting/invoice_handler/scripts/voice_trigger_dashboard.sh" test
+set -e
+LAUNCHER="/Users/yourname/path/to/ai-assistants/agents/accounting/invoice_handler/scripts/voice_trigger_dashboard.sh"
+chmod +x "$LAUNCHER"
+"$LAUNCHER" test
 ```
 
-Use `production` instead of `test` in the second shortcut's script. To listen directly through the terminal microphone, install [requirements.txt](./requirements.txt), download the offline [Vosk small English model](https://alphacephei.com/vosk/models), and extract `vosk-model-small-en-us-0.15` under `dashboard/`. Then run `python3 scripts/manual_voice_trigger_app_dashboard.py`; it listens locally, prints recognized commands in the terminal, and launches the dashboard for supported phrases. Set `VOSK_MODEL_PATH` if the model is stored elsewhere. The voice listener does not use HTTP or send audio to an online service. For integrations, the optional `--http` mode starts the localhost endpoint; send JSON such as `{"command":"show test invoice dashboard"}` to `http://127.0.0.1:5001/trigger-dashboard`.
+Use `production` instead of `test` in the second shortcut's script. To listen directly through the terminal microphone, install [requirements.txt](./requirements.txt), download the offline [Vosk small English model](https://alphacephei.com/vosk/models), and extract `vosk-model-small-en-us-0.15` under `dashboard/`. Then run `python3 scripts/manual_voice_trigger_app_dashboard.py`; it listens locally, prints recognized commands in the terminal, and launches the dashboard for supported phrases. Set `VOSK_MODEL_PATH` if the model is stored elsewhere. The voice listener does not use HTTP or send audio to an online service. Pass `--environment testing` or `--environment production` (also available as `--mode`) to force the dashboard mode regardless of which supported test/production phrase is spoken. For integrations, the optional `--http` mode starts the localhost endpoint; send JSON such as `{"command":"show test invoice dashboard"}` to `http://127.0.0.1:5001/trigger-dashboard`.
 
 To launch a dashboard directly from Terminal without listening, pass the voice phrase to `--voice`, for example `python3 scripts/manual_voice_trigger_app_dashboard.py --voice "show test invoice dashboard"`; the phrase may also be entered without quotes.
 ```bash
 python3 scripts/manual_voice_trigger_app_dashboard.py --voice "show test invoice dashboard"
 python3 scripts/manual_voice_trigger_app_dashboard.py --voice show production invoice dashboard
+
+python3 scripts/manual_voice_trigger_app_dashboard.py --environment testing
+python3 scripts/manual_voice_trigger_app_dashboard.py --mode production --voice "show test invoice dashboard"
 ```
+
+Use the same environment option to override the phrase's mode, for example `python3 scripts/manual_voice_trigger_app_dashboard.py --environment testing --voice "show production invoice dashboard"` launches the test dashboard.
 
 ## Troubleshooting
 
