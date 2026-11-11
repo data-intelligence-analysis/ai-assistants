@@ -122,7 +122,13 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 "/Users/yourname/path/to/ai-assistants/agents/accounting/invoice_handler/scripts/voice_trigger_dashboard.sh" test
 ```
 
-Use `production` instead of `test` in the second shortcut's script. For integrations that send a local HTTP request instead of running a shell action, [scripts/manual_voice_trigger_dashboard.py](./scripts/manual_voice_trigger_dashboard.py) accepts the same supported command phrases. Start it with `python3 scripts/manual_voice_trigger_dashboard.py`; send a POST to `http://127.0.0.1:5001/trigger-dashboard` with JSON such as `{"command":"show test invoice dashboard"}`. The endpoint only binds to localhost and only accepts the test/production commands.
+Use `production` instead of `test` in the second shortcut's script. To listen directly through the terminal microphone, install [requirements.txt](./requirements.txt), download the offline [Vosk small English model](https://alphacephei.com/vosk/models), and extract `vosk-model-small-en-us-0.15` under `dashboard/`. Then run `python3 scripts/manual_voice_trigger_app_dashboard.py`; it listens locally, prints recognized commands in the terminal, and launches the dashboard for supported phrases. Set `VOSK_MODEL_PATH` if the model is stored elsewhere. The voice listener does not use HTTP or send audio to an online service. For integrations, the optional `--http` mode starts the localhost endpoint; send JSON such as `{"command":"show test invoice dashboard"}` to `http://127.0.0.1:5001/trigger-dashboard`.
+
+To launch a dashboard directly from Terminal without listening, pass the voice phrase to `--voice`, for example `python3 scripts/manual_voice_trigger_app_dashboard.py --voice "show test invoice dashboard"`; the phrase may also be entered without quotes.
+```bash
+python3 scripts/manual_voice_trigger_app_dashboard.py --voice "show test invoice dashboard"
+python3 scripts/manual_voice_trigger_app_dashboard.py --voice show production invoice dashboard
+```
 
 ## Troubleshooting
 

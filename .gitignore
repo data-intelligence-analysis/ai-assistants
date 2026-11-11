@@ -99,3 +99,4 @@ Thumbs.db
 .ipynb_checkpoints
 agents/sales-lead-generator/.env
 agents/sales-lead-generator/.env
+/agents/accounting/invoice_handler/dashboard/vosk-model*/

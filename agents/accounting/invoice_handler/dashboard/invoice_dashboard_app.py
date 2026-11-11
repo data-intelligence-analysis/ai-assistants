@@ -4,6 +4,7 @@ import os
 import re
 from email.utils import parseaddr, parsedate_to_datetime
 from datetime import datetime
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -16,7 +17,7 @@ from googleapiclient.discovery import build
 GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 APP_EMAIL_FILTER = os.environ.get("APP_EMAIL_FILTER", "in:inbox invoice")
 APP_DATA_MODE = os.environ.get("APP_DATA_MODE", "production").strip().lower()
-TEST_DATA_PATH = "/workspace/invoice_sample.csv"
+TEST_DATA_PATH = Path(__file__).with_name("invoice_sample.csv")
 PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
 INVOICE_COLUMNS = [
     "Supplier",
