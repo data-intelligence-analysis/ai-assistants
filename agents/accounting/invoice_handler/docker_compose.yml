@@ -3,5 +3,7 @@ services:
     build:
       context: .
       dockerfile: dashboard/Dockerfile
+    environment:
+      LOGO_DEV_PUBLISHABLE_KEY: ${LOGO_DEV_PUBLISHABLE_KEY:-}
     ports:
       - "8501:8501"

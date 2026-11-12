@@ -1,6 +1,7 @@
 import argparse
 import base64
 import html
+from io import BytesIO
 import json
 import os
 import re
@@ -10,9 +11,11 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+from xml.etree import ElementTree
 
 import pandas as pd
 import streamlit as st
+from PIL import Image
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
@@ -27,6 +30,7 @@ ENVIRONMENT_MODE = environment_parser.parse_args().environment
 
 GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 APP_EMAIL_FILTER = os.environ.get("APP_EMAIL_FILTER", "in:inbox invoice")
+LOGO_DEV_PUBLISHABLE_KEY = os.environ.get("LOGO_DEV_PUBLISHABLE_KEY", "").strip()
 TEST_DATA_PATH = Path(__file__).with_name("invoice_sample.csv")
 PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
 INVOICE_COLUMNS = [
@@ -158,9 +162,110 @@ def _supplier_logo_url(supplier: str, domain: str, logo_dev_key: str) -> str:
 
 
 @st.cache_data(ttl=86400, show_spinner=False)
+def _inline_svg_icon(image_data: bytes, color: str) -> str | None:
+    try:
+        root = ElementTree.fromstring(image_data)
+    except ElementTree.ParseError:
+        return None
+
+    if root.tag.rsplit("}", 1)[-1] != "svg":
+        return None
+    view_box = root.get("viewBox")
+    if not view_box:
+        return None
+
+    allowed_tags = {
+        "circle",
+        "ellipse",
+        "g",
+        "line",
+        "path",
+        "polygon",
+        "polyline",
+        "rect",
+        "text",
+    }
+    allowed_attributes = {
+        "cx",
+        "cy",
+        "d",
+        "fill",
+        "fill-rule",
+        "opacity",
+        "points",
+        "r",
+        "rx",
+        "ry",
+        "stroke",
+        "stroke-linecap",
+        "stroke-linejoin",
+        "stroke-width",
+        "transform",
+        "font-family",
+        "font-size",
+        "font-weight",
+        "text-anchor",
+        "x",
+        "x1",
+        "x2",
+        "y",
+        "y1",
+        "y2",
+    }
+
+    def render_element(element: ElementTree.Element) -> str:
+        tag = element.tag.rsplit("}", 1)[-1]
+        if tag not in allowed_tags:
+            return ""
+        if tag == "path" and not element.get("d"):
+            return ""
+        if tag in {"polygon", "polyline"} and not element.get("points"):
+            return ""
+
+        attributes = {
+            key: value.replace("currentColor", color)
+            for key, value in element.attrib.items()
+            if key in allowed_attributes
+        }
+        rendered_attributes = " ".join(
+            f'{key}="{html.escape(value, quote=True)}"'
+            for key, value in attributes.items()
+        )
+        opening_tag = (
+            f"<{tag} {rendered_attributes}>"
+            if rendered_attributes
+            else f"<{tag}>"
+        )
+        if tag in {"circle", "ellipse", "line", "path", "polygon", "polyline", "rect"}:
+            return opening_tag[:-1] + "/>"
+        children = "".join(render_element(child) for child in element)
+        text = html.escape(element.text or "")
+        if tag == "g" and not children:
+            return ""
+        return f"{opening_tag}{text}{children}</{tag}>"
+
+    root_fill = root.get("fill", color).replace("currentColor", color)
+    content = "".join(render_element(child) for child in root)
+    if not content:
+        return None
+    return (
+        f'<svg x="2" y="5" width="32" height="32" '
+        f'viewBox="{html.escape(view_box, quote=True)}" '
+        f'fill="{html.escape(root_fill, quote=True)}" '
+        'preserveAspectRatio="xMidYMid meet">'
+        f"{content}</svg>"
+    )
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
 def _supplier_cell_image(supplier: str, logo_url: str, dark_mode: bool) -> str:
+    text_color = "#fafafa" if dark_mode else "#31333f"
+    placeholder_image = _placeholder_logo(supplier)
+    placeholder_data = base64.b64decode(placeholder_image.split(",", 1)[1])
     if logo_url.startswith("data:image/"):
-        embedded_logo = logo_url
+        encoded_image = logo_url.split(",", 1)[1]
+        image_data = base64.b64decode(encoded_image)
+        content_type = logo_url[5:].split(";", 1)[0].lower()
     else:
         image_request = Request(logo_url)
         try:
@@ -168,22 +273,41 @@ def _supplier_cell_image(supplier: str, logo_url: str, dark_mode: bool) -> str:
                 content_type = response.headers.get_content_type()
                 image_data = response.read(256 * 1024 + 1)
             if not content_type.startswith("image/") or len(image_data) > 256 * 1024:
-                embedded_logo = _placeholder_logo(supplier)
+                image_data = placeholder_data
+                content_type = "image/svg+xml"
+        except (HTTPError, URLError, TimeoutError, OSError):
+            image_data = placeholder_data
+            content_type = "image/svg+xml"
+
+    icon_markup = (
+        _inline_svg_icon(image_data, text_color)
+        if content_type == "image/svg+xml"
+        else None
+    )
+    if icon_markup is None:
+        if content_type == "image/svg+xml":
+            icon_markup = _inline_svg_icon(placeholder_data, text_color)
+        else:
+            try:
+                with Image.open(BytesIO(image_data)) as image:
+                    image.verify()
+            except (OSError, ValueError):
+                icon_markup = _inline_svg_icon(placeholder_data, text_color)
             else:
                 encoded_image = base64.b64encode(image_data).decode("ascii")
-                embedded_logo = f"data:{content_type};base64,{encoded_image}"
-        except (HTTPError, URLError, TimeoutError, OSError):
-            embedded_logo = _placeholder_logo(supplier)
+                icon_markup = (
+                    '<image x="2" y="5" width="32" height="32" '
+                    f'href="data:{html.escape(content_type, quote=True)};base64,{encoded_image}" '
+                    'preserveAspectRatio="xMidYMid meet"/>'
+                )
+    if icon_markup is None:
+        raise ValueError(f"Could not create a supplier placeholder for {supplier!r}.")
 
-    text_color = "#fafafa" ##the table is in dark mode, so the text color is set to a light color for better contrast. If dark_mode is False, the text color is set to a darker shade for better visibility on a light background.
-    # text_color = "#fafafa" if dark_mode else "#31333f"
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="42" '
         'viewBox="0 0 200 42" role="img">'
         f"<title>{html.escape(supplier)}</title>"
-        f'<image x="2" y="5" width="32" height="32" '
-        f'href="{html.escape(embedded_logo, quote=True)}" '
-        'preserveAspectRatio="xMidYMid meet"/>'
+        f"{icon_markup}"
         f'<text x="42" y="26" fill="{text_color}" '
         'font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif" '
         f'font-size="14">{html.escape(supplier)}</text>'
@@ -329,7 +453,7 @@ with st.container(
 ):
     st.title("Invoices")
     dark_mode = st.toggle("Dark mode", value=True, key="dark_mode")
-    
+
 # with title:
 #     st.title("Invoices")
 # with theme_toggle:
@@ -404,25 +528,51 @@ selected_ledger = st.radio(
     label_visibility="collapsed",
 )
 
+if "invoice_page" not in st.session_state:
+    st.session_state.invoice_page = 0
+
+
+def _reset_invoice_page() -> None:
+    st.session_state.invoice_page = 0
+
+
 with st.container(
     horizontal=True,
     horizontal_alignment="distribute",
     vertical_alignment="center",
-    wrap=False,
+    wrap=True,
 ):
-    with st.popover("Filters"):
-        suppliers = sorted(invoices["Supplier"].unique().tolist())
-        selected_suppliers = st.multiselect("Supplier", suppliers)
-        workflows = sorted(invoices["Workflow"].unique().tolist())
-        selected_workflows = st.multiselect("Workflow", workflows, default=workflows)
-
-    page_size = st.selectbox(
-        "Results per page",
-        PAGE_SIZE_OPTIONS,
-        index=0,
-        width=80,
+    search_query = st.text_input(
+        "Search invoices",
+        key="invoice_search",
+        type="search",
+        placeholder="Search invoices...",
         label_visibility="collapsed",
+        width=320,
+        on_change=_reset_invoice_page,
     )
+    with st.container(
+        horizontal=True,
+        horizontal_alignment="right",
+        vertical_alignment="center",
+        gap="medium",
+        wrap=False,
+    ):
+        with st.popover("Filters"):
+            suppliers = sorted(invoices["Supplier"].unique().tolist())
+            selected_suppliers = st.multiselect("Supplier", suppliers)
+            workflows = sorted(invoices["Workflow"].unique().tolist())
+            selected_workflows = st.multiselect(
+                "Workflow", workflows, default=workflows
+            )
+
+        page_size = st.selectbox(
+            "Results per page",
+            PAGE_SIZE_OPTIONS,
+            index=0,
+            width=80,
+            label_visibility="collapsed",
+        )
 
 filtered = invoices
 if selected_ledger != "All":
@@ -434,25 +584,29 @@ if selected_ledger != "All":
 if selected_suppliers:
     filtered = filtered[filtered["Supplier"].isin(selected_suppliers)]
 filtered = filtered[filtered["Workflow"].isin(selected_workflows)]
+if search_query:
+    searchable_columns = [
+        column for column in INVOICE_COLUMNS if column in filtered.columns
+    ]
+    matches = filtered[searchable_columns].astype(str).apply(
+        lambda column: column.str.contains(search_query, case=False, regex=False)
+    )
+    filtered = filtered[matches.any(axis=1)]
 
 if filtered.empty:
     st.info("No invoices match the selected filters.")
     st.stop()
-
-if "invoice_page" not in st.session_state:
-    st.session_state.invoice_page = 0
 
 page_count = (len(filtered) + page_size - 1) // page_size
 st.session_state.invoice_page = min(st.session_state.invoice_page, page_count - 1)
 page_index = st.session_state.invoice_page
 start = page_index * page_size
 page = filtered.iloc[start : start + page_size].copy()
-logo_dev_key = os.environ.get("LOGO_DEV_PUBLISHABLE_KEY", "").strip()
 supplier_logo_urls = [
     _supplier_logo_url(
         row["Supplier"],
         row[SUPPLIER_DOMAIN_COLUMN],
-        logo_dev_key,
+        LOGO_DEV_PUBLISHABLE_KEY,
     )
     for _, row in page.iterrows()
 ]

@@ -62,7 +62,6 @@ fi
 echo "Starting $MODE invoice dashboard..."
 RUN_OPTIONS=(
     -e APP_EMAIL_FILTER
-    -e LOGO_DEV_PUBLISHABLE_KEY
     -p "${PORT}:8501"
 )
 if [ "$MODE" = "test" ]; then
