@@ -108,7 +108,7 @@ def _listen_for_voice_commands(environment_mode: str | None = None) -> None:
         raise RuntimeError(f"Could not access the microphone: {error}") from error
 
 
-def _start_dashboard(mode: str) -> subprocess.Popen:
+def _start_dashboard(mode: str, port: int = 8501) -> subprocess.Popen:
     environment = os.environ.copy()
     environment.pop("APP_DATA_MODE", None)
 
@@ -129,7 +129,7 @@ def _start_dashboard(mode: str) -> subprocess.Popen:
                 "streamlit",
                 "run",
                 str(DASHBOARD_APP),
-                "--server.port=8501",
+                f"--server.port={port}",
                 "--server.address=127.0.0.1",
                 "--",
                 "--environment",
@@ -176,7 +176,7 @@ def trigger_dashboard():
 
     mode = app.config.get("ENVIRONMENT_MODE") or mode
     try:
-        process = _start_dashboard(mode)
+        process = _start_dashboard(mode, app.config.get("PORT", 8501))
     except DashboardStartError as error:
         app.logger.error("Dashboard launch failed: %s", error)
         return jsonify(
@@ -207,6 +207,11 @@ if __name__ == "__main__":
         help="start the optional localhost HTTP trigger instead of listening",
     )
     parser.add_argument(
+        "--port",
+        type=int,
+        help="port for the invoice dashboard",
+    )
+    parser.add_argument(
         "--environment",
         "--mode",
         choices=("testing", "production"),
@@ -226,6 +231,8 @@ if __name__ == "__main__":
     else:
         raise ValueError("environment must be one of 'testing', 'test', or 'production'")
     app.config["ENVIRONMENT_MODE"] = environment_mode
+    if arguments.port is not None:
+        app.config["PORT"] = arguments.port
 
     if arguments.voice:
         voice = _dashboard_mode(" ".join(arguments.voice))
@@ -237,13 +244,13 @@ if __name__ == "__main__":
         if environment_mode is not None:
             voice = environment_mode
         try:
-            process = _start_dashboard(voice)
+            process = _start_dashboard(voice, app.config.get("PORT", 8501))
         except DashboardStartError as error:
             app.logger.error("Dashboard launch failed: %s", error)
             raise SystemExit(1) from error
         print(f"Starting the {voice} invoice dashboard (process {process.pid}).")
     elif arguments.http:
-        app.run(host="127.0.0.1", port=5001)
+        app.run(host="127.0.0.1", port=app.config.get("PORT", 5001))
     else:
         try:
             _listen_for_voice_commands(environment_mode)
