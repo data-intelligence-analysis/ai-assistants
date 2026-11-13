@@ -5,6 +5,7 @@ from io import BytesIO
 import json
 import os
 import re
+
 from email.utils import parseaddr, parsedate_to_datetime
 from datetime import datetime
 from pathlib import Path
@@ -18,7 +19,9 @@ import streamlit as st
 from PIL import Image
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from dotenv import load_dotenv
 
+load_dotenv()  # searches up the directory tree
 environment_parser = argparse.ArgumentParser()
 environment_parser.add_argument(
     "--environment",
@@ -113,7 +116,7 @@ def _has_logo(url: str) -> bool:
     try:
         with urlopen(request, timeout=4) as response:
             return response.headers.get_content_type().startswith("image/")
-    except (HTTPError, URLError, TimeoutError):
+    except (HTTPError, URLError, TimeoutError, OSError):
         return False
 
 
@@ -154,9 +157,14 @@ def _supplier_logo_url(supplier: str, domain: str, logo_dev_key: str) -> str:
         re.sub(r"[^a-z0-9]", "", normalized_supplier),
     )
     if slug:
-        simple_icon_url = f"https://cdn.simpleicons.org/{quote(slug, safe='')}"
-        if _has_logo(simple_icon_url):
-            return simple_icon_url
+        encoded_slug = quote(slug, safe="")
+        simple_icon_urls = (
+            f"https://cdn.jsdelivr.net/npm/simple-icons@16.10.0/icons/{encoded_slug}.svg",
+            f"https://cdn.simpleicons.org/{encoded_slug}",
+        )
+        for simple_icon_url in simple_icon_urls:
+            if _has_logo(simple_icon_url):
+                return simple_icon_url
 
     return _placeholder_logo(supplier)
 
@@ -459,9 +467,73 @@ with st.container(
 # with theme_toggle:
 #     dark_mode = st.toggle("Dark mode", value=True, key="dark_mode")
 background = "#0e1117" if dark_mode else "#ffffff"
-secondary_background = "#262730" if dark_mode else "#f0f2f6"
-text_color = "#fafafa" if dark_mode else "#31333f"
-border_color = "#41434f" if dark_mode else "#e6eaed"
+secondary_background = "#262730" if dark_mode else "#f8fafc"
+text_color = "#fafafa" if dark_mode else "#111827"
+border_color = "#41434f" if dark_mode else "#e5e7eb"
+control_border = "#41434f" if dark_mode else "#cbd5e1"
+muted_text_color = "#aab4c0" if dark_mode else "#475569"
+disabled_background = "#262730" if dark_mode else "#f1f5f9"
+disabled_text_color = "#7d8590" if dark_mode else "#64748b"
+disabled_border = "#41434f" if dark_mode else "#cbd5e1"
+light_mode_styles = ""
+if not dark_mode:
+    light_mode_styles = f"""
+    [data-testid="stTextInput"] input,
+    [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+    [data-testid="stMultiSelect"] [data-baseweb="select"] > div {{
+        background-color: {background} !important;
+        color: {text_color} !important;
+        border-color: {control_border} !important;
+    }}
+
+    [data-testid="stTextInputRootElement"] {{
+        background-color: {background} !important;
+        border-color: {control_border};
+        opacity: 1;
+    }}
+    [data-testid="stTextInputIcon"] {{
+        color: {text_color} !important;
+    }}
+    [data-testid="stTextInput"] input::placeholder {{
+        color: {muted_text_color} !important;
+        opacity: 1;
+    }}
+    [data-testid="stMultiSelect"] [data-baseweb="tag"] {{
+        background-color: #e2e8f0;
+        color: #1e293b;
+    }}
+    [data-baseweb="popover"], [role="listbox"] {{
+        background-color: {background} !important;
+        color: {text_color} !important;
+        border-color: {control_border} !important;
+    }}
+    [role="option"], [data-testid="stWidgetLabel"],
+    [data-testid="stRadio"] label {{
+        color: {text_color} !important;
+    }}
+    [data-testid="stButton"] button,
+    [data-testid="stPopover"] button,
+    [data-testid="stSelectbox"] button,
+    [data-testid="stSelectbox"] input {{
+        background-color: {background};
+        color: {text_color};
+        border-color: {control_border};
+    }}
+    [data-testid="stSelectbox"] {{
+        background-color: {background};
+        color: {text_color};
+        border-color: {control_border};
+    }}
+    [data-testid="stButton"] button:hover,
+    [data-testid="stPopover"] button:hover {{
+        background-color: {secondary_background};
+        color: {text_color};
+        border-color: {control_border};
+    }}
+    [data-testid="stCaptionContainer"] {{
+        color: {muted_text_color};
+    }}
+    """
 st.markdown(
     f"""
     <style>
@@ -475,7 +547,7 @@ st.markdown(
         padding: 0
         margin: 0 auto;
     }}
-    .block-container {{ padding-top: 3rem; }}
+    .block-container {{ padding-top: 4rem; }}
     [data-testid="stAppViewContainer"] {{
         background-color: var(--background-color);
         color: var(--text-color);
@@ -489,6 +561,15 @@ st.markdown(
         background-color: var(--secondary-background-color);
         color: var(--text-color);
     }}
+    [data-testid="stButton"] button:disabled,
+    [data-testid="stPopover"] button:disabled {{
+        background-color: {disabled_background} !important;
+        color: {disabled_text_color} !important;
+        border-color: {disabled_border} !important;
+        opacity: 1 !important;
+        cursor: not-allowed;
+    }}
+    {light_mode_styles}
     </style>
     """,
     unsafe_allow_html=True,
@@ -536,6 +617,12 @@ def _reset_invoice_page() -> None:
     st.session_state.invoice_page = 0
 
 
+def _refresh_invoice_data() -> None:
+    fetch_invoices.clear()
+    _supplier_logo_url.clear()
+    _supplier_cell_image.clear()
+
+
 with st.container(
     horizontal=True,
     horizontal_alignment="distribute",
@@ -555,9 +642,17 @@ with st.container(
         horizontal=True,
         horizontal_alignment="right",
         vertical_alignment="center",
-        gap="medium",
+        gap="small",
         wrap=False,
     ):
+        st.button(
+            " ",
+            key="refresh_invoice_data",
+            help="Refresh invoice data and supplier logos",
+            type="secondary",
+            icon=":material/refresh:",
+            on_click=_refresh_invoice_data,
+        )
         with st.popover("Filters"):
             suppliers = sorted(invoices["Supplier"].unique().tolist())
             selected_suppliers = st.multiselect("Supplier", suppliers)
@@ -565,7 +660,6 @@ with st.container(
             selected_workflows = st.multiselect(
                 "Workflow", workflows, default=workflows
             )
-
         page_size = st.selectbox(
             "Results per page",
             PAGE_SIZE_OPTIONS,
@@ -615,8 +709,30 @@ page["Supplier"] = [
     for supplier, logo_url in zip(page["Supplier"], supplier_logo_urls)
 ]
 
+table_data = page
+if not dark_mode:
+    table_data = page.style.set_properties(color=text_color).apply(
+        lambda column: [
+            f"background-color: {background}"
+            if row_index % 2 == 0
+            else f"background-color: {secondary_background}"
+            for row_index in range(len(column))
+        ],
+        axis=0,
+    ).set_table_styles(
+        [
+            {
+                "selector": "th",
+                "props": [
+                    ("background-color", secondary_background),
+                    ("color", muted_text_color),
+                ],
+            }
+        ]
+    )
+
 st.dataframe(
-    page,
+    table_data,
     hide_index=True,
     use_container_width=True,
     height="content",
@@ -635,20 +751,33 @@ st.dataframe(
         ),
     },
 )
-if any(logo_url.startswith("https://img.logo.dev/") for logo_url in supplier_logo_urls):
-    st.caption("[Logos provided by Logo.dev](https://logo.dev)")
+
 
 previous, count, next_page = st.columns([2, 3, 1], vertical_alignment="center")
 with previous:
     if st.button("‹ Previous", disabled=page_index == 0):
         st.session_state.invoice_page -= 1
         st.rerun()
+
 with count:
-    st.caption(
-        f"Showing {start + 1}–{start + len(page)} of {len(filtered)} invoices "
-        f"· Page {page_index + 1} of {page_count}"
-    )
+    with st.container(
+        horizontal=True,
+        horizontal_alignment="center",
+        vertical_alignment="center",
+        wrap=False,
+    ):
+        st.caption(
+            f"Showing {start + 1}–{start + len(page)} of {len(filtered)} invoices "
+            f"· Page {page_index + 1} of {page_count}"
+        )
+    
 with next_page:
-    if st.button("Next ›", disabled=page_index >= page_count - 1):
-        st.session_state.invoice_page += 1
-        st.rerun()
+    with st.container(
+        horizontal=True,
+        horizontal_alignment="right",
+        vertical_alignment="center",
+        wrap=False,
+    ):
+        if st.button("Next ›", disabled=page_index >= page_count - 1):
+            st.session_state.invoice_page += 1
+            st.rerun()

@@ -59,7 +59,7 @@ To load live invoices, first complete [one-time Google authorization](#one-time-
 
 Production mode refreshes the Gmail read-only token, searches the inbox using `APP_EMAIL_FILTER` (default `in:inbox invoice`), and uses custom Gmail labels for ledger groupings. Messages without a custom label appear as `Unassigned`. The launcher builds the `dashboard` image, passes the selected environment as a command-line argument, publishes port `8501`, and opens `http://localhost:8501`. The shell launcher defaults to production when no mode is supplied; the dashboard app itself requires an explicit `--environment testing|production` argument and does not read its mode from an environment variable or `.env` file.
 
-Supplier logos use the optional Logo.dev CDN when `LOGO_DEV_PUBLISHABLE_KEY` is set, then try the Simple Icons CDN, and finally show an initials placeholder. The sample dataset can use Simple Icons without credentials. Set `LOGO_DEV_PUBLISHABLE_KEY` in the invoice handler's `.env` file or export it before starting the launcher; Docker Compose passes it to the dashboard app. The supplier image embeds SVG logo markup with the supplier name so it renders in the table's existing Supplier column. The dashboard displays Logo.dev attribution when one of its logos is shown. Review Logo.dev's [pricing and attribution requirements](https://www.logo.dev/pricing) before using its free plan commercially; Simple Icons also asks users to read its [legal disclaimer](https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md).
+Supplier logos use the optional Logo.dev CDN when `LOGO_DEV_PUBLISHABLE_KEY` is set, then try the pinned Simple Icons package on jsDelivr and the Simple Icons CDN, and finally show an initials placeholder. The sample dataset can use Simple Icons without credentials. Set `LOGO_DEV_PUBLISHABLE_KEY` in the invoice handler's `.env` file or export it before starting the launcher; Docker Compose passes it to the dashboard app. The supplier image embeds SVG logo markup with the supplier name so it renders in the table's existing Supplier column. The dashboard displays Logo.dev attribution when one of its logos is shown. Review Logo.dev's [pricing and attribution requirements](https://www.logo.dev/pricing) before using its free plan commercially; Simple Icons also asks users to read its [legal disclaimer](https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md).
 
 To build the image without launching the dashboard:
 
@@ -132,14 +132,17 @@ Use `production` instead of `test` in the second shortcut's script. To listen di
 
 To launch a dashboard directly from Terminal without listening, pass the voice phrase to `--voice`, for example `python3 scripts/manual_voice_trigger_app_dashboard.py --voice "show test invoice dashboard"`; the phrase may also be entered without quotes.
 ```bash
-python3 scripts/manual_voice_trigger_app_dashboard.py --voice "show test invoice dashboard"
-python3 scripts/manual_voice_trigger_app_dashboard.py --voice show production invoice dashboard
+python3 scripts/manual_voice_trigger_app_dashboard.py --voice "show test invoice dashboard" #simulate a voice command in test mode
+python3 scripts/manual_voice_trigger_app_dashboard.py --voice show production invoice dashboard #simulate a voice command in production mode
 
-python3 scripts/manual_voice_trigger_app_dashboard.py --environment testing
-python3 scripts/manual_voice_trigger_app_dashboard.py --mode production --voice "show test invoice dashboard"
+python3 scripts/manual_voice_trigger_app_dashboard.py --environment testing #use local voice-to-text model to trigger dashboard in test mode.
+python3 scripts/manual_voice_trigger_app_dashboard.py --environment production #use local voice-to-text model to trigger dashboard in production mode
+python3 scripts/manual_voice_trigger_app_dashboard.py --mode production --voice "show invoice dashboard" #simulate a voice command in prodcution mode
+python3 scripts/manual_voice_trigger_app_dashboard.py --mode testing --voice "show invoice dashboard" #simulate a voice command in testing mode
+
 ```
 
-Use the same environment option to override the phrase's mode, for example `python3 scripts/manual_voice_trigger_app_dashboard.py --environment testing --voice "show production invoice dashboard"` launches the test dashboard.
+Use the same environment option to override the phrase's mode, for example `python3 scripts/manual_voice_trigger_app_dashboard.py --environment testing --voice "show invoice dashboard"` launches the test dashboard.
 
 ## Troubleshooting
 

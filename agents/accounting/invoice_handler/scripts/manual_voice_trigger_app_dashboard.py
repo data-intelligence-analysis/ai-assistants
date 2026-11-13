@@ -13,6 +13,7 @@ WORKSPACE_DIR = Path(__file__).resolve().parents[1]
 DASHBOARD_APP = WORKSPACE_DIR / "dashboard" / "invoice_dashboard_app.py"
 TOKEN_PATH = WORKSPACE_DIR / "dashboard" / "token.json"
 DEFAULT_MODEL_PATH = WORKSPACE_DIR / "dashboard" / "vosk-model-small-en-us-0.15"
+environment_mode = ''
 VOICE_COMMANDS = {
     "show test invoice dashboard": "test",
     "open test invoice dashboard": "test",
@@ -20,6 +21,7 @@ VOICE_COMMANDS = {
     "show production invoice dashboard": "production",
     "open production invoice dashboard": "production",
     "production invoice dashboard": "production",
+    "show invoice dashboard": "test" if environment_mode in ("testing", "test") else "production",
 }
 
 
@@ -215,26 +217,31 @@ if __name__ == "__main__":
     if arguments.voice and arguments.http:
         parser.error("--voice and --http cannot be used together")
 
-    environment_mode = (
-        "test" if arguments.environment == "testing" else arguments.environment
-    )
+    if isinstance(arguments.environment, str) and arguments.environment in ("testing", "test", "production"):
+        environment_mode = (
+            "test"
+            if arguments.environment in ("testing", "test")
+            else arguments.environment
+        )
+    else:
+        raise ValueError("environment must be one of 'testing', 'test', or 'production'")
     app.config["ENVIRONMENT_MODE"] = environment_mode
 
     if arguments.voice:
-        mode = _dashboard_mode(" ".join(arguments.voice))
-        if mode is None:
+        voice = _dashboard_mode(" ".join(arguments.voice))
+        if voice is None:
             parser.error(
                 "unsupported voice command; use 'show test invoice dashboard' or "
                 "'show production invoice dashboard'"
             )
         if environment_mode is not None:
-            mode = environment_mode
+            voice = environment_mode
         try:
-            process = _start_dashboard(mode)
+            process = _start_dashboard(voice)
         except DashboardStartError as error:
             app.logger.error("Dashboard launch failed: %s", error)
             raise SystemExit(1) from error
-        print(f"Starting the {mode} invoice dashboard (process {process.pid}).")
+        print(f"Starting the {voice} invoice dashboard (process {process.pid}).")
     elif arguments.http:
         app.run(host="127.0.0.1", port=5001)
     else:
