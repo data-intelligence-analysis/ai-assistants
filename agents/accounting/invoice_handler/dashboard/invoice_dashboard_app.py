@@ -660,13 +660,6 @@ with st.container(
             selected_workflows = st.multiselect(
                 "Workflow", workflows, default=workflows
             )
-        page_size = st.selectbox(
-            "Results per page",
-            PAGE_SIZE_OPTIONS,
-            index=0,
-            width=80,
-            label_visibility="collapsed",
-        )
 
 filtered = invoices
 if selected_ledger != "All":
@@ -691,6 +684,7 @@ if filtered.empty:
     st.info("No invoices match the selected filters.")
     st.stop()
 
+page_size = st.session_state.get("invoice_page_size", PAGE_SIZE_OPTIONS[0])
 page_count = (len(filtered) + page_size - 1) // page_size
 st.session_state.invoice_page = min(st.session_state.invoice_page, page_count - 1)
 page_index = st.session_state.invoice_page
@@ -753,31 +747,46 @@ st.dataframe(
 )
 
 
-previous, count, next_page = st.columns([2, 3, 1], vertical_alignment="center")
-with previous:
-    if st.button("‹ Previous", disabled=page_index == 0):
-        st.session_state.invoice_page -= 1
-        st.rerun()
+with st.container(
+    horizontal=True,
+    horizontal_alignment="distribute",
+    vertical_alignment="center",
+    wrap=True,
+):
+    st.caption(f"Showing {start + len(page)} of {len(filtered)}")
 
-with count:
     with st.container(
         horizontal=True,
-        horizontal_alignment="center",
+        horizontal_alignment="distribute",
         vertical_alignment="center",
-        wrap=False,
+        gap="small",
+        wrap=True,
     ):
+        if st.button("‹ Previous", disabled=page_index == 0):
+            st.session_state.invoice_page -= 1
+            st.rerun()
         st.caption(
-            f"Showing {start + 1}–{start + len(page)} of {len(filtered)} invoices "
-            f"· Page {page_index + 1} of {page_count}"
+            f"Page {page_index + 1} of {page_count}",
+            text_alignment="center",
         )
-    
-with next_page:
+        if st.button("Next ›", disabled=page_index >= page_count - 1):
+            st.session_state.invoice_page += 1
+            st.rerun()
+
     with st.container(
         horizontal=True,
         horizontal_alignment="right",
         vertical_alignment="center",
+        gap="small",
         wrap=False,
     ):
-        if st.button("Next ›", disabled=page_index >= page_count - 1):
-            st.session_state.invoice_page += 1
-            st.rerun()
+        st.caption(f"Results: ", text_alignment="right")
+        st.selectbox(
+            "Results per page",
+            PAGE_SIZE_OPTIONS,
+            index=0,
+            width=80,
+            label_visibility="collapsed",
+            key="invoice_page_size",
+            on_change=_reset_invoice_page,
+        )
